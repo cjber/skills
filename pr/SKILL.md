@@ -211,6 +211,55 @@ let CI be the test gate.
 - If the change contradicts a documented rule or contract (a skill file, an
   architecture doc, an invariant list), update that document in the same PR.
   A canonical contract left describing the old behaviour is a defect.
+### Lead with a diagram, not a wall of text
+
+A long PR body is the least-read artifact in the repository. Reviewers skim it,
+then read the diff anyway; the author spends real effort restating in prose a
+structure a picture carries at a glance. So the body opens with **one mermaid
+diagram of the subsystem as it now works**, and the prose underneath is kept to
+what a diagram cannot say: why, deliberate deferrals, rollout order, and what
+cannot be backfilled.
+
+GitHub renders mermaid natively in a PR body, so this costs a fenced ```mermaid
+block and nothing else — no image hosting, no attachment, and every reviewer sees
+it including bots. Two diagrams is usually the right number:
+
+1. **How the subsystem works now** — the lanes, the shared seam, the gate or
+   invariant everything passes through. Someone who has never opened these files
+   should be able to name the pieces after reading it.
+2. **Before → after** — each defect paired with its fix, so the review question
+   becomes "is this the right fix" rather than "what changed".
+
+Draw the *domain*, not the call graph: a diagram that is one node per function is
+the diff again in a worse format. Nodes are the surfaces a person would name;
+edges are the flow between them.
+
+**Mermaid gotchas that will otherwise cost a round-trip:**
+
+- **Never use HTML in a node label.** Some renderers run with `htmlLabels` off
+  and *delete* the tags rather than honour them, so `a<br/>b` silently becomes
+  `ab` — the failure looks like a typo, not a config difference. Use mermaid's
+  markdown-string form instead, which is a real newline inside backticks:
+
+  ```
+  W1["`**save_memory**
+  the user asked for it`"]
+  ```
+
+- **Split dense diagrams rather than shrinking them.** Several subgraphs side by
+  side in one `flowchart LR` forces every label small enough to be unreadable.
+  Three `flowchart TB` diagrams beat one wide one, every time.
+- Set explicit `classDef` fills. Diagrams render on whatever ground the host
+  picks, and a default-themed node can end up invisible.
+
+**When a richer page is warranted** — a large audit, a multi-subsystem change, a
+result someone will refer back to — build it with the Artifact tool (load
+`artifact-design` first) and link it from the PR body. One caveat that decides
+whether this is appropriate: **a published artifact is private to your account
+until you share it from the page's share menu**, so an unshared link is dead for
+every reviewer. Put the diagram itself in the PR body regardless; the artifact is
+the extended version, never the only copy.
+
 
 ## 6. Drive the PR green before finishing
 

@@ -7,9 +7,10 @@ directory, each a self-contained `SKILL.md` plus whatever tooling it needs.
 |---|---|
 | [`pr`](#pr--ship-one-green-pr-on-two-models) | Take an approved change all the way to a reviewed, green PR — planned, implemented and reviewed on two different models. |
 | [`deadcode`](#deadcode--prove-it-dead-before-you-delete-it) | Clean up a whole project without shipping a silent breakage. The judgment layer on top of `vulture`/`knip`/`ts-prune`. |
+| [`issue`](#issue--from-a-github-issue-to-a-plan-or-a-whole-backlog-to-one-pr) | Turn a GitHub issue into a file-level plan — or triage the entire open backlog into a single PR that closes all of it. |
 
-They are designed to work together — `/pr` calls `/deadcode` in its review phase —
-but either one stands alone.
+They are designed to work together — `/issue` produces the plan `/pr` ships, and
+`/pr` calls `/deadcode` in its review phase — but each one stands alone.
 
 ---
 
@@ -151,6 +152,40 @@ Then invoke as `/pr` and `/deadcode` — or just describe the task ("ship this",
 - **`gh`**, authenticated — PR creation, checks, and comment threads
 - **`jq`** — only for the two watch scripts
 - Signed commits configured (`commit.gpgsign`); `/pr` assumes every commit is signed
+
+---
+
+## `issue` — from a GitHub issue to a plan, or a whole backlog to one PR
+
+`/issue` has two modes, chosen by whether you passed it issue numbers.
+
+**With numbers** (`/issue 3765`, or several at once) it is planning only: it reads
+the issue, reads the code the issue is actually about, and writes a concrete
+file-level implementation plan to `~/.claude/plans/`. No branches, no commits.
+The output is something you can hand to `/pr`.
+
+**With no arguments** it triages the entire open backlog: pulls every open issue,
+clarifies scope with you — pushing for the largest batch you will accept — plans
+the batch in parallel, then builds it **serially** onto one branch as one signed
+commit per issue, and opens a single PR that closes all of them.
+
+### Why the two phases have different shapes
+
+Planning fans out because plans do not touch a shared resource. Building does
+not, and the asymmetry is the whole design:
+
+- **One branch, one PR, one commit per issue.** A stack of tiny interdependent
+  PRs is worse to review than one coherent PR whose history explains itself.
+- **A red gate drops that issue to plan-only.** It does not get a
+  "best effort" commit. Revert its edits, leave the branch clean, record the
+  blocker, move on — the batch keeps its green history and the dropped issue
+  keeps its plan.
+- **Explicit file lists, never `git add -A`.** A serialized build shares a
+  worktree across issues; `-A` is how one issue's commit swallows the next one's
+  half-finished edits.
+- **The build is serialized because local checks share state.** If your check
+  gate touches one local database across every worktree, concurrent builds
+  corrupt each other's results rather than failing honestly.
 
 ## Adapt before you use these
 

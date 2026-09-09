@@ -8,9 +8,12 @@ directory, each a self-contained `SKILL.md` plus whatever tooling it needs.
 | [`pr`](#pr--ship-one-green-pr-on-two-models) | Take an approved change all the way to a reviewed, green PR — planned, implemented and reviewed on two different models. |
 | [`deadcode`](#deadcode--prove-it-dead-before-you-delete-it) | Clean up a whole project without shipping a silent breakage. The judgment layer on top of `vulture`/`knip`/`ts-prune`. |
 | [`issue`](#issue--from-a-github-issue-to-a-plan-or-a-whole-backlog-to-one-pr) | Turn a GitHub issue into a file-level plan — or triage the entire open backlog into a single PR that closes all of it. |
+| [`simplify`](#simplify--make-the-diff-smaller-before-anyone-reviews-it) | Shrink a finished diff without changing behaviour, so reviewers read the change and not the scaffolding. |
+| [`review`](#review--one-diff-one-pass-a-budget) | Review a diff, branch or PR for defects that actually execute — with an explicit cap on what it is allowed to spend. |
 
-They are designed to work together — `/issue` produces the plan `/pr` ships, and
-`/pr` calls `/deadcode` in its review phase — but each one stands alone.
+They are designed to work together — `/issue` produces the plan, `/pr` ships it,
+and `/pr` calls `/simplify`, `/review` and `/deadcode` at its quality gates — but
+each one stands alone.
 
 ---
 
@@ -187,6 +190,68 @@ not, and the asymmetry is the whole design:
   gate touches one local database across every worktree, concurrent builds
   corrupt each other's results rather than failing honestly.
 
+---
+
+## `simplify` — make the diff smaller before anyone reviews it
+
+`/simplify` runs on a finished diff and does one job: make it smaller and clearer
+without changing behaviour. It does not review, commit, or push.
+
+The order it works in is the point — deletions first, then unification, then
+abstraction collapse, then tests and comments:
+
+1. Delete what is unreachable, redundant, speculative or superseded. **Never**
+   behind a "remove in a follow-up" note — if this diff killed the last reader,
+   this diff deletes it.
+2. Extend the highest existing authoritative seam instead of adding a parallel one.
+3. Replace hand-rolled parsing, retry, caching or validation with the trusted
+   library already in the lockfile.
+4. Collapse abstractions with one caller or no independent contract.
+5. Keep one test per distinct realistic failure.
+6. Cut comments that narrate the next line; keep the ones carrying incident
+   rationale.
+
+### The guardrail that makes it safe to run
+
+A simplifier with no floor will happily delete your authorization checks. So there
+is a hard stop: never reduce authorization, tenant isolation, billing,
+persistence, concurrency, cancellation, migrations, or supported stale-client
+compatibility merely to shrink the diff — and never use simplification to erase a
+regression test for one of them.
+
+It also refuses reductions that only *look* smaller: a candidate that is longer,
+less typed, or less explicit is rejected unless it buys a real deletion somewhere
+else.
+
+[`references/review-rubric.md`](simplify/references/review-rubric.md) is the long
+form — whole-system duplication, dependency leverage, control flow, indirection,
+tests, and operational residue. The skill reads it only for a broad or
+structurally complex diff.
+
+---
+
+## `review` — one diff, one pass, a budget
+
+Most review skills fail by being too expensive to actually run, so you stop
+running them. `/review` starts from a **resource budget** and works inward:
+
+- Use the current model at medium effort. Do not force the biggest model.
+- No parallel reviewers, no agent teams, no cross-reconciliation loops.
+- Exactly one fresh-context second pass, allowed *only* for security,
+  authorization, billing, migrations and data loss, concurrency, or a diff too
+  large to hold in one coherent pass — and scoped to that risky area rather than
+  repeating the whole review.
+
+The review itself prioritizes **defects that execute**: wrong results, broken
+security boundaries, data loss, races, compatibility failures. Every candidate is
+validated against the surrounding code before it is reported, and style
+preferences are dropped rather than listed. Findings come back as
+`file:line` + the defect + a concrete failure scenario + the smallest viable fix,
+followed by what was actually checked and what remains uncertain.
+
+If nothing survives validation it says so plainly, which is the outcome that makes
+the budget credible.
+
 ## Adapt before you use these
 
 These are my working copies, not neutral templates. They hardcode the gates and
@@ -194,9 +259,6 @@ habits of the repository I use them in, and those are the first lines to change:
 
 - `uv run sift check` and `uv run dead-code` are that repo's lint/type and
   dead-code gates. Substitute your own.
-- `/simplify` and `/review` are separate skills that live elsewhere and are not in
-  this repository yet. Where a file invokes them, point at your equivalent or
-  inline the intent.
 - `gpt-6-astra` is the Codex model pin. Model names move; check yours.
 - The `cb/<slug>` branch convention and `gh stack` for stacked PRs are personal
   habits, safe to drop.

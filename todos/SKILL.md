@@ -91,7 +91,13 @@ specific ways; check each, and report only what needs a decision.
    the blocker or drop the edge.
 5. **Drift both ways.** Beads open for work already done (close them), and
    linked `gh-NNNN` issues closed upstream while the bead stays open:
-   `gh issue view <n> --repo agent-labs-dev/nebula --json state`.
+   `gh issue view <n> --repo agent-labs-dev/nebula --json state`. Also
+   open GitHub issues whose fix already merged (a PR fixed them but never
+   closed them). **Standing permission:** close stale beads *and* stale GitHub
+   issues without asking. Leave a comment naming the evidence (the merged PR or
+   commit) with `gh issue close <n> --comment "Fixed by #NNNN ..."`, then report
+   what you closed. Only close with evidence. If you're unsure it's really done,
+   ask.
 6. **Unlinked roadmap work.** New GitHub issues that belong to a track but have
    no bead. Sweep by track keyword against `gh issue list --state open`, and
    **link, don't duplicate** — GitHub stays the execution tracker, beads is the
@@ -110,6 +116,8 @@ specific ways; check each, and report only what needs a decision.
 3. **Claim before working** (`bd update <id> --claim`) so parallel agents don't
    collide. Hash ids are safe across branches and worktrees.
 4. **Close what you finish**, batched. Never report work done without closing it.
+   Closing stale issues (beads or GitHub) never needs approval — close with an
+   evidence comment and report it.
 5. **Don't implement a decision.** Surface it; let cjber call it.
 6. **Link, never duplicate.** One fact, one home.
 

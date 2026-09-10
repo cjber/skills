@@ -19,9 +19,11 @@ outlive the session. Those vanish, which is precisely how things slip.
 the workspace level, not inside a repo, because the work spans `nebula`,
 `parallax`, `nebula-desktop` and the DGX box.
 
-Two companion files live beside it: `alpha-roadmap.md` holds the *reasoning*,
-beads holds the *actions*. Keep them in sync — when a track's shape changes,
-change both.
+Beads is the only home, with no companion markdown. Cross-cutting strategy
+(thesis, operating principle, track sequencing) lives in `bd memories roadmap`.
+Each track's reasoning lives in its epic's description and notes. When a track's
+shape changes, update the epic. Never start a parallel roadmap doc: the last
+one drifted within a day.
 
 `bd prime` prints the full command reference. **One exception to what it says:**
 it instructs agents to abandon `MEMORY.md`. Ignore that line — cjber has an

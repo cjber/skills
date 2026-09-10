@@ -11,6 +11,7 @@ directory, each a self-contained `SKILL.md` plus whatever tooling it needs.
 | [`simplify`](#simplify--make-the-diff-smaller-before-anyone-reviews-it) | Shrink a finished diff without changing behaviour, so reviewers read the change and not the scaffolding. |
 | [`review`](#review--one-diff-one-pass-a-budget) | Review a diff, branch or PR for defects that actually execute — with an explicit cap on what it is allowed to spend. |
 | [`todos`](#todos--a-workload-that-does-not-leak) | Keep a durable cross-repo workload honest: what to do next, what is blocked, what decision is rotting, and a board you can look at. |
+| [`autopsy`](#autopsy--account-for-every-second-of-one-agent-run) | Forensic audit of one LLM agent run: rebuild the full timeline from traces, events and logs, and list every harness, tool, model and environment defect with evidence and a fix. |
 
 They are designed to work together — `/todos` decides what is worth doing next,
 `/issue` produces the plan, `/pr` ships it, and `/pr` calls `/simplify`,
@@ -326,6 +327,42 @@ The skill names one workspace path, one issue prefix and one set of track
 labels, because that is what makes a digest useful rather than generic. Swap
 those for your own and the rest — the review pass, the capture discipline, the
 board — is unchanged.
+
+## `autopsy` — account for every second of one agent run
+
+`/autopsy <thread id | screenshot | pasted text>` audits a single agent run when
+it was slow, looped, failed, or said something untrue. It resolves the input to a
+run, pulls every source you have (observability spans, app events, cloud logs,
+the deployed version), and normalises them into one timeline.
+
+Two things make it more than "read the trace":
+
+- **A time budget that must add up.** Each lane's wall clock is split into tool,
+  model, failed-tool and unaccounted time. Unaccounted time is itself a finding.
+- **No "flaky".** Every anomaly needs evidence and a cause at the producer.
+  "Transient" has to name the upstream event and the missing defence. "The model
+  did something dumb" has to name the prompt, tool description or error text that
+  invited it.
+
+`scripts/autopsy.py` is backend-agnostic. You write a small adapter that emits a
+canonical JSONL, and the script runs mechanical detectors:
+
+- success recorded on failed output
+- untyped failures
+- repeated identical calls
+- failures with no circuit breaker
+- shared-layer outages across several hosts
+- constant-duration timeouts
+- retries after being told to stop
+- read-only filesystems and missing auth
+- long gaps
+- TTFT-dominated calls, cache misses and context growth
+- progress that never moved
+
+Every hit is a lead to explain, not a verdict. Where your traces live goes in a
+per-project profile (`.claude/autopsy.md`), never in the skill.
+[`references/taxonomy.md`](autopsy/references/taxonomy.md) is the failure
+taxonomy, with a detection signal for each class and its sources.
 
 ## Licence
 

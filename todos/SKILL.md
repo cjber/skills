@@ -57,6 +57,8 @@ Lead with what to do. Short enough to read without scrolling.
 | `/todos <id>` | `bd show <id>` — detail, edges, notes |
 | `/todos add <text>` | create it; infer epic and priority, then say what you chose |
 | `/todos close <id>...` | `bd close <id1> <id2>` — always batch |
+| `/todos ship <id>...` | turn beads into one `/pr` per repo (below) |
+| `/todos ship next` | the top `ready-to-build` bead, plus its same-repo cluster |
 | `/todos board` | publish the dashboard (below) |
 | `/todos review` | the weekly review (below) |
 | anything else | natural language against the tracker |
@@ -75,9 +77,32 @@ state; blocked items show what they wait on; `gh-NNNN` external refs become
 links to the real issue. **Republishing:** pass the existing artifact URL as
 `url` so it updates in place instead of minting a second board.
 
+## `/todos ship` — beads into PRs
+
+`/pr` ships an *approved change*, and knows nothing about beads. This is the
+handoff between the two.
+
+1. **Gate.** Refuse a bead labelled `decision` (not approved work) or one that
+   `bd blocked` lists. `ship next` only picks beads labelled `ready-to-build`:
+   the root cause is known and the fix is clear, so it isn't still an
+   investigation. When a bead reaches that state, add the label
+   (`bd tag <id> ready-to-build`).
+2. **Claim** every id: `bd update <id> --claim`.
+3. **Brief.** For each bead, combine its description and notes (file, line, root
+   cause, proof), its epic's reasoning note (`bd show <epic>`), and the body of
+   any linked issue (`gh issue view <n>`). The brief is the approved change.
+4. **Batch by repo.** Every id touching the same repo goes into ONE `/pr` run
+   (one PR per repo). A cluster that spans repos becomes one `/pr` per repo.
+   `ship next` pulls in the top bead's ready siblings under the same epic that
+   touch the same repo.
+5. **Hand off.** Invoke `/pr` with the brief. The PR body carries
+   `Closes #NNNN` once per linked issue (the keyword applies to one issue each).
+6. **Record.** As soon as the PR opens: `bd note <id> "PR #NNNN"` on every bead
+   it covers. Don't close the bead yet.
+
 ## `/todos review` — the anti-slippage pass
 
-Run weekly, or whenever the list feels untrustworthy. Things slip in six
+Run weekly, or whenever the list feels untrustworthy. Things slip in seven
 specific ways; check each, and report only what needs a decision.
 
 1. **Uncaptured.** Scan the session and recent commits for work that was
@@ -105,6 +130,10 @@ specific ways; check each, and report only what needs a decision.
    **link, don't duplicate** — GitHub stays the execution tracker, beads is the
    strategic layer that sequences it. Use `--external-ref gh-NNNN` on a new
    bead, or `bd note` on an existing one.
+7. **PRs in flight.** Beads with a `PR #NNNN` note. Check each with
+   `gh pr view <n> --json state,statusCheckRollup`. If it merged, close the bead
+   citing the PR (standing permission). If it's closed without merging, un-claim
+   the bead and note why. If it's red or untouched for 3+ days, report it.
 
 ## Rules
 
@@ -141,5 +170,6 @@ bd remember "insight" · bd memories <keyword>
 
 ## Handing off
 
-Once an item is picked: `/issue` if it needs a file-level plan, `/pr` to ship it.
-Close the bead when the PR merges — not when it opens.
+Once an item is picked: `/issue` if it still needs a file-level plan (then tag it
+`ready-to-build`), `/todos ship` to build it. Close the bead when the PR merges,
+not when it opens. Review check 7 does that closing.

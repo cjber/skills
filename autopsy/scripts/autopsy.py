@@ -25,8 +25,9 @@ never talks to a backend itself.
       "level": "ERROR"                 # for kind=log
     }
 
-Usage:  autopsy.py trace.jsonl [--out DIR]
-Writes DIR/timeline.md and DIR/findings.json and prints a summary. Every
+Usage:  autopsy.py trace.jsonl [--out DIR]          one run: DIR/timeline.md + DIR/findings.json
+        autopsy.py a.jsonl b.jsonl ... [--out DIR]  sweep: per-run dirs + DIR/sweep.md (detector
+                                                    classes ranked by severity and how many runs hit them) Every
 detector hit is a CANDIDATE for the auditor to explain with evidence, not a verdict.
 """
 
@@ -268,24 +269,65 @@ def timeline_md(recs, rows):
     return "\n".join(out) + "\n"
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("trace")
-    ap.add_argument("--out", default=".")
-    a = ap.parse_args()
-    recs = load(a.trace)
+def audit(path, out):
+    recs = load(path)
     rows = budget(recs)
     findings = detect(recs)
-    out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "timeline.md").write_text(timeline_md(recs, rows))
     (out / "findings.json").write_text(json.dumps({"budget": rows, "findings": findings}, indent=1))
+    return recs, rows, findings
+
+
+def report_one(out, recs, rows, findings):
     for b in rows:
         print(f"lane {b['lane']}: span {b['span_s']:.0f}s = tool {b['tool_s']:.0f}s + llm {b['llm_s']:.0f}s "
               f"+ unaccounted {b['unaccounted_s']:.0f}s (failed tools {b['failed_tool_s']:.0f}s)")
     for x in sorted(findings, key=lambda x: ["high", "medium", "low"].index(x["severity"])):
         print(f"[{x['severity']}] {x['detector']}: {x['message']}  refs={x['refs'][:8]}")
     print(f"\n{len(recs)} records, {len(findings)} candidate findings -> {out}/timeline.md, {out}/findings.json")
+
+
+def report_sweep(out, runs):
+    """Cross-run view: which detector classes recur, in how many runs, costing how much time."""
+    by_det = defaultdict(lambda: {"runs": set(), "hits": 0, "severity": "low", "example": ""})
+    totals = Counter()
+    for name, (recs, rows, findings) in runs.items():
+        for b in rows:
+            totals["span_s"] += b["span_s"] if b["lane"] == "root" else 0
+            totals["tool_s"] += b["tool_s"]
+            totals["llm_s"] += b["llm_s"]
+            totals["failed_tool_s"] += b["failed_tool_s"]
+            totals["unaccounted_s"] += b["unaccounted_s"]
+        for x in findings:
+            d = by_det[x["detector"]]
+            d["runs"].add(name)
+            d["hits"] += 1
+            if ["high", "medium", "low"].index(x["severity"]) < ["high", "medium", "low"].index(d["severity"]):
+                d["severity"] = x["severity"]
+            d["example"] = d["example"] or f"{name}: {x['message']}"
+    rank = sorted(by_det.items(), key=lambda kv: (["high", "medium", "low"].index(kv[1]["severity"]), -len(kv[1]["runs"])))
+    lines = [f"# Sweep: {len(runs)} runs", "",
+             "Time across all lanes: " + ", ".join(f"{k} {v:.0f}s" for k, v in totals.items()), "",
+             "| detector | severity | runs | hits | example |", "|---|---|---|---|---|"]
+    for det, d in rank:
+        lines.append(f"| {det} | {d['severity']} | {len(d['runs'])}/{len(runs)} | {d['hits']} | "
+                     f"{d['example'][:160].replace('|', '/')} |")
+    (out / "sweep.md").write_text("\n".join(lines) + "\n")
+    print("\n".join(lines))
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("traces", nargs="+", help="one canonical JSONL per run; several = sweep")
+    ap.add_argument("--out", default=".")
+    a = ap.parse_args()
+    out = Path(a.out)
+    if len(a.traces) == 1:
+        report_one(out, *audit(a.traces[0], out))
+        return
+    runs = {Path(t).stem: audit(t, out / Path(t).stem) for t in a.traces}
+    report_sweep(out, runs)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 ---
 name: autopsy
-description: "Forensic audit of one LLM agent run. Give it a thread/run/trace id, a screenshot, or pasted text; it pulls the full trace (observability spans, app events, cloud logs), rebuilds one timeline, and reports every harness, tool, prompt, orchestration, environment, provider and model-behaviour defect with evidence, root cause and fix. Use when a run was slow, looped, failed, lied, or 'just felt wrong', or when asked why an agent task took so long."
+description: "Forensic audit of LLM agent runs. With no argument, sweeps production: samples the worst runs plus a baseline, clusters defects by root cause, and ranks them by users affected. Give it a thread/run/trace id, a screenshot, or pasted text; it pulls the full trace (observability spans, app events, cloud logs), rebuilds one timeline, and reports every harness, tool, prompt, orchestration, environment, provider and model-behaviour defect with evidence, root cause and fix. Use when a run was slow, looped, failed, lied, or 'just felt wrong', or when asked why an agent task took so long."
 ---
 
 # /autopsy — explain every second and every oddity of one agent run
@@ -30,6 +30,37 @@ model just does that". Those are what you write when you haven't found the cause
 - **Root cause at the producer.** Group cascaded symptoms under the first place the
   value went wrong. Don't list five findings that are one bug.
 
+## 0. No argument = production sweep
+
+`/autopsy` with no argument audits **production as a population**, not one run.
+
+1. **Window.** Default to the last 24h. If the user names a window, use theirs.
+2. **Candidates.** Use the profile's *sweep query* to list runs in the window with cheap
+   signals: wall-clock duration, tool-call count, failed-call count, the share of
+   calls that failed, the max gap between steps, whether the run finished, and
+   warnings/errors in the logs keyed to it.
+3. **Sample.** Take the worst ~10 by each signal, dedupe, and add ~5 random
+   *normal* runs as a baseline. Without the baseline you can't tell a bug from how
+   everything behaves. Cap the total at ~25 runs; say how many runs were in the
+   window and how you picked.
+4. **Audit.** Fetch and adapt each run, then run the detectors over all of them at once:
+   `autopsy.py run1.jsonl run2.jsonl ... --out <dir>` writes per-run output plus
+   `sweep.md`, which ranks detector classes by severity and by how many runs hit them.
+5. **Cluster by root cause, not by run.** Hits that share a producer are one finding.
+   Examples: the same error signature, target, tool, or window. Count the runs and
+   users each finding affects, and the seconds it cost. A class that shows up in the
+   baseline too is systemic.
+6. **Cross-check at population level.** Is a spike one tenant, one target, one model,
+   one release? Compare against the previous window and the deployed-version change.
+   Correlate with the platform-health logs.
+7. **Deep-walk the top findings.** For each of the top ~5 clusters, pick its worst
+   run and do the full per-run audit below (steps 5–8) to get a root cause at
+   file:line.
+8. **Report.** Findings ranked by users affected × cost. Give each the runs and users
+   affected, the seconds lost, one exemplar run id, root cause, fix, class guard and
+   verification. Then list the unexplained anomalies and a coverage statement: runs
+   in the window, runs audited, sources reached.
+
 ## 1. Resolve the input
 
 | Input | Do |
@@ -50,7 +81,8 @@ Where the traces live is project knowledge, not skill knowledge. Look in order:
 
 A profile says how to reach each source read-only: the app event store, the
 observability backend (Langfuse / LangSmith / Phoenix / OTel), cloud logs, the
-deployed-version lookup, and an **adapter** that emits the canonical JSONL below.
+deployed-version lookup, a **sweep query** that lists runs in a window with cheap
+health signals, and an **adapter** that emits the canonical JSONL below.
 If there is no profile, build one with the user from
 [`references/sources.md`](references/sources.md) and save it. Don't hardcode any
 of it into this skill.

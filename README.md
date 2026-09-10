@@ -331,7 +331,9 @@ board — is unchanged.
 ## `autopsy` — account for every second of one agent run
 
 `/autopsy <thread id | screenshot | pasted text>` audits a single agent run when
-it was slow, looped, failed, or said something untrue. It resolves the input to a
+it was slow, looped, failed, or said something untrue. Bare `/autopsy` sweeps
+production: it samples the worst runs in a window plus a random baseline,
+clusters their defects by root cause, and ranks them by users affected. It resolves the input to a
 run, pulls every source you have (observability spans, app events, cloud logs,
 the deployed version), and normalises them into one timeline.
 

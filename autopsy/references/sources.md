@@ -1,7 +1,7 @@
 # Trace sources and writing a project profile
 
 A profile is a short markdown file at `./.claude/autopsy.md` (committed, if your team
-shares it) or `~/.claude/autopsy/<repo>.md` (private). It answers five questions, and
+shares it) or `~/.claude/autopsy/<repo>.md` (private). It answers six questions, and
 for each one gives a **read-only** command:
 
 1. **How do I turn a screenshot or title into an id?** For example, a SQL lookup on the
@@ -10,6 +10,9 @@ for each one gives a **read-only** command:
 3. **Where are the model spans?** The observability backend.
 4. **Where are the logs, and where is platform health?**
 5. **What was deployed, and where did the tools run?**
+6. **Sweep query:** which runs happened in a window, with cheap health signals per run
+   (duration, tool calls, failed calls, max gap, finished?), so no-argument mode can
+   pick the worst plus a baseline without fetching everything.
 
 It also names an **adapter** that turns those sources into the canonical JSONL
 (`scripts/autopsy.py` documents the schema). Keep the adapter next to the profile. It

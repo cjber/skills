@@ -57,6 +57,7 @@ Lead with what to do. Short enough to read without scrolling.
 | `/todos <id>` | `bd show <id>` — detail, edges, notes |
 | `/todos add <text>` | create it; infer epic and priority, then say what you chose |
 | `/todos close <id>...` | `bd close <id1> <id2>` — always batch |
+| `/todos ship` | suggest shippable bundles and let cjber pick (below) |
 | `/todos ship <id>...` | turn beads into one `/pr` per repo (below) |
 | `/todos ship next` | the top `ready-to-build` bead, plus its same-repo cluster |
 | `/todos board` | publish the dashboard (below) |
@@ -81,6 +82,17 @@ links to the real issue. **Republishing:** pass the existing artifact URL as
 
 `/pr` ships an *approved change*, and knows nothing about beads. This is the
 handoff between the two.
+
+**No arguments means suggest, don't build.** Run
+`bd list -l ready-to-build --status=open` and `bd ready`, drop anything
+claimed or already carrying a `PR #` note, and group the rest into
+**bundles**: same epic, same repo, one PR each. Then offer 2–4 bundles with
+AskUserQuestion (multiSelect, recommended bundle first). Each option is labelled
+with the bundle's theme; its description lists the ids, the repo, the rough size,
+and why now (priority, what it unblocks, related issues it closes). If
+`ready-to-build` is thin, also suggest 1–2 near-ready beads with the one gap
+that stops them (e.g. "needs /issue plan"). Ship only what cjber picks,
+running the steps below.
 
 1. **Gate.** Refuse a bead labelled `decision` (not approved work) or one that
    `bd blocked` lists. `ship next` only picks beads labelled `ready-to-build`:

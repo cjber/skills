@@ -30,6 +30,10 @@ password manager entry, or a CLI config.
   `model`, `usageDetails` (input / output / cache_read / reasoning), `level`,
   `statusMessage`, `metadata`.
 - `meta.totalItems` gives exact counts for baselines without paging.
+- Paged observation listings can return **duplicate ids and silently skip others**. Dedupe by id
+  and check the count against `totalItems`; fetching by `type` is more reliable.
+- Record the served **upstream provider** (router metadata) per generation. Aggregators often
+  split one model across providers with very different TTFT and throughput.
 
 **LangSmith**
 - `client.list_runs(project_name=..., trace_id=...)` or `filter='eq(thread_id, "...")'`

@@ -62,6 +62,7 @@ remainder is a finding.
 | Class | Signal |
 |---|---|
 | Routing / fallback | served model ≠ requested model; fallback depth ≥ 2; provider varies within one lane |
+| Slow upstream behind a router | one model, several upstreams; latency/TTFT per upstream differs by several times and the slow one gets most of the traffic |
 | Under-powered tier | a flash or small tier drives a long multi-step task; many tiny steps, poor batching |
 | Truncation | finish_reason is length/max_tokens; tool-call JSON cut off |
 | Rate limits / 5xx | 429/5xx attempts, including ones the SDK retried and hid |

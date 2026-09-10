@@ -10,10 +10,11 @@ directory, each a self-contained `SKILL.md` plus whatever tooling it needs.
 | [`issue`](#issue--from-a-github-issue-to-a-plan-or-a-whole-backlog-to-one-pr) | Turn a GitHub issue into a file-level plan — or triage the entire open backlog into a single PR that closes all of it. |
 | [`simplify`](#simplify--make-the-diff-smaller-before-anyone-reviews-it) | Shrink a finished diff without changing behaviour, so reviewers read the change and not the scaffolding. |
 | [`review`](#review--one-diff-one-pass-a-budget) | Review a diff, branch or PR for defects that actually execute — with an explicit cap on what it is allowed to spend. |
+| [`todos`](#todos--a-workload-that-does-not-leak) | Keep a durable cross-repo workload honest: what to do next, what is blocked, what decision is rotting, and a board you can look at. |
 
-They are designed to work together — `/issue` produces the plan, `/pr` ships it,
-and `/pr` calls `/simplify`, `/review` and `/deadcode` at its quality gates — but
-each one stands alone.
+They are designed to work together — `/todos` decides what is worth doing next,
+`/issue` produces the plan, `/pr` ships it, and `/pr` calls `/simplify`,
+`/review` and `/deadcode` at its quality gates — but each one stands alone.
 
 ---
 
@@ -270,6 +271,61 @@ habits of the repository I use them in, and those are the first lines to change:
 Everything else — the two-arm structure, the review discipline, the codex
 gotchas, the reachability rules, the CI and comment loops — is portable as
 written.
+
+## `todos` — a workload that does not leak
+
+`/todos` is the layer above the rest: what is worth doing, in what order, and
+what is quietly rotting. `/issue` turns one item into a plan and `/pr` ships it;
+this skill decides *which* item, and makes sure nothing falls through the gaps.
+
+It is a thin judgment layer over [beads](https://github.com/gastownhall/beads)
+(`bd`), a git-backed graph issue tracker built for agents. Beads supplies the
+machinery — hierarchical epics, a real dependency graph, atomic claims safe
+across parallel agents, `bd ready` for unblocked work. The skill supplies the
+part a CLI cannot: what to surface, what to ask about, and what to distrust.
+
+### Why not a session todo list
+
+`TaskCreate`/`TodoWrite` vanish when the session ends, which is exactly how work
+slips. Anything meant to outlive the session goes in the tracker, and the first
+rule is that follow-up work found mid-task gets filed **when it is discovered**,
+with the file and line that prove it — not mentioned in a closing message that
+nobody reads twice.
+
+### The review pass
+
+`/todos review` is the anti-slippage mechanism, and the reason the skill exists
+rather than a shell alias. Work leaks in six specific ways, so it checks six:
+
+| | What rots | What to do |
+|---|---|---|
+| 1 | **Uncaptured** — discussed, never filed | file it now |
+| 2 | **Stale** — filed, untouched, rotting | re-prioritise, park with a reason, or close |
+| 3 | **Decisions aging** — nothing downstream moves until they settle | surface any older than a week and ask directly |
+| 4 | **Blocked on nothing** — the blocker is itself unowned | schedule the blocker or drop the edge |
+| 5 | **Drift, both ways** — done but open, or closed upstream | reconcile against the real tracker |
+| 6 | **Unlinked** — new issues that belong to a track | link, never duplicate |
+
+Rule 2 carries more weight than it looks: a tracker nobody trusts is worse than
+no tracker, because it converts an honest "I do not know" into a false "it is
+handled". Rule 6 is the one that keeps two systems from becoming two truths —
+the upstream tracker stays the execution record, beads stays the strategic layer
+that sequences it, joined by `--external-ref`.
+
+### The board
+
+`/todos board` renders the whole graph as a self-contained page and publishes it
+— tracks as threads, issues strung along them as beads coloured by state,
+blocked items showing what they wait on, external refs linking back to the real
+issue. `scripts/dashboard.py` takes `bd export` JSONL and emits standalone HTML,
+so it works with any beads workspace and needs nothing at runtime.
+
+### Portability
+
+The skill names one workspace path, one issue prefix and one set of track
+labels, because that is what makes a digest useful rather than generic. Swap
+those for your own and the rest — the review pass, the capture discipline, the
+board — is unchanged.
 
 ## Licence
 

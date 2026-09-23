@@ -139,8 +139,9 @@ Isolation itself:
 - Fix the authoritative producer, remove superseded paths, and avoid unrelated
   cleanup.
 - Each arm runs only focused checks for its slice. After both finish, Claude
-  inspects the combined diff and runs the repo's fast lint/type gate
-  (`uv run sift check`, no `--tests`).
+  inspects the combined diff and runs the repo's fast lint/type gate (with
+  [sift](https://github.com/cjber/sift) set up, the gate listed in
+  `.agents/skills/sift-project/SKILL.md`; skip the slow test step).
 - Before integration, exchange short implementation summaries and diffs. Each arm
   checks the other's slice only for seam mismatches, broken assumptions, and
   missing tests; it does not re-review the entire repository or edit the other's
@@ -151,8 +152,11 @@ Isolation itself:
 ## 4. Simplify once, review once on both models
 
 - Run `/simplify` on the coherent final diff and apply worthwhile reductions.
-- Run the repo's dead-code sweep (`uv run dead-code` here — a Python/uv
-  runner; substitute your own) and clear what the diff itself made dead. Removing a
+- Run the repo's dead-code sweep and clear what the diff itself made dead. With
+  [sift](https://github.com/cjber/sift), that is `sift audit diff`: it runs the
+  language's dead-code scanner, reviews the diff's blast radius (searches still
+  cover the whole repo) and classifies each hit's fate; otherwise run your own
+  scanner. Removing a
   branch, a call site, or a config entry orphans the code behind it, and that
   residue is invisible to `/simplify` (which reads the diff, not the whole
   program) and to reviewers (who see what changed, not what stopped being
@@ -193,11 +197,10 @@ Isolation itself:
 **Never run the full test suite locally.** CI runs the tests, and it runs the
 integration and migration jobs against separate databases. Locally, run ONLY a
 test you just wrote or one individually-targeted test — enough to show it fails
-without the fix and passes with it. Do not run `uv run pytest` bare, the whole
-`tests/integration` tree, or `uv run sift check --tests`: that gate starts its check
-groups concurrently against one shared Postgres, so the migration group's
-up/down test wipes the schema out from under the integration group and produces
-hundreds of `UndefinedColumn` errors that say nothing about the diff. Push and
+without the fix and passes with it. Do not run the whole suite, integration trees,
+or any gate that starts check groups concurrently against shared local
+infrastructure: one group's migration or teardown can wipe state out from under
+another and produce hundreds of errors that say nothing about the diff. Push and
 let CI be the test gate.
 
 ## 5. Commit and publish

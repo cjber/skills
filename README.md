@@ -12,6 +12,7 @@ directory, each a self-contained `SKILL.md` plus whatever tooling it needs.
 | [`review`](#review--one-diff-one-pass-a-budget) | Review a diff, branch or PR for defects that actually execute — with an explicit cap on what it is allowed to spend. |
 | [`todos`](#todos--a-workload-that-does-not-leak) | Keep a durable cross-repo workload honest: what to do next, what is blocked, what decision is rotting, and a board you can look at. |
 | [`autopsy`](#autopsy--account-for-every-second-of-one-agent-run) | Forensic audit of one LLM agent run: rebuild the full timeline from traces, events and logs, and list every harness, tool, model and environment defect with evidence and a fix. |
+| [`wow-mock-screenshots`](#wow-mock-screenshots--addon-screenshots-without-the-game) | Render WoW addon README/store screenshots from the client's own art, fonts and data instead of capturing them in game. |
 
 They are designed to work together — `/todos` decides what is worth doing next,
 `/issue` produces the plan, `/pr` ships it, and `/pr` calls `/simplify`,
@@ -365,6 +366,22 @@ Every hit is a lead to explain, not a verdict. Where your traces live goes in a
 per-project profile (`.claude/autopsy.md`), never in the skill.
 [`references/taxonomy.md`](autopsy/references/taxonomy.md) is the failure
 taxonomy, with a detection signal for each class and its sources.
+
+## `wow-mock-screenshots` — addon screenshots without the game
+
+Screenshots captured in game go stale with every UI change and need someone at
+the keyboard. This skill renders them instead: `wowmock.py` fetches the exact
+client build's atlases, textures, fonts, item icons and DB2 data from
+wago.tools (cached, so reruns are byte-identical), and provides the retail-UI
+widgets — nine-slice frames, tooltips, menus, bag and item buttons, the
+Professions and world map frames, the objective tracker — laid out with the
+numbers from Blizzard's own XML. Each addon keeps a small
+`tools/screenshots.py` that draws its scenes from its own source and data.
+
+The skill's rule is accuracy over polish: every scene is checked, cropped and
+enlarged, against a real capture before it ships, and `NOTES.md` records what
+that turned up (BLP quirks, which atlas set wins, font layout, tooltip
+spacing) so the next scene starts from it. Needs Python 3 and Pillow 12+.
 
 ## Licence
 

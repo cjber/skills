@@ -33,9 +33,12 @@ Use the create wizard at `https://authors.curseforge.com/#/projects/create/choos
 Steps and what trips agents up:
 
 1. **Choose Game** → World of Warcraft, category Addons.
-2. **General**: name, summary, categories, logo. The logo upload in the *create* flow is broken
-   (POSTs `/_api/projects/null/upload-avatar` → 400 "Id must be a string"). Skip it or let the user pick;
-   add the logo afterwards on the project's General page, where the id exists.
+2. **General**: name, summary, categories, logo. **The logo is a user step; Claude cannot upload it.**
+   The create form's upload is broken (POSTs `/_api/projects/null/upload-avatar` → 400 "Id must be a
+   string"), and the project General page's "Upload image" button opens a native OS file picker with no
+   DOM file input behind it, so `file_upload` has nothing to target (don't click it: the stray picker
+   blocks the tab). Ask the user to click "Upload image" and pick the repo's 400×400 PNG
+   (`media/icon-400.png` in cjber's addons), either here or later at `#/projects/<ID>/general`.
 3. **Description**: set the textarea with `form_input` to `docs/curseforge.md`, then **type** a little
    text at the end (click the textarea, `ctrl+End`, type the footer). `form_input` alone does not update
    React state, so the step validates as empty. cjber's footer:
@@ -47,7 +50,7 @@ Steps and what trips agents up:
 5. **Create** (the user's request to publish is the authorization). You land on
    `#/projects/<ID>/files`; the number in the URL is the **project ID**.
 6. **Media** (`#/projects/<ID>/media`): `file_upload` the screenshot PNGs straight into the media file
-   input (`find` "file input for media"). Logo: `#/projects/<ID>/general`.
+   input (`find` "file input for uploading media/screenshots"). This one works; it has a real input.
 
 A new project stays hidden until a moderator approves it; uploaded files appear after approval.
 
@@ -79,5 +82,5 @@ then silently skips that site while the run stays green.
 
 ## Things only the user can do
 
-Setting the API-token secrets, permanently deleting store files or gallery images, and anything
-needing a login. Say exactly which, with the command or page to use.
+Uploading the CurseForge logo, setting the API-token secrets, permanently deleting store files or
+gallery images, and anything needing a login. Say exactly which, with the command or page to use.

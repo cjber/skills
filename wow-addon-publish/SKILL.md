@@ -64,8 +64,29 @@ A new project stays hidden until a moderator approves it; uploaded files appear 
 ## 3. Wago project (addons.wago.io)
 
 `https://addons.wago.io/developers/projects/create`, create from the GitHub repo. Settings: name,
-summary, categories, thumbnail. Gallery: "New Gallery Image". The project ID is the slug in
-`addons.wago.io/addons/<ID>`.
+summary, categories, thumbnail. The project ID is the slug in `addons.wago.io/addons/<ID>`.
+
+Gallery, one image per submit: navigate straight to
+`https://addons.wago.io/developers/projects/<slug>/gallery/create` (the "New Gallery Image" link
+sometimes does nothing), `find` the file input, Description and "Add Image", then:
+
+1. `file_upload` the image in its own call. Attaching re-renders the form a moment later and wipes
+   anything typed in the same batch.
+2. In a later call: click Description, `ctrl+a`, type the caption, zoom to check it. The first attempt
+   after an upload is often dropped; repeat until the zoom shows it.
+3. Submit only once the caption shows. A submit with an empty caption still uploads.
+4. Check with `get_page_text` on the gallery page.
+
+Wago lists the newest first, so upload in reverse display order. `/gallery/<id>/edit` edits only the
+caption; it cannot swap the image, so a stale image means uploading a new one and the user deleting
+the old one.
+
+## Keep galleries in sync
+
+A gallery image that no longer matches the addon is a defect of the change that made it stale.
+Whenever a visible feature changes, regenerate its mocks in the same PR (`wow-mock-screenshots`),
+and after the release upload the new images to both stores and list the stale ones, by caption,
+for the user to delete.
 
 ## 4. TOC and release
 

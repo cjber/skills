@@ -17,9 +17,11 @@ per UI unit.
     scene(ui, [(bag, 0, 0), (tip, x, y)]).save(path)   # layers bottom to top, framed over a backdrop
 
     art = map_art(ui, 1440)                  # a UiMap's base art; map_overlays + draw_overlay reveal areas
+    terrain = minimap_art(ui, 1, 6341.38, 557.68, 233.333)  # world map, north x, west y, radius in yards
     frame, r = world_map_frame(ui, art, ["World", "Kalimdor", "Ashenvale"], arrows=(1, 2))
     tracker, r = objective_tracker(ui, [TrackerModule("Legacy", [TrackerBlock("Novice Mage", ["..."])])])
     atlas_markup("common-dropdown-icon-checkmark-yellow", 14, 14)  # |A..|a inline textures work in Canvas.text / text_width
+    tooltip_backdrop(canvas, x, y, w, h)    # legacy BackdropTemplate's tooltip textures, not NineSlice
 
 Widgets return (Canvas, rects) where rects locate interesting parts in UI units, so a scene can place a
 tooltip beside a slot or draw an addon's own textures into a slot (see item_button's `artwork` hook).
@@ -751,10 +753,10 @@ ITEM_BUTTON = 37
 BAG_QUALITY_COLORS = {1: "COMMON_GRAY_COLOR", 2: "UNCOMMON_GREEN_COLOR", 3: "RARE_BLUE_COLOR", 4: "EPIC_PURPLE_COLOR"}
 
 
-def item_button(canvas, x, y, item=None, count=None, hover=False, artwork=None):
+def item_button(canvas, x, y, item=None, count=None, hover=False, artwork=None, junk=False):
     """ContainerFrameItemButtonTemplate at (x, y). `artwork(canvas, x, y)` draws in the ARTWORK layer, above
     the icon and normal texture and below the quality border, where an addon's CreateTexture(nil, "ARTWORK")
-    lands."""
+    lands. `junk` shows the JunkIcon coin (OVERLAY 5, above the quality border)."""
     ui = canvas.ui
     if item is None:
         canvas.draw(ui.atlas("bags-item-slot64"), x, y, ITEM_BUTTON, ITEM_BUTTON)
@@ -769,6 +771,9 @@ def item_button(canvas, x, y, item=None, count=None, hover=False, artwork=None):
     if item is not None and item.quality in BAG_QUALITY_COLORS:
         border = ui.global_color(BAG_QUALITY_COLORS[item.quality])
         canvas.draw(ui.texture("interface/common/whiteiconframe.blp"), x, y, ITEM_BUTTON, ITEM_BUTTON, border)
+    if junk:
+        # ContainerFrame.xml: bags-junkcoin at its atlas size, TOPLEFT (1, 0).
+        canvas.draw(ui.atlas("bags-junkcoin"), x + 1, y)
     if hover:
         canvas.draw(ui.texture("interface/buttons/buttonhilight-square.blp"), x, y, ITEM_BUTTON, ITEM_BUTTON, blend="ADD")
 
@@ -791,10 +796,10 @@ ITEM_SPACING = 5
 CONTAINER_MARGIN = 24
 
 
-def container_frame(ui, title, portrait, slots, money, columns=4, hover=None, artwork=None):
+def container_frame(ui, title, portrait, slots, money, columns=4, hover=None, artwork=None, junk=()):
     """The Mainline backpack (ContainerFrameBackpackTemplate). `slots` is [(item_id | None, count | None)] in
     slot order; `hover` is the index of a slot under the cursor; `artwork(canvas, x, y, index)` draws into
-    a slot's ARTWORK layer. Returns (canvas, {"frame": rect, "slots": [rect]}) with rects in canvas units."""
+    a slot's ARTWORK layer; `junk` holds the indices whose junk coin shows. Returns (canvas, {"frame": rect, "slots": [rect]}) with rects in canvas units."""
     rows = math.ceil(len(slots) / columns)
     items_height = rows * ITEM_BUTTON + (rows - 1) * ITEM_SPACING
     money_height = 13
@@ -845,7 +850,7 @@ def container_frame(ui, title, portrait, slots, money, columns=4, hover=None, ar
         y = items_bottom - ITEM_BUTTON - (from_end // columns) * (ITEM_BUTTON + ITEM_SPACING)
         item = ui.item(item_id) if item_id else None
         hook = (lambda c, bx, by, i=index: artwork(c, bx, by, i)) if artwork and item else None
-        item_button(canvas, x, y, item, count, hover == index, hook)
+        item_button(canvas, x, y, item, count, hover == index, hook, index in junk and item is not None)
         rects.append((x, y, ITEM_BUTTON, ITEM_BUTTON))
     return canvas, {"frame": (m, m, width, height), "slots": rects}
 
@@ -967,6 +972,35 @@ def power_of_two(pixels):
     while size < pixels:
         size *= 2
     return size
+
+
+def minimap_art(ui, map_id, x, y, radius):
+    """Stitch pinned WDT MAID minimap tiles around north-growing x / west-growing y.
+
+    The eighth FileDataID is minimapTexture; the seventh is the terrain normal map.
+    Radius is in world yards. The returned square is north-up, before the UI mask.
+    """
+    world = ui.table("Map")[str(map_id)]
+    wdt = ui.wago.file(int(world["WdtFileDataID"]))
+    position, maid = 0, None
+    while position + 8 <= len(wdt):
+        magic, size = struct.unpack_from("<4sI", wdt, position)
+        if magic in (b"DIAM", b"MAID"):
+            maid = wdt[position + 8:position + 8 + size]
+        position += size + 8
+    assert maid and len(maid) == 64 * 64 * 32, "expected WDT MAID with minimapTexture entries"
+    unit = 1600 / 3
+    left, top = 32 - (y + radius) / unit, 32 - (x + radius) / unit
+    right, bottom = left + radius * 2 / unit, top + radius * 2 / unit
+    x0, y0 = math.floor(left), math.floor(top)
+    image = Image.new("RGBA", ((math.ceil(right) - x0) * 256, (math.ceil(bottom) - y0) * 256))
+    for y in range(y0, math.ceil(bottom)):
+        for x in range(x0, math.ceil(right)):
+            fdid = struct.unpack_from("<8I", maid, (y * 64 + x) * 32)[7]
+            assert fdid, f"no minimap texture at {x},{y}"
+            image.paste(ui.texture(fdid).resize((256, 256), Image.Resampling.LANCZOS), ((x - x0) * 256, (y - y0) * 256))
+    return image.crop(tuple(round(v * 256) for v in (left - x0, top - y0, right - x0, bottom - y0)))
+
 
 
 def map_art_id(ui, ui_map_id):
@@ -1166,7 +1200,7 @@ def world_map_frame(ui, map_image, nav, arrows=(), title="Map & Quest Log", port
     corner = ui.atlas("MapCornerShadow-Right")
     canvas.draw(corner, toggle_x + 32 + 2 - corner.width, toggle_y + 32 + 1 - corner.height)
     canvas.draw(ui.atlas("QuestCollapse-Show-Up"), toggle_x, toggle_y, 32, 32)
-    canvas.nine_slice(PORTRAIT_FRAME_LAYOUT, m, m, w, h)
+    canvas.nine_slice(camelot_layout(PORTRAIT_FRAME_LAYOUT), m, m, w, h)
     # Portrait (level 400, over the border), masked to a circle.
     portrait_layer = ui.canvas(w + 2 * m, h + 2 * m)
     portrait_layer.draw(ui.texture(portrait), m - 5, m - 7, 62, 62)
@@ -1210,11 +1244,12 @@ class TrackerModule:
     blocks: list = field(default_factory=list)
 
 
-def objective_tracker(ui, modules, title="All Objectives"):
+def objective_tracker(ui, modules, title="All Objectives", container=True):
     """ObjectiveTrackerFrame: the container header, then each module's header and blocks, laid out as
     ObjectiveTrackerModuleMixin/BlockMixin do (block headers and lines wrap to two lines). The background
     nine-slice sits at alpha 0 by default, so nothing is drawn behind the text.
 
+    Set container=False for a crop beginning at the first module header.
     Returns (canvas, rects): "modules" lists each module's header rect (x, y, w, h), for an addon's own
     header decorations; "blocks" lists each block's (x, y, w, h)."""
     measure = ui.canvas(1, 1)
@@ -1223,7 +1258,7 @@ def objective_tracker(ui, modules, title="All Objectives"):
     block_w = TRACKER_WIDTH - TRACKER_BLOCK_X
     dash_w = measure.text_width("- ", line_font)
     header_color = ui.global_color("OBJECTIVE_TRACKER_BLOCK_HEADER_COLOR")[:3]
-    layout, y = [], TRACKER_TOP_PADDING
+    layout, y = [], TRACKER_TOP_PADDING if container else 0
     for module in modules:
         blocks, block_y, contents = [], y + 26 + TRACKER_FROM_HEADER, TRACKER_HEADER_HEIGHT
         for block in module.blocks:
@@ -1243,16 +1278,21 @@ def objective_tracker(ui, modules, title="All Objectives"):
     margin = 8
     canvas = ui.canvas(TRACKER_WIDTH + 2 * margin, y + 2 * margin)
     ox, oy = margin, margin
-    header = ui.atlas("ui-questtracker-primary-objective-header")
-    canvas.draw(header, ox + (TRACKER_WIDTH - header.width) / 2, oy + (32 - header.height) / 2)
-    canvas.text(ox + 7, oy, title, header_font, box_height=32)
-    button = ui.atlas("ui-questtrackerbutton-collapse-all")
-    canvas.draw(button, ox + TRACKER_WIDTH - 1 - button.width, oy + (32 - button.height) / 2)
+    if container:
+        header = ui.atlas("ui-questtracker-primary-objective-header")
+        canvas.draw(header, ox + (TRACKER_WIDTH - header.width) / 2, oy + (32 - header.height) / 2)
+        canvas.text(ox + 7, oy, title, header_font, box_height=32)
+        button = ui.atlas("ui-questtrackerbutton-collapse-all")
+        canvas.draw(button, ox + TRACKER_WIDTH - 1 - button.width, oy + (32 - button.height) / 2)
     rects = {"modules": [], "blocks": []}
     for module, top, blocks in layout:
         background = ui.atlas("UI-QuestTracker-Secondary-Objective-Header")
         canvas.draw(background, ox + (TRACKER_WIDTH - background.width) / 2, oy + top + (26 - background.height) / 2)
-        canvas.text(ox + 7, oy + top, module.header, header_font, box_height=26)
+        # ObjectiveTrackerModuleHeaderTemplate caps its single line at 200 and scales down to 12.
+        module_font = header_font
+        while module_font.height > 12 and measure.text_width(module.header, module_font) > 200:
+            module_font = Font(module_font.path, module_font.height - 1, module_font.color, module_font.shadow)
+        canvas.text(ox + 7, oy + top, module.header, module_font, box_height=26)
         minimize = ui.atlas("ui-questtrackerbutton-secondary-collapse")
         canvas.draw(minimize, ox + TRACKER_WIDTH + 1 - minimize.width, oy + top + (26 - minimize.height) / 2)
         rects["modules"].append((ox, oy + top, TRACKER_WIDTH, 26))
@@ -1441,3 +1481,35 @@ def side_tab(canvas, x, y, icon, selected=False):
         chosen = ui.atlas("common-sidetab-selected")
         canvas.draw(chosen, cx - chosen.width / 2, cy - chosen.height / 2)
     return h
+
+
+def tooltip_backdrop(canvas, x, y, w, h, background=(0, 0, 0, 1), border=(1, 1, 1, 1), edge=12):
+    """BackdropTemplate's UI-Tooltip-Background/Border at edgeSize=12, insets=3, tileSize=16.
+
+    Backdrop.lua uses eight strips in a legacy border file, with 1/128 horizontal and 1/16 vertical
+    texel insets. This is different art from GameTooltip's modern atlas NineSlice.
+    """
+    ui = canvas.ui
+    # ManifestInterfaceData IDs avoid a slow path lookup and still select the pinned build's bytes.
+    # Tint the background separately, so an alpha multiplier doesn't affect pre-existing scene art.
+    bg = ui.canvas(w - 6, h - 6)
+    tiled(bg, ui.texture(137056), 0, 0, w - 6, h - 6, 16, 16)
+    bg.image = tint(bg.image, background)
+    canvas.paste(bg, x + 3, y + 3)
+    texture = ui.texture(137057)
+    for index, (left, top) in enumerate(((x, y), (x + w - edge, y), (x, y + h - edge), (x + w - edge, y + h - edge)), 4):
+        piece = crop_coords(texture, index / 8 + 1 / 128, (index + 1) / 8 - 1 / 128, 1 / 16, 15 / 16)
+        canvas.draw(piece, left, top, edge, edge, border)
+    for index, (left, top, length, horizontal) in enumerate((
+        (x, y + edge, h - 2 * edge, False),
+        (x + w - edge, y + edge, h - 2 * edge, False),
+        (x + edge, y, w - 2 * edge, True),
+        (x + edge, y + h - edge, w - 2 * edge, True),
+    )):
+        piece = crop_coords(texture, index / 8 + 1 / 128, (index + 1) / 8 - 1 / 128, 0, 1)
+        if horizontal:
+            # Backdrop.lua maps the strip's left edge to the top, with V decreasing rightward.
+            piece = piece.transpose(Image.Transpose.ROTATE_270)
+        layer = ui.canvas(length if horizontal else edge, edge if horizontal else length)
+        tiled(layer, tint(piece, border), 0, 0, layer.width, layer.height, edge, edge)
+        canvas.paste(layer, left, top)

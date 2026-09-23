@@ -187,3 +187,44 @@ that repo's git history.
 - The overview side tab's `INV_SideTab_Professions_c60` is in neither the wago listfile nor
   ManifestInterfaceData, so its file data ID is unknown and Trade_Blacksmithing stands in. `Wago.resolve`
   used to crash on a miss (the search returns `[]`, not `{}`); it now raises its "no file" KeyError.
+
+## Shortest Path Forever scenes
+
+- `tools/screenshots.py` uses LuaJIT `Path.FindSync` and `Planner.LegPoints`, loading bundled Nav0/Nav1.
+  Walking arrays also carry `wet` metadata: distinguish numeric array keys when serializing. Route 295
+  is Auberdine–Menethil; 11167 also calls at Southshore. Route 292 is Menethil–Theramore.
+- Dock labels must follow the current data: with three Auberdine piers, DockPierName(8) is
+  “Auberdine northeast pier”, not the older mock’s hardcoded “north pier”. Hover labels use projected
+  cluster coordinates; dock 24 becomes “northwest pier” there, but “west pier” in the tracker.
+- UiMapAssignment projects `(world y, world x)` in reverse from Region_4/Region_3 to Region_1/Region_0,
+  then into UiMin/UiMax. This supplies both continents' rectangles on UiMap 947 (Azeroth).
+- `objective_tracker(..., container=False)` starts at the module header, as in owner capture 21.
+  Its AutoScalingFontString has width 200 and minimum height 12. Journey totals moved to this header
+  after that capture; the destination remains a separate block heading. Boats is a separate scene:
+  the addon owns one module, with dock content appended beneath a journey when both are active.
+- Owner map/tracker captures use approximately 1.2 pixels per UI unit. Parchment crops align at
+  Darkshore `(171,171,460,553)` and Kalimdor `(249,18,633,548)` within a 1.2-scale map face. Pin sizes,
+  tracker wrapping and colours compare well; font baselines/rasterization still vary by a few pixels.
+- Shared `minimap_art(ui, map_id, x, y, radius)` reads the pinned Map.WdtFileDataID's MAID chunk.
+  MAID entries contain **eight** uint32 IDs: index 6 is the terrain normal map, index 7 is minimapTexture.
+  At Kalimdor tile (30,20), 1290784 is the normal map and 207875 is the actual Auberdine minimap.
+  Each tile spans 1600/3 yards, with tile coordinates `32 - world_y/unit, 32 - world_x/unit`.
+  These minimap textures are 256 square. The helper stitches before cropping, so tile boundaries align.
+- Camelot Skin.lua selects `UI-HUD-Minimap-Frame` and `ui-hud-minimap-frame-generic-mask`; the face is
+  198 square. Diel.lua supplies the moon/day indicator at (63,72), under `UI-HUD-Minimap-Frame-Cycle`.
+  Reference 19 confirms the frame and terrain. The selected 233⅓-yard radius and 16-unit native waypoint
+  are engine-side assumptions; the mock omits other tracked POIs/navigation beams.
+- `tooltip_backdrop` uses legacy texture IDs 137056/137057, not modern GameTooltip NineSlice art.
+  Backdrop.lua's horizontal UV mapping requires ROTATE_270 (clockwise); ROTATE_90 reverses top/bottom
+  and leaves disconnected corners. The compass's border is 12 units with 3-unit insets. The supplied
+  compass capture predates its soft border, stock fonts and proportion-preserving marker update.
+- `world_map_frame` now applies `camelot_layout(PORTRAIT_FRAME_LAYOUT)` to its metal corners, matching
+  Camelot's x=-2 right-corner adjustment and y=-8 bottom offsets.
+- Route widths/dashes are physical pixels. Static 2x images keep 2-pixel cores, 4-pixel outlines and
+  6/5 dashes; a GIF must render at final size to preserve them. Draw all outlines below all cores.
+  For a shared GIF palette, weight UI crops as heavily as map parchment and reserve white, grey,
+  gold and cyan: an unweighted map can otherwise turn the small tracker text yellow.
+- All assets now fetch successfully. Eight PNGs and an eight-second GIF render deterministically.
+  `docs/verification/` contains enlarged owner comparisons and sampled GIF frames. No owner dock-tooltip
+  capture was supplied; its stock widget was checked against SkillUp's real `be11638` tooltip, its
+  content/anchors against Map.lua. No game client was used.

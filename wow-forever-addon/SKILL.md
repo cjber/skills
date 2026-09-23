@@ -1,6 +1,6 @@
 ---
 name: wow-forever-addon
-description: Standards pack for cjber's WoW: Forever addons (legacy-here, skillup-forever, tweaks-forever, shortest-path-forever, any new one) - the numbered requirements every addon repo shares for UI look and feel, assets, README and store pages, code and performance, CI and releases. Load before building or changing an addon's UI, icon, screenshots, README, store page, CI or release process, or when `sift audit` reviews an addon that declares it under `## Standards` in AGENTS.md.
+description: Standards pack for cjber's WoW: Forever addons (legacy-here, skillup-forever, tweaks-forever, shortest-path-forever, any new one) - the numbered requirements every addon repo shares for UI look and feel, assets, README and store pages, code and performance, CI and releases. Load before building or changing an addon's UI, icon, screenshots, README, store page, CI, release process or GitHub repo settings, or when `sift audit` reviews an addon that declares it under `## Standards` in AGENTS.md.
 ---
 
 # WoW: Forever addon standards
@@ -80,12 +80,38 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 - **WFA-15** CI covers at least the skillup-forever baseline: actions pinned to full SHAs with a
   version comment, `persist-credentials: false`, `permissions: contents: read`; luacheck, every
   `tests/*_spec.lua` under LuaJIT (a glob, so a new spec cannot be left out), StyLua `--check`,
-  ruff for the Python tools, actionlint and zizmor, gitleaks over the full history, and
-  `sift agents`. Extra checks (lua-language-server, shellcheck) are welcome. Downloaded binaries
-  are pinned by sha256. Dependabot updates `github-actions` monthly, grouped.
+  lua-language-server, ruff for the Python tools, actionlint and zizmor, gitleaks over the full
+  history, and `sift agents`. Extra checks (shellcheck) are welcome. Downloaded binaries are
+  pinned by sha256. Dependabot updates `github-actions` monthly, grouped.
 - **WFA-16** Releases: a signed `v*` tag runs `release.yml` (BigWigs packager, pinned) with this
   version's CHANGELOG entry as notes (`tools/changelog.py`), uploading to GitHub, CurseForge and
   Wago; the TOC carries `X-Curse-Project-ID` and `X-Wago-ID`. Setup is in `wow-addon-publish`.
 - **WFA-17** Every repo has a lean `AGENTS.md` passing `sift agents` in CI, declaring this pack.
   Game-client verification the agent cannot do (in-game look, combat behaviour) is listed in the PR
   as a `/reload` test for the user; agents never drive the game.
+
+### Repository
+
+- **WFA-18** CI job names are the same in every repo, because the ruleset (WFA-21) requires checks
+  by exact name: `check` (luacheck, StyLua, the specs), `typecheck` (lua-language-server),
+  `sift`, `secrets` (gitleaks), `workflows` (actionlint, zizmor), and `python` (ruff) only when
+  the Python tooling is big enough to earn its own job. Rename a job and its required check
+  together.
+- **WFA-19** `refresh-data.yml`, where a repo has one, dispatches `ci.yml` on the branch it opens
+  (`gh workflow run ci.yml --ref <branch>`, `actions: write`; `ci.yml` accepts
+  `workflow_dispatch`), so the new data is tested at once. A PR opened with `GITHUB_TOKEN` gets
+  its `pull_request` CI only as runs awaiting approval, and a dispatched run never counts toward
+  required checks: approve those runs from the PR's merge box before merging.
+- **WFA-20** `.gitattributes` normalises text to LF and marks generated data files
+  `linguist-generated`, so their diffs collapse in review. Community health files (contributing,
+  security policy, issue and PR templates) are inherited from `cjber/.github`; a repo carries its
+  own copy only to override one.
+- **WFA-21** `main` is protected by one ruleset: force-push and deletion blocked; changes land by
+  PR with 0 required approvals and all review threads resolved; the WFA-18 checks required by
+  exact job name, not strict (a branch need not be up to date); signed commits; linear history;
+  squash the only merge method. Repository admins bypass it. A private repo on the free plan
+  cannot have rulesets; add it when the repo goes public.
+- **WFA-22** Repo settings: delete branch on merge; wiki and projects off; Dependabot alerts and
+  security updates on; private vulnerability reporting on (public repos only); Actions may create
+  pull requests (for WFA-19); Actions require full-SHA pinning; topics `wow-addon`,
+  `world-of-warcraft`, `wow-forever`, `lua` plus one or two for what the addon does.

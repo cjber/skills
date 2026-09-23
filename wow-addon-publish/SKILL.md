@@ -10,7 +10,11 @@ packager uploads to GitHub, CurseForge and Wago. Project creation is the only ma
 in the user's already-logged-in Chrome, through each site's own web form.
 
 Never enter passwords, API keys or tokens into a page, never log in for the user, never print a secret.
-If a token is missing, ask the user to run `! gh secret set <NAME> -R <owner>/<repo>` themselves.
+If a token is missing, ask the user to run, in their own terminal (not `!`: it has no TTY, so gh's hidden
+prompt reads empty stdin and stores an empty secret), `gh secret set <NAME> -R <owner>/<repo>`, or
+`--body "$VAR"` when the key is in a variable. The names are exactly `CF_API_KEY` and `WAGO_API_TOKEN`
+(Wago's UI calls it an "API key"; `WAGO_API_KEY` is ignored). An empty secret shows as a blank rather than
+`***` in the release log.
 
 ## 1. Repo prerequisites
 
@@ -50,7 +54,10 @@ Steps and what trips agents up:
 5. **Create** (the user's request to publish is the authorization). You land on
    `#/projects/<ID>/files`; the number in the URL is the **project ID**.
 6. **Media** (`#/projects/<ID>/media`): `file_upload` the screenshot PNGs straight into the media file
-   input (`find` "file input for uploading media/screenshots"). This one works; it has a real input.
+   input (`find` "file input for uploading media/screenshots"). This one works; it has a real input
+   (target the `type="file"` button, not its label) and takes several files at once. Each image must
+   be under 2 MB: convert large PNGs to `-quality 90` JPEGs in a temp dir first. Reload the page to see
+   a multi-file upload's results.
 
 A new project stays hidden until a moderator approves it; uploaded files appear after approval.
 

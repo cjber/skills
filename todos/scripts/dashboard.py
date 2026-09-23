@@ -1,28 +1,40 @@
 #!/usr/bin/env python3
 """Render a beads workspace as a single self-contained HTML dashboard.
 
-Usage:  bd export -o /tmp/b.jsonl && dashboard.py /tmp/b.jsonl out.html [repo-slug]
+Usage: dashboard.py export.jsonl out.html [owner/repo] [--title TITLE]
+
+Run from the beads workspace. The title defaults to BEADS_WORKSPACE's directory
+name, then the nearest ancestor containing .beads/, then the current directory.
+GitHub issue links are omitted unless a repository is supplied.
 
 The layout follows the tool's own metaphor: each track is a thread, its issues
 strung along it as beads coloured by state.
 """
 
+import argparse
 import html
 import json
-import sys
+import os
 from collections import defaultdict
+from pathlib import Path
 
-TRACKS = {
-    "track-a": "Alpha", "track-b": "Latency", "track-c": "Orchestrator",
-    "track-d": "Programs", "track-e": "External agents", "track-f": "Voice",
-    "track-g": "Evals", "track-h": "Nebula OS", "track-i": "Local agent",
-}
 PRIO = {0: "now", 1: "next", 2: "parallel", 3: "later", 4: "backlog"}
+
+
+def workspace_root():
+    configured = os.environ.get("BEADS_WORKSPACE")
+    if configured:
+        return Path(configured).expanduser().resolve()
+    current = Path.cwd()
+    return next(
+        (path for path in (current, *current.parents) if (path / ".beads").is_dir()),
+        current,
+    )
 
 
 def load(path):
     rows = []
-    with open(path) as fh:
+    with open(path, encoding="utf-8") as fh:
         for line in fh:
             line = line.strip()
             if line:
@@ -30,30 +42,47 @@ def load(path):
     return [r for r in rows if r.get("issue_type") in {"task", "bug", "feature", "epic", "chore"}]
 
 
-def build(rows, repo):
+def build(rows, repo=None, title=None):
     by_id = {r["id"]: r for r in rows}
     blockers = defaultdict(list)
+    parents = {}
     for r in rows:
+        if "." in r["id"]:
+            parents[r["id"]] = r["id"].rsplit(".", 1)[0]
         for d in r.get("dependencies") or []:
             dep_id = d.get("depends_on_id") or d.get("id") or d.get("target")
-            if d.get("type") == "blocks" and dep_id:
+            if d.get("type") == "parent-child" and dep_id:
+                parents[r["id"]] = dep_id
+            if d.get("type") == "blocks" and dep_id and by_id.get(dep_id, {}).get("status") != "closed":
                 blockers[r["id"]].append(dep_id)
 
-    epics, children = {}, defaultdict(list)
+    def track_labels(row):
+        return [label for label in (row.get("labels") or []) if label.startswith("track-")]
+
+    epics = {}
     for r in rows:
-        track = next((l for l in (r.get("labels") or []) if l in TRACKS), None)
         if r.get("issue_type") == "epic":
-            if track:
+            for track in track_labels(r):
                 epics[track] = r
-        else:
-            parent = r["id"].rsplit(".", 1)[0] if "." in r["id"] else None
-            children[parent].append(r)
+
+    def track_for(row):
+        seen = set()
+        while row and row["id"] not in seen:
+            seen.add(row["id"])
+            labels = track_labels(row)
+            if labels:
+                return labels[0]
+            row = by_id.get(parents.get(row["id"]))
+        return None
 
     e = html.escape
     open_rows = [r for r in rows if r["status"] != "closed" and r.get("issue_type") != "epic"]
     blocked = [r for r in open_rows if blockers.get(r["id"])]
     decisions = [r for r in open_rows if "decision" in (r.get("labels") or [])]
     ready = [r for r in open_rows if not blockers.get(r["id"])]
+    tracks = defaultdict(list)
+    for row in open_rows:
+        tracks[track_for(row)].append(row)
 
     def bead(r):
         bid = r["id"]
@@ -62,7 +91,7 @@ def build(rows, repo):
         state = "blocked" if blk else ("decision" if "decision" in (r.get("labels") or []) else f"p{p}")
         ref = (r.get("external_ref") or "").strip()
         ref_html = ""
-        if ref.startswith("gh-") and repo:
+        if ref.startswith("gh-") and ref[3:].isdigit() and repo:
             n = ref[3:]
             ref_html = f'<a class="ref" href="https://github.com/{e(repo)}/issues/{e(n)}" target="_blank" rel="noopener">#{e(n)}</a>'
         wait = ""
@@ -78,13 +107,9 @@ def build(rows, repo):
         )
 
     panels = []
-    for key, label in TRACKS.items():
-        ep = epics.get(key)
-        if not ep:
-            continue
-        kids = sorted(children.get(ep["id"], []), key=lambda r: (r.get("priority", 2), r["id"]))
-        if not kids:
-            continue
+    for key in sorted(tracks, key=lambda key: (key is None, key or "")):
+        label = epics.get(key, {}).get("title") or key or "Other work"
+        kids = sorted(tracks[key], key=lambda r: (r.get("priority", 2), r["id"]))
         nblk = sum(1 for k in kids if blockers.get(k["id"]))
         panels.append(
             f'<section class="track"><header><h2>{e(label)}</h2>'
@@ -98,6 +123,7 @@ def build(rows, repo):
     )
 
     return TEMPLATE.format(
+        title=e(title if title is not None else (workspace_root().name or "Work Threads")),
         panels="".join(panels),
         decisions=dec_html,
         n_open=len(open_rows), n_ready=len(ready),
@@ -105,7 +131,9 @@ def build(rows, repo):
     )
 
 
-TEMPLATE = """<title>Nebula Work Threads</title>
+TEMPLATE = """<!doctype html>
+<meta charset="utf-8">
+<title>{title}</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 :root {{
@@ -181,9 +209,9 @@ a:focus-visible, .ref:focus-visible {{ outline:2px solid var(--live); outline-of
 @media (prefers-reduced-motion:reduce) {{ * {{ transition:none !important; }} }}
 </style>
 <div class="wrap">
-<h1>Nebula Work Threads</h1>
-<p class="sub">Every open thread across nebula, parallax, desktop and the DGX box. Priority reads as
-sequence, not importance: <em>now</em> ships the alpha, <em>next</em> follows it, the rest run in parallel.</p>
+<h1>{title}</h1>
+<p class="sub">Open work across this workspace. Priority reads as sequence, not importance:
+<em>now</em>, <em>next</em>, <em>parallel</em>, <em>later</em>, then <em>backlog</em>.</p>
 <div class="bar">
   <div><b>{n_open}</b><span>Open</span></div>
   <div><b>{n_ready}</b><span>Ready</span></div>
@@ -198,7 +226,11 @@ sequence, not importance: <em>now</em> ships the alpha, <em>next</em> follows it
 """
 
 if __name__ == "__main__":
-    src, out = sys.argv[1], sys.argv[2]
-    repo = sys.argv[3] if len(sys.argv) > 3 else "agent-labs-dev/nebula"
-    open(out, "w").write(build(load(src), repo))
-    print(f"wrote {out}")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("src", help="beads JSONL export")
+    parser.add_argument("out", help="output HTML path")
+    parser.add_argument("repo", nargs="?", help="owner/repo for gh-NNNN links (default: no links)")
+    parser.add_argument("--title", help="dashboard title (default: workspace directory name)")
+    args = parser.parse_args()
+    Path(args.out).write_text(build(load(args.src), args.repo, args.title), encoding="utf-8")
+    print(f"wrote {args.out}")

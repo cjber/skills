@@ -14,26 +14,29 @@ outlive the session. Those vanish, which is precisely how things slip.
 
 ## The tracker
 
-`bd` (beads) — a git-backed graph issue tracker. Workspace root
-`/home/cjber/drive/agl`, prefix `neb-`, embedded Dolt at `.beads/`. It sits at
-the workspace level, not inside a repo, because the work spans `nebula`,
-`parallax`, `nebula-desktop` and the DGX box.
+`bd` (beads) — a git-backed graph issue tracker, with its data in `.beads/`.
+The workspace root is `$BEADS_WORKSPACE` when set; otherwise, use the nearest
+ancestor of the current directory (including itself) containing `.beads/`.
+Run the commands below **from the workspace root**. `bd` discovers `.beads/`
+upward; explicitly change to `$BEADS_WORKSPACE` when using that override.
+If neither identifies a workspace, ask the user which workspace to use.
+A workspace can contain one repo or coordinate work across several repos.
 
 Beads is the only home, with no companion markdown. Cross-cutting strategy
 (thesis, operating principle, track sequencing) lives in `bd memories roadmap`.
 Each track's reasoning lives in its epic's description and notes. When a track's
-shape changes, update the epic. Never start a parallel roadmap doc: the last
-one drifted within a day.
+shape changes, update the epic. Never start a parallel roadmap doc; multiple
+copies drift.
 
 `bd prime` prints the full command reference. **One exception to what it says:**
-it instructs agents to abandon `MEMORY.md`. Ignore that line — cjber has an
-established auto-memory system. Use `bd remember` for project knowledge that
-belongs with the work; MEMORY.md keeps its own job.
+it instructs agents to abandon `MEMORY.md`. If the user already has an agent
+memory system, keep it; use `bd remember` for knowledge that belongs with the
+work. `MEMORY.md` keeps its own job.
 
 ## `/todos` — the digest
 
 ```bash
-cd /home/cjber/drive/agl
+# From the workspace root
 bd ready -n 40 && bd blocked && bd list -l decision --status=open && bd status
 ```
 
@@ -57,7 +60,7 @@ Lead with what to do. Short enough to read without scrolling.
 | `/todos <id>` | `bd show <id>` — detail, edges, notes |
 | `/todos add <text>` | create it; infer epic and priority, then say what you chose |
 | `/todos close <id>...` | `bd close <id1> <id2>` — always batch |
-| `/todos ship` | suggest shippable bundles and let cjber pick (below) |
+| `/todos ship` | suggest shippable bundles and let the user pick (below) |
 | `/todos ship <id>...` | turn beads into one `/pr` per repo (below) |
 | `/todos ship next` | the top `ready-to-build` bead, plus its same-repo cluster |
 | `/todos board` | publish the dashboard (below) |
@@ -66,17 +69,24 @@ Lead with what to do. Short enough to read without scrolling.
 
 ## `/todos board` — the visual
 
+From the workspace root, set `TODOS_SKILL_DIR` to the installed directory
+containing this `SKILL.md`, then run:
+
 ```bash
-cd /home/cjber/drive/agl
 bd export -o /tmp/beads.jsonl
-python3 ~/skills/todos/scripts/dashboard.py /tmp/beads.jsonl /tmp/todos.html agent-labs-dev/nebula
+python3 "$TODOS_SKILL_DIR/scripts/dashboard.py" /tmp/beads.jsonl /tmp/todos.html
 ```
+
+The title defaults to the workspace directory name; override it with
+`--title "Work Threads"`. Pass an optional third positional argument,
+`owner/repo`, to link `gh-NNNN` refs to GitHub issues; without it, links are
+omitted. Only supply a repo when those refs belong to that repo. Track names
+come from each `track-*` label's epic title, falling back to the label.
 
 Then publish `/tmp/todos.html` with the Artifact tool and hand over the link.
 Tracks render as threads with issues strung along them as beads, coloured by
-state; blocked items show what they wait on; `gh-NNNN` external refs become
-links to the real issue. **Republishing:** pass the existing artifact URL as
-`url` so it updates in place instead of minting a second board.
+state; blocked items show what they wait on. **Republishing:** pass the existing
+artifact URL as `url` so it updates in place instead of minting a second board.
 
 ## `/todos ship` — beads into PRs
 
@@ -91,7 +101,7 @@ AskUserQuestion (multiSelect, recommended bundle first). Each option is labelled
 with the bundle's theme; its description lists the ids, the repo, the rough size,
 and why now (priority, what it unblocks, related issues it closes). If
 `ready-to-build` is thin, also suggest 1–2 near-ready beads with the one gap
-that stops them (e.g. "needs /issue plan"). Ship only what cjber picks,
+that stops them (e.g. "needs /issue plan"). Ship only what the user picks,
 running the steps below.
 
 1. **Gate.** Refuse a bead labelled `decision` (not approved work) or one that
@@ -130,7 +140,7 @@ specific ways; check each, and report only what needs a decision.
    the blocker or drop the edge.
 5. **Drift both ways.** Beads open for work already done (close them), and
    linked `gh-NNNN` issues closed upstream while the bead stays open:
-   `gh issue view <n> --repo agent-labs-dev/nebula --json state`. Also
+   `gh issue view <n> --repo <owner/repo> --json state`, using the bead's repo. Also
    open GitHub issues whose fix already merged (a PR fixed them but never
    closed them). **Standing permission:** close stale beads *and* stale GitHub
    issues without asking. Leave a comment naming the evidence (the merged PR or
@@ -154,14 +164,14 @@ specific ways; check each, and report only what needs a decision.
    its origin), not a line in a closing message that gets lost. This single habit
    prevents most slippage.
 2. **Put the evidence in the description** — file, line, root cause, the command
-   that proves it. A bead naming `device_consent.py` and the missing consent tier
+   that proves it. A bead naming `parser.py` and the failing input
    is worth ten restating the symptom.
 3. **Claim before working** (`bd update <id> --claim`) so parallel agents don't
    collide. Hash ids are safe across branches and worktrees.
 4. **Close what you finish**, batched. Never report work done without closing it.
    Closing stale issues (beads or GitHub) never needs approval — close with an
    evidence comment and report it.
-5. **Don't implement a decision.** Surface it; let cjber call it.
+5. **Don't implement a decision.** Surface it; let the user call it.
 6. **Link, never duplicate.** One fact, one home.
 
 ## Commands
@@ -169,7 +179,7 @@ specific ways; check each, and report only what needs a decision.
 ```bash
 bd ready -n 40 · bd blocked · bd stale · bd status
 bd show <id> · bd graph <epic> · bd children <epic>
-bd list -l track-g --status=open
+bd list -l track-<name> --status=open
 bd query 'status=open AND priority<=1'
 
 bd create "Title" --parent <epic> -p 1 -d "Why" --external-ref gh-1234

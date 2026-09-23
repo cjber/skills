@@ -228,3 +228,33 @@ that repo's git history.
   `docs/verification/` contains enlarged owner comparisons and sampled GIF frames. No owner dock-tooltip
   capture was supplied; its stock widget was checked against SkillUp's real `be11638` tooltip, its
   content/anchors against Map.lua. No game client was used.
+
+## Tweaks Forever scenes (exploration, junk, campsite, Edit Mode)
+
+- Junk marks: ContainerFrame.xml's JunkIcon is `bags-junkcoin` at atlas size, TOPLEFT (1, 0), OVERLAY 5,
+  over the quality border (`item_button(junk=True)`, `container_frame(junk=indices)`). The game shows it
+  on greys only at a merchant, so keep greys out of a bag scene unless the addon draws their coin.
+- Revealed maps: draw the addon's unexplored overlays first, tinted, then `map_overlays` (the explored
+  areas) at full colour on top, as the addon's ARTWORK -1 layer sits under Blizzard's. Redridge (1433)
+  reads well; Stranglethorn (1434) overlay tiles raised an IndexError in `draw_overlay`.
+- Tooltip wrapping is not modelled: `tooltip` sizes to its widest line. A wrapped line in-game stops at
+  about spell-tooltip width, so keep lines under ~250 units or split them by hand.
+- Campsite aura 1230587 has an empty Spell.Description_lang in this build; the addon's line falls back
+  to the aura name. The scene asserts this so a build that adds text fails loudly.
+- Edit Mode widgets, all numbers from the templates:
+  `dialog_border` (DialogBorderTranslucentTemplate: Bg black 0.8 inset 7, DiamondMetal `Dialog` layout,
+  which Camelot does not override); `unique_corners_layout(kit)` + `draw_nine_slice` (skips pieces whose
+  atlas the build lacks; `OptionsFrame` has no Center); `panel_tabs` (PanelTabButtonTemplate: width text
+  + 20, min 72; active art at x-1 / right +8 and 42 high, inactive x-3 / +7 and 36 high; tabs 3 apart;
+  selected text white 3 below centre, others gold 2 above); `minimal_slider`
+  (MinimalSliderWithSteppersTemplate: bar 19 in, steppers 11x19 / 9x18 4 outside, 20x19 thumb travelling
+  `w - 38 - 20`); `ui_panel_button` (UI-Panel-Button-Up texcoords, 12-wide caps, red in this client);
+  `close_button`; `edit_mode_checkbox` (32x32 UI-CheckBox-Up/Check files, GameFontHighlightMedium label
+  +5, rows 32 apart); `edit_mode_selection` (EditModeSystemSelectionLayout: corner mirrored 8 outside,
+  centre at 50% alpha, label GameFontHighlightLarge centred when selected).
+- `minimal_scrollbar(visible=, offset=)` draws the small thumb (track minus 38, `minThumbExtent` 23).
+  ScrollFrameTemplate hangs its bar at TOPRIGHT (6, 2) to BOTTOMRIGHT (6, 5). Clip scroll content by
+  drawing it on its own canvas of the scroll frame's size, then pasting.
+- `Canvas.nine_slice` honours a piece's own `mirrorLayout`, as NineSlice.lua does.
+- Edit Mode's real screen also shows every HUD system's blue highlight box over the game world; a scene
+  on the plain backdrop leaves them out. No reference capture of the Windows tab exists yet.

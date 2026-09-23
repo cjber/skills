@@ -22,6 +22,9 @@ per UI unit.
     tracker, r = objective_tracker(ui, [TrackerModule("Legacy", [TrackerBlock("Novice Mage", ["..."])])])
     atlas_markup("common-dropdown-icon-checkmark-yellow", 14, 14)  # |A..|a inline textures work in Canvas.text / text_width
     tooltip_backdrop(canvas, x, y, w, h)    # legacy BackdropTemplate's tooltip textures, not NineSlice
+    dialog_border(canvas, x, y, w, h); panel_tabs(canvas, x, y, ["HUD", "Windows"], selected=1)
+    minimal_slider(canvas, x, y, 180, 32, 100, 50, 150); ui_panel_button(canvas, x, y, w, h, "Okay")
+    edit_mode_checkbox(canvas, x, y, "Label", True); edit_mode_selection(canvas, x, y, w, h, "Name")
 
 Widgets return (Canvas, rects) where rects locate interesting parts in UI units, so a scene can place a
 tooltip beside a slot or draw an addon's own textures into a slot (see item_button's `artwork` hook).
@@ -78,6 +81,9 @@ FONTS = {
     "GameFontNormalSmall": Font(FRIZQT, 10, NORMAL, (1, -1)),
     "GameFontHighlightSmall": Font(FRIZQT, 10, WHITE, (1, -1)),
     "GameFontDisableSmall": Font(FRIZQT, 10, DISABLED, (1, -1)),
+    "GameFontHighlightMedium": Font(FRIZQT, 14, WHITE, (1, -1)),
+    "GameFontNormalLarge": Font(FRIZQT, 16, NORMAL, (1, -1)),
+    "GameFontHighlightLarge": Font(FRIZQT, 16, WHITE, (1, -1)),
     "GameTooltipHeaderText": Font(FRIZQT, 14, WHITE),
     "GameTooltipText": Font(FRIZQT, 12, WHITE),
     "NumberFontNormal": Font(ARIALN, 14, WHITE, None, True),
@@ -487,11 +493,12 @@ class Canvas:
             "TopRightCorner": (True, False), "BottomLeftCorner": (False, True), "BottomRightCorner": (True, True),
             "BottomEdge": (False, True), "RightEdge": (True, False),
         }
+        # A piece's own mirrorLayout overrides the layout's (NineSlice.lua SetupTextureCoordinates).
         for name, (atlas, box) in edges.items():
-            fh, fv = flips.get(name, (False, False)) if mirror else (False, False)
+            fh, fv = flips.get(name, (False, False)) if layout[name].get("mirrorLayout", mirror) else (False, False)
             self.draw(atlas, *box, border_color, flip_h=fh, flip_v=fv)
         for name, (atlas, left, top) in pieces.items():
-            fh, fv = flips.get(name, (False, False)) if mirror else (False, False)
+            fh, fv = flips.get(name, (False, False)) if layout[name].get("mirrorLayout", mirror) else (False, False)
             self.draw(atlas, left, top, color=border_color, flip_h=fh, flip_v=fv)
 
     def save(self, path):
@@ -1439,14 +1446,24 @@ def filter_dropdown(canvas, right, top, text="Filter"):
     return x, top, w, h
 
 
-def minimal_scrollbar(canvas, x, y, h):
-    """MinimalScrollBar with nothing to scroll: the 8-wide track (19 in from each end) and both steppers."""
+def minimal_scrollbar(canvas, x, y, h, visible=1.0, offset=0.0):
+    """MinimalScrollBar: the 8-wide track (19 in from each end) and both steppers. With `visible` < 1 (the
+    shown fraction of the content) it draws the small thumb, `minThumbExtent` 23, `offset` along the track."""
     ui = canvas.ui
     top, bottom = ui.atlas("minimal-scrollbar-track-top"), ui.atlas("minimal-scrollbar-track-bottom")
     track_top, track_bottom = y + 19, y + h - 19
     canvas.draw(top, x, track_top)
     canvas.draw(bottom, x, track_bottom - bottom.height)
     canvas.draw(ui.atlas("!minimal-scrollbar-track-middle"), x, track_top + top.height, 8, track_bottom - bottom.height - track_top - top.height)
+    if visible < 1:
+        track = track_bottom - track_top
+        extent = max(23, track * visible)
+        thumb_top = track_top + (track - extent) * offset
+        begin, end = ui.atlas("minimal-scrollbar-small-thumb-top"), ui.atlas("minimal-scrollbar-small-thumb-bottom")
+        canvas.draw(begin, x, thumb_top)
+        canvas.draw(end, x, thumb_top + extent - end.height)
+        middle = ui.atlas("minimal-scrollbar-small-thumb-middle")
+        canvas.draw(middle, x, thumb_top + begin.height, 8, extent - begin.height - end.height)
     back, forward = ui.atlas("minimal-scrollbar-arrow-top"), ui.atlas("minimal-scrollbar-arrow-bottom")
     canvas.draw(back, x + 4 - back.width / 2, y)
     canvas.draw(forward, x + 4 - forward.width / 2, y + h - forward.height)
@@ -1513,3 +1530,151 @@ def tooltip_backdrop(canvas, x, y, w, h, background=(0, 0, 0, 1), border=(1, 1, 
         layer = ui.canvas(length if horizontal else edge, edge if horizontal else length)
         tiled(layer, tint(piece, border), 0, 0, layer.width, layer.height, edge, edge)
         canvas.paste(layer, left, top)
+
+
+# ------------------------------------------------------------------------------------------------ dialogs
+
+DIALOG_LAYOUT = {  # NineSliceLayouts.Dialog (Camelot leaves it alone)
+    "TopLeftCorner": {"atlas": "UI-Frame-DiamondMetal-CornerTopLeft"},
+    "TopRightCorner": {"atlas": "UI-Frame-DiamondMetal-CornerTopRight"},
+    "BottomLeftCorner": {"atlas": "UI-Frame-DiamondMetal-CornerBottomLeft"},
+    "BottomRightCorner": {"atlas": "UI-Frame-DiamondMetal-CornerBottomRight"},
+    "TopEdge": {"atlas": "_UI-Frame-DiamondMetal-EdgeTop"},
+    "BottomEdge": {"atlas": "_UI-Frame-DiamondMetal-EdgeBottom"},
+    "LeftEdge": {"atlas": "!UI-Frame-DiamondMetal-EdgeLeft"},
+    "RightEdge": {"atlas": "!UI-Frame-DiamondMetal-EdgeRight"},
+}
+
+
+def unique_corners_layout(kit):
+    """NineSliceLayouts.UniqueCornersLayout for a texture kit, without the Center when the kit has none
+    (OptionsFrame has none: SetAtlas on a missing element leaves the centre empty)."""
+    return {
+        name: {"atlas": atlas % kit}
+        for name, atlas in (
+            ("TopLeftCorner", "%s-NineSlice-CornerTopLeft"),
+            ("TopRightCorner", "%s-NineSlice-CornerTopRight"),
+            ("BottomLeftCorner", "%s-NineSlice-CornerBottomLeft"),
+            ("BottomRightCorner", "%s-NineSlice-CornerBottomRight"),
+            ("TopEdge", "_%s-NineSlice-EdgeTop"),
+            ("BottomEdge", "_%s-NineSlice-EdgeBottom"),
+            ("LeftEdge", "!%s-NineSlice-EdgeLeft"),
+            ("RightEdge", "!%s-NineSlice-EdgeRight"),
+            ("Center", "%s-NineSlice-Center"),
+        )
+    }
+
+
+def draw_nine_slice(canvas, layout, x, y, w, h):
+    """Canvas.nine_slice, dropping pieces whose atlas this build lacks, as SetAtlas silently does."""
+    present = {}
+    for name, piece in layout.items():
+        if not isinstance(piece, dict):
+            present[name] = piece
+            continue
+        try:
+            canvas.ui.atlas(piece["atlas"])
+        except KeyError:
+            continue
+        present[name] = piece
+    canvas.nine_slice(present, x, y, w, h)
+
+
+def dialog_border(canvas, x, y, w, h, background=(0, 0, 0, 0.8)):
+    """DialogBorderTranslucentTemplate (the default `background`) or any DialogBorder*Template given its Bg
+    colour: the Bg 7 units inside the frame, then the DiamondMetal Dialog NineSlice."""
+    canvas.fill(x + 7, y + 7, w - 14, h - 14, background)
+    canvas.nine_slice(DIALOG_LAYOUT, x, y, w, h)
+
+
+def ui_panel_button(canvas, x, y, w, h, text, font=None):
+    """UIPanelButtonTemplate: UI-Panel-Button-Up's left cap, stretched middle and right cap (12 wide each
+    side, texcoords from SecureUIPanelTemplates.xml) with GameFontNormal centred."""
+    texture = canvas.ui.texture("interface/buttons/ui-panel-button-up.blp")
+    canvas.draw(crop_coords(texture, 0, 0.09375, 0, 0.6875), x, y, 12, h)
+    canvas.draw(crop_coords(texture, 0.09375, 0.53125, 0, 0.6875), x + 12, y, w - 24, h)
+    canvas.draw(crop_coords(texture, 0.53125, 0.625, 0, 0.6875), x + w - 12, y, 12, h)
+    canvas.text(x, y, text, font or FONTS["GameFontNormal"], justify="CENTER", width=w, box_height=h)
+
+
+def close_button(canvas, right, top):
+    """UIPanelCloseButton (24x24 RedButton-Exit) placed by its TOPRIGHT."""
+    canvas.draw(canvas.ui.atlas("RedButton-Exit"), right - 24, top, 24, 24)
+
+
+def panel_tabs(canvas, x, y, names, selected=0):
+    """PanelTabButtonTemplate tabs from the first tab's TOPLEFT, each 3 units after the last: width is the
+    text (GameFontNormalSmall) plus 20, at least the side caps' width. The selected tab takes the taller
+    activetab art and white text 3 below centre; the others gold text 2 above. Returns the tab rects."""
+    ui = canvas.ui
+    rects = []
+    for index, name in enumerate(names):
+        active = index == selected
+        prefix = "uiframe-activetab" if active else "uiframe-tab"
+        left, right, middle = ui.atlas(f"{prefix}-left"), ui.atlas(f"{prefix}-right"), ui.atlas(f"_{prefix}-center")
+        font = FONTS["GameFontHighlightSmall" if active else "GameFontNormalSmall"]
+        caps = ui.atlas("uiframe-tab-left").width + ui.atlas("uiframe-tab-right").width
+        w = max(canvas.text_width(name, font) + 20, caps)
+        left_x = x + (-1 if active else -3)
+        right_x = x + w + (8 if active else 7) - right.width
+        canvas.draw(left, left_x, y)
+        canvas.draw(right, right_x, y)
+        canvas.draw(middle, left_x + left.width, y, right_x - left_x - left.width, middle.height)
+        # ButtonText is 10 high at CENTER (0, 2), which PanelTemplates_(De)SelectTab moves to (0, -3)/(0, 2).
+        canvas.text(x, y + 16 - 5 + (3 if active else -2), name, font, justify="CENTER", width=w, box_height=10)
+        rects.append((x, y, w, 32))
+        x += w + 3
+    return rects
+
+
+def minimal_slider(canvas, x, y, w, h, value, lo, hi):
+    """MinimalSliderWithSteppersTemplate at (x, y, w, h): the bar 19 in from each side, the Back/Forward
+    steppers 4 outside it and the thumb at `value` in [lo, hi], all centred vertically."""
+    ui = canvas.ui
+    bar_x, bar_w, cy = x + 19, w - 38, y + h / 2
+    left, right, middle = ui.atlas("Minimal_SliderBar_Left"), ui.atlas("Minimal_SliderBar_Right"), ui.atlas("_Minimal_SliderBar_Middle")
+    canvas.draw(left, bar_x, cy - left.height / 2)
+    canvas.draw(right, bar_x + bar_w - right.width, cy - right.height / 2)
+    canvas.draw(middle, bar_x + left.width, cy - middle.height / 2, bar_w - left.width - right.width, middle.height)
+    thumb = ui.atlas("Minimal_SliderBar_Button")
+    canvas.draw(thumb, bar_x + (bar_w - thumb.width) * (value - lo) / (hi - lo), cy - thumb.height / 2)
+    back, forward = ui.atlas("Minimal_SliderBar_Button_Left"), ui.atlas("Minimal_SliderBar_Button_Right")
+    canvas.draw(back, bar_x - 4 - 11, cy - 19 / 2, 11, 19)
+    canvas.draw(forward, bar_x + bar_w + 4, cy - 18 / 2, 9, 18)
+
+
+def edit_mode_checkbox(canvas, x, y, label, checked=False):
+    """EditModeCheckButtonTemplate: the classic 32x32 UI-CheckBox file textures and a GameFontHighlightMedium
+    label 5 units to the right, both centred on a 32-high row."""
+    ui = canvas.ui
+    canvas.draw(ui.texture("interface/buttons/ui-checkbox-up.blp"), x, y, 32, 32)
+    if checked:
+        canvas.draw(ui.texture("interface/buttons/ui-checkbox-check.blp"), x, y, 32, 32)
+    canvas.text(x + 37, y, label, FONTS["GameFontHighlightMedium"], box_height=32)
+
+
+def edit_mode_selection_layout(kit):
+    """EditModeSystemTemplates.lua's EditModeSystemSelectionLayout for a texture kit: one mirrored corner
+    8 units outside each corner of the system, the centre spread over the same outset."""
+    corner = f"{kit}-NineSlice-Corner"
+    return {
+        "TopLeftCorner": {"atlas": corner, "mirrorLayout": True, "x": -8, "y": 8},
+        "TopRightCorner": {"atlas": corner, "mirrorLayout": True, "x": 8, "y": 8},
+        "BottomLeftCorner": {"atlas": corner, "mirrorLayout": True, "x": -8, "y": -8},
+        "BottomRightCorner": {"atlas": corner, "mirrorLayout": True, "x": 8, "y": -8},
+        "TopEdge": {"atlas": f"_{kit}-NineSlice-EdgeTop"},
+        "BottomEdge": {"atlas": f"_{kit}-NineSlice-EdgeBottom"},
+        "LeftEdge": {"atlas": f"!{kit}-NineSlice-EdgeLeft"},
+        "RightEdge": {"atlas": f"!{kit}-NineSlice-EdgeRight"},
+        "Center": {"atlas": f"{kit}-NineSlice-Center", "x": -8, "y": 8, "x1": 8, "y1": -8},
+    }
+
+
+def edit_mode_selection(canvas, x, y, w, h, label=None, selected=True):
+    """EditModeSystemSelectionTemplate over a system at (x, y, w, h): the blue highlight, or the yellow
+    selected kit with the system's name centred in GameFontHighlightLarge."""
+    kit = "editmode-actionbar-selected" if selected else "editmode-actionbar-highlight"
+    canvas.nine_slice(edit_mode_selection_layout(kit), x, y, w, h)
+    if selected and label:
+        font = FONTS["GameFontHighlightLarge"]
+        canvas.text(x, y, label, font, justify="CENTER", width=w, box_height=h)

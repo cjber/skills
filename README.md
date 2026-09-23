@@ -121,8 +121,9 @@ logs. Bare `/autopsy` samples the worst production runs and ranks defects by use
 ## wow-forever-addon
 
 A standards pack: numbered requirements (`WFA-1`…) every WoW: Forever addon shares — retail-UI
-look, one icon family, README and store-page budgets, CI and release baseline. Each addon declares
-it under `## Standards` in its `AGENTS.md`, and `sift audit` reviews against it.
+look, one icon family, README and store-page budgets, CI and release baseline, repo settings and
+the `main` ruleset. Each addon declares it under `## Standards` in its `AGENTS.md`, and
+`sift audit` reviews against it.
 
 - [`icon-template.svg`](wow-forever-addon/icon-template.svg) is the family frame; swap the emblem.
 - `render_icon.py` renders `media/icon-400.png` and the 64 px `media/Icon.tga` from `media/icon.svg`.

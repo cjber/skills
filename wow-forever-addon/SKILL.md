@@ -48,7 +48,8 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   meaning (difficulty colours, a tick). No scenes or alternative backgrounds.
 - **WFA-8** Icon files are rendered, not hand-exported: `python3 <this skill>/render_icon.py`
   writes `media/icon-400.png` (README, store logo) and `media/Icon.tga` (64 px). The TOC uses
-  `## IconTexture: Interface\AddOns\<Addon>\media\Icon`.
+  `## IconTexture: Interface\AddOns\<Addon>\media\Icon`, and so does every child addon the zip
+  ships (load-on-demand data or map addons), pointing at the parent's icon, so none shows a `?`.
 - **WFA-9** Screenshots come from `tools/screenshots.py` via the `wow-mock-screenshots` skill, one
   per headline feature, regenerated in the same PR as any UI change they show. README, store page
   and store gallery use the same files from `docs/screenshots/`.

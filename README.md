@@ -11,6 +11,8 @@ Agent skills I use daily, one per directory, each a self-contained `SKILL.md` pl
 | [`review`](#review) | Review a diff for defects that execute, on a fixed budget |
 | [`deadcode`](#deadcode) | Prove code dead before deleting it |
 | [`autopsy`](#autopsy) | Account for every second and defect of one agent run |
+| [`wow-forever-addon`](#wow-forever-addon) | Hold every WoW: Forever addon to one look, icon family, docs shape and CI baseline |
+| [`wow-addon-publish`](#wow-addon-publish) | Publish a WoW addon to CurseForge and Wago, and cut releases |
 | [`wow-mock-screenshots`](#wow-mock-screenshots) | Render WoW addon screenshots from the game's own art, without the client |
 
 ```mermaid
@@ -115,6 +117,21 @@ logs. Bare `/autopsy` samples the worst production runs and ranks defects by use
   cache misses, …) over a canonical JSONL your adapter emits. Trace locations go in
   `.claude/autopsy.md`, never the skill.
 - Failure classes: [`references/taxonomy.md`](autopsy/references/taxonomy.md).
+
+## wow-forever-addon
+
+A standards pack: numbered requirements (`WFA-1`…) every WoW: Forever addon shares — retail-UI
+look, one icon family, README and store-page budgets, CI and release baseline. Each addon declares
+it under `## Standards` in its `AGENTS.md`, and `sift audit` reviews against it.
+
+- [`icon-template.svg`](wow-forever-addon/icon-template.svg) is the family frame; swap the emblem.
+- `render_icon.py` renders `media/icon-400.png` and the 64 px `media/Icon.tga` from `media/icon.svg`.
+
+## wow-addon-publish
+
+Create the CurseForge and Wago projects through each site's own form in a logged-in browser, wire
+their IDs into the TOC, and release with a signed tag that the BigWigs packager uploads everywhere.
+Secrets and gallery deletions stay with the user.
 
 ## wow-mock-screenshots
 

@@ -20,8 +20,8 @@ prompt reads empty stdin and stores an empty secret), `gh secret set <NAME> -R <
 
 - `.github/workflows/release.yml` on `push: tags: ["v*"]` running `BigWigsMods/packager` (pinned by SHA)
   with `CF_API_KEY`, `WAGO_API_TOKEN` and `GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}`, and
-  `permissions: contents: write`. Copy it from `cjber/tweaks-forever` rather than writing one.
-- Release notes = this version's CHANGELOG entry only (`tools/changelog.py <tag>`, also in tweaks-forever),
+  `permissions: contents: write`. Copy it from `cjber/skillup-forever` rather than writing one.
+- Release notes = this version's CHANGELOG entry only (`tools/changelog.py <tag>`, also in skillup-forever),
   prose style, `## [x.y.z] - YYYY-MM-DD` headings.
 - `docs/curseforge.md`: the store description (Markdown; screenshots referenced by
   `raw.githubusercontent.com/<owner>/<repo>/main/docs/screenshots/*.png`). Make screenshots with the

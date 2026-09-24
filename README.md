@@ -22,7 +22,7 @@ flowchart LR
     X[(sift)] -. gate + dead-code sweep .-> P
 ```
 
-Each stands alone. They pair with **[sift](https://github.com/cjber/sift)**: `sift setup` records a
+Each stands alone. They pair with **[sift](https://github.com/agent-labs-dev/sift)**: `sift setup` records a
 project's lint/type/test gate, which `/pr` runs; `sift audit diff` is `/pr`'s dead-code sweep.
 
 ## Install
@@ -103,7 +103,7 @@ Scanners (`vulture`, `knip`, `ts-prune`, …) give candidates; this skill proves
 - Code referenced only by its test is dead; delete both.
 - Analyse → prove → plan → **approval** → apply → verify. The approval gate is unconditional.
 - Module reachability uses [`grimp`](https://github.com/seddonym/grimp) (Python); elsewhere use the
-  nearest equivalent (`knip` for TS/JS). [sift](https://github.com/cjber/sift) wires scanners per
+  nearest equivalent (`knip` for TS/JS). [sift](https://github.com/agent-labs-dev/sift) wires scanners per
   language.
 
 ## autopsy

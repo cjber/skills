@@ -140,7 +140,7 @@ Isolation itself:
   cleanup.
 - Each arm runs only focused checks for its slice. After both finish, Claude
   inspects the combined diff and runs the repo's fast lint/type gate (with
-  [sift](https://github.com/cjber/sift) set up, the gate listed in
+  [sift](https://github.com/agent-labs-dev/sift) set up, the gate listed in
   `.agents/skills/sift-project/SKILL.md`; skip the slow test step).
 - Before integration, exchange short implementation summaries and diffs. Each arm
   checks the other's slice only for seam mismatches, broken assumptions, and
@@ -153,7 +153,7 @@ Isolation itself:
 
 - Run `/simplify` on the coherent final diff and apply worthwhile reductions.
 - Run the repo's dead-code sweep and clear what the diff itself made dead. With
-  [sift](https://github.com/cjber/sift), that is `sift audit diff`: it runs the
+  [sift](https://github.com/agent-labs-dev/sift), that is `sift audit diff`: it runs the
   language's dead-code scanner, reviews the diff's blast radius (searches still
   cover the whole repo) and classifies each hit's fate; otherwise run your own
   scanner. Removing a

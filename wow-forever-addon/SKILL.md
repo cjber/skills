@@ -98,15 +98,16 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   version comment, `persist-credentials: false`, `permissions: contents: read`; luacheck, every
   `tests/*_spec.lua` under LuaJIT (a glob, so a new spec cannot be left out), StyLua `--check`,
   lua-language-server, ruff for the Python tools, actionlint and zizmor, and gitleaks over the full
-  history. Extra checks (shellcheck) are welcome. Downloaded binaries are pinned by sha256. sift is
-  private until its public release, so it runs locally, not in CI: `sift check` and
-  `sift agents check` before every push. Dependabot updates `github-actions` monthly, grouped.
+  history. Extra checks (shellcheck) are welcome. Downloaded binaries are pinned by sha256. A job
+  named `sift` runs the vendored `python3 .sift/gate.py --base "origin/$BASE"` and
+  `python3 .sift/agents.py check`; `sift setup` vendors both and `sift update` refreshes them.
+  Dependabot updates `github-actions` monthly, grouped.
 - **WFA-16** Releases: a signed `v*` tag runs `release.yml` (BigWigs packager, pinned) with this
   version's CHANGELOG entry as notes (`tools/changelog.py`), uploading to GitHub, CurseForge and
   Wago; the TOC carries `X-Curse-Project-ID` and `X-Wago-ID`. Setup is in `wow-addon-publish`.
-- **WFA-17** Every repo has a lean `AGENTS.md` passing `sift agents check`, declaring this pack.
-  Game-client verification the agent cannot do (in-game look, combat behaviour) is listed in the PR
-  as a `/reload` test for the user; agents never drive the game.
+- **WFA-17** Every repo has a lean `AGENTS.md` passing `python3 .sift/agents.py check`, declaring
+  this pack at a full commit SHA. Game-client verification the agent cannot do (in-game look, combat
+  behaviour) is listed in the PR as a `/reload` test for the user; agents never drive the game.
 
 ### Repository
 

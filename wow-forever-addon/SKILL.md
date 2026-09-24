@@ -39,6 +39,11 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   next free number and adds it here. Attach by hooking `ObjectiveTrackerManager:AddContainer`.
 - **WFA-6** Copy talks to the player in the game's voice: short, plain, no jargon or internal names.
   After an update, tell them to `/reload`, never to restart the game.
+- **WFA-26** An audio cue is the sound the game itself makes for that thing: a ship's dock bell for a
+  boat, the zeppelin's horn for a zeppelin. Never a raid warning, ready check or PvP alert, which mean
+  something else to a player. Find it in the Forever build's listfile on wago.tools, check it exists with
+  `/api/casc/<FileDataID>?build=`, and play it with `PlaySoundFile(<FileDataID>, "Master")` beside a
+  comment naming the file.
 
 ### Assets
 
@@ -73,7 +78,8 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   docs/curseforge.md README.md` must pass before a store paste or post.
 - **WFA-25** No two images stacked without words between them, in the README or the store page. Each
   image, or row of images in one `<p>`, gets a line under it saying what to look at in plain words,
-  not a copy of its alt text. `check_copy.py` flags a stacked pair.
+  not a copy of its alt text. `check_copy.py` flags a stacked pair. Two things that belong side by side
+  are one image, composed in `tools/screenshots.py` as one `scene()` with both widgets as layers.
 - **WFA-12** `CHANGELOG.md` follows Keep a Changelog with prose: `## [Unreleased]` on top,
   `## [x.y.z] - YYYY-MM-DD`, bullets led by a bold sentence then why it matters, in player terms.
 

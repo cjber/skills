@@ -1,6 +1,6 @@
 ---
 name: wow-forever-addon
-description: Standards pack for cjber's WoW: Forever addons (legacy-here, skillup-forever, tweaks-forever, shortest-path-forever, any new one) - the numbered requirements every addon repo shares for UI look and feel, assets, README and store pages, code and performance, CI and releases. Load before building or changing an addon's UI, icon, screenshots, README, store page, CI, release process or GitHub repo settings, or when `sift audit` reviews an addon that declares it under `## Standards` in AGENTS.md.
+description: Standards pack for cjber's WoW: Forever addons (legacy-forever, skillup-forever, tweaks-forever, shortest-path-forever, any new one) - the numbered requirements every addon repo shares for UI look and feel, assets, README and store pages, code and performance, CI and releases. Load before building or changing an addon's UI, icon, screenshots, README, store page, CI, release process or GitHub repo settings, or when `sift audit` reviews an addon that declares it under `## Standards` in AGENTS.md.
 ---
 
 # WoW: Forever addon standards
@@ -24,7 +24,7 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   or companion installs. Data ships in the release zip (`.pkgmeta` `move-folders` for a
   load-on-demand data addon). Anything off by default is off because it acts for the player.
 - **WFA-3** Minimal surface. Options live in one place: a Settings > AddOns page (Blizzard's
-  settings API), or a menu on the addon's own UI when every option is about that UI (Legacy Here's
+  settings API), or a menu on the addon's own UI when every option is about that UI (Legacy Forever's
   map menu). A slash command (short form plus the full name) and an addon compartment entry
   (`## AddonCompartmentFunc`) both open it. No minimap button, no custom options window.
 
@@ -35,7 +35,7 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   source for the Forever build (Gethe/wow-ui-source, branch `forever`). Never custom-styled frames,
   fonts or colours; addon-drawn art only where no atlas exists, in the atlas's palette.
 - **WFA-5** Objective tracker sections sit above quests with a unique negative `uiOrder`. Registry:
-  Legacy Here `0` and `-1`, SkillUp Forever `-2`, Shortest Path Forever `-3`. A new addon takes the
+  Legacy Forever `0` and `-1`, SkillUp Forever `-2`, Shortest Path Forever `-3`, Adventure Guide Forever `-4`. A new addon takes the
   next free number and adds it here. Attach by hooking `ObjectiveTrackerManager:AddContainer`.
 - **WFA-6** Copy talks to the player in the game's voice: short, plain, no jargon or internal names.
   After an update, tell them to `/reload`, never to restart the game.

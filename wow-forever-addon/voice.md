@@ -5,7 +5,7 @@ release announcements. Taken from his own pre-AI writing (GitHub issue comments 
 and the way he talks about the addons. AI was used to build them and that is fine to say when asked;
 the copy just has to read like one person wrote it.
 
-## The pitch (WFA-18)
+## The pitch (WFA-23)
 
 Every addon is pitched the same way: **it looks like it came with the game.** Blizzard's own frames,
 fonts, icons, tooltips, map pins and settings, nothing bolted on. Say it early, in plain words, and
@@ -16,7 +16,7 @@ addons you already run.
 The lead image shows the addon looking native, and where the change is subtle it is shown against
 the stock UI.
 
-## Voice (WFA-19)
+## Voice (WFA-24)
 
 - First person, singular, sparing: "I wanted...", "I got tired of...". One or two lines on why it
   exists, then what it does.

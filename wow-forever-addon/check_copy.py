@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Flag the mechanical AI tells voice.md bans in store copy and posts (WFA-19).
+"""Flag the mechanical AI tells voice.md bans in store copy and posts (WFA-24).
 
 Usage: check_copy.py FILE... ; exits 1 and prints file:line: phrase for each hit.
 Image alt text and code spans are skipped: they quote the game, not our voice.

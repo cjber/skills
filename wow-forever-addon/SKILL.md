@@ -63,11 +63,11 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 - **WFA-11** `docs/curseforge.md` is the store description: the pitch, the headline screenshots,
   Features, Usage, a source/licence line; under 600 words; no Install or Development sections. It
   is pasted into CurseForge and Wago by hand after it changes (`wow-addon-publish`).
-- **WFA-18** One pitch for the family: the addon looks like it came with the game. The README
+- **WFA-23** One pitch for the family: the addon looks like it came with the game. The README
   pitch, store description and any post say so early, backed by something concrete from this addon,
   then that it steps aside for addons you already run. The lead image shows it looking native,
   against the stock UI where the change is subtle. See [voice.md](voice.md).
-- **WFA-19** Store copy, README and posts read like cjber wrote them, never like AI marketing:
+- **WFA-24** Store copy, README and posts read like cjber wrote them, never like AI marketing:
   first person where it helps, short plain sentences, British spelling, undersold, concrete, one
   honest limit. [voice.md](voice.md) is the rule set; `python3 <this skill>/check_copy.py
   docs/curseforge.md README.md` must pass before a store paste or post.

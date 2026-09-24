@@ -23,7 +23,7 @@ prompt reads empty stdin and stores an empty secret), `gh secret set <NAME> -R <
   `permissions: contents: write`. Copy it from `cjber/skillup-forever` rather than writing one.
 - Release notes = this version's CHANGELOG entry only (`tools/changelog.py <tag>`, also in skillup-forever),
   prose style, `## [x.y.z] - YYYY-MM-DD` headings.
-- `docs/curseforge.md`: the store description, pitched and worded per `wow-forever-addon` WFA-18/19
+- `docs/curseforge.md`: the store description, pitched and worded per `wow-forever-addon` WFA-23/24
   (`voice.md`); run its `check_copy.py docs/curseforge.md README.md` before every paste (Markdown; screenshots referenced by
   `raw.githubusercontent.com/<owner>/<repo>/main/docs/screenshots/*.png`). Make screenshots with the
   `wow-mock-screenshots` skill.

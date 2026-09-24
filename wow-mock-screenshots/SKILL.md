@@ -46,6 +46,14 @@ Requirements: Python 3 with Pillow 12+. Everything else is fetched from wago.too
    text size and baseline, spacing. Iterate until they match. State in the report any place the mock
    still deviates from the real UI.
 7. **Reproducibility**: running `python3 tools/screenshots.py` twice must give byte-identical PNGs.
+7a. **Animated demo** (`docs/screenshots/demo.gif`) when a headline feature is about motion or time: a
+   route settling, a countdown, a sort reordering. Render the frames from the same scene builders
+   rather than screen-recording; `render_demo` in shortest-path-forever's `tools/screenshots.py` is the
+   template. Render each frame at the GIF's final size (thin strokes and dashes do not survive a
+   downscale), quantize every frame to one shared palette built from the first frame plus an enlarged
+   crop of the small UI, with no dither, then save with `duration=100, loop=0, optimize=True`. That
+   keeps text colours stable, repeated encodes byte-identical and the file under the stores' 2 MB limit.
+   Six to ten seconds is enough. It leads the store gallery when it exists.
 8. **Ship**: images, the script and the README/store references in the addon repo's PR; library and notes
    changes in a `cjber/skills` commit.
 

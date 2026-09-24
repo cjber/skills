@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Flag the mechanical AI tells voice.md bans in store copy and posts (WFA-24).
 
-Usage: check_copy.py FILE... ; exits 1 and prints file:line: phrase for each hit.
+Usage: check_copy.py FILE... ; exits 1 and prints file:line: phrase for each hit, and each image
+stacked under another with no text between (WFA-25).
 Image alt text and code spans are skipped: they quote the game, not our voice.
 """
 
@@ -56,8 +57,35 @@ def hits(path: Path) -> list[str]:
     return found
 
 
+IMAGE = re.compile(r"!\[[^\]]*\]\([^)]*\)|<img\b[^>]*>", re.IGNORECASE)
+TAG = re.compile(r"<[^>]+>")
+OPEN_P = re.compile(r"<p\b", re.IGNORECASE)
+CLOSE_P = re.compile(r"</p>", re.IGNORECASE)
+
+
+def stacked(path: Path) -> list[str]:
+    """Two images one above the other with no words between (WFA-25). Images in one <p> sit in a row: fine."""
+    found = []
+    last_image = 0  # line of the last image since any words
+    in_p = False
+    row_has_image = False
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if OPEN_P.search(line):
+            in_p, row_has_image = True, False
+        if IMAGE.search(line):
+            if last_image and not row_has_image:
+                found.append(f"{path}:{number}: image stacked under line {last_image} with no text between")
+            last_image = number
+            row_has_image = in_p
+        if TAG.sub("", IMAGE.sub("", line)).strip():
+            last_image = 0
+        if CLOSE_P.search(line):
+            in_p, row_has_image = False, False
+    return found
+
+
 def main() -> int:
-    found = [hit for name in sys.argv[1:] for hit in hits(Path(name))]
+    found = [hit for name in sys.argv[1:] for hit in hits(Path(name)) + stacked(Path(name))]
     for hit in found:
         print(hit)
     return 1 if found else 0

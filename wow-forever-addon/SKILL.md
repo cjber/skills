@@ -71,6 +71,9 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   first person where it helps, short plain sentences, British spelling, undersold, concrete, one
   honest limit. [voice.md](voice.md) is the rule set; `python3 <this skill>/check_copy.py
   docs/curseforge.md README.md` must pass before a store paste or post.
+- **WFA-25** No two images stacked without words between them, in the README or the store page. Each
+  image, or row of images in one `<p>`, gets a line under it saying what to look at in plain words,
+  not a copy of its alt text. `check_copy.py` flags a stacked pair.
 - **WFA-12** `CHANGELOG.md` follows Keep a Changelog with prose: `## [Unreleased]` on top,
   `## [x.y.z] - YYYY-MM-DD`, bullets led by a bold sentence then why it matters, in player terms.
 

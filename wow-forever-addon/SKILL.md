@@ -97,13 +97,14 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 - **WFA-15** CI covers at least the skillup-forever baseline: actions pinned to full SHAs with a
   version comment, `persist-credentials: false`, `permissions: contents: read`; luacheck, every
   `tests/*_spec.lua` under LuaJIT (a glob, so a new spec cannot be left out), StyLua `--check`,
-  lua-language-server, ruff for the Python tools, actionlint and zizmor, gitleaks over the full
-  history, and `sift agents`. Extra checks (shellcheck) are welcome. Downloaded binaries are
-  pinned by sha256. Dependabot updates `github-actions` monthly, grouped.
+  lua-language-server, ruff for the Python tools, actionlint and zizmor, and gitleaks over the full
+  history. Extra checks (shellcheck) are welcome. Downloaded binaries are pinned by sha256. sift is
+  private until its public release, so it runs locally, not in CI: `sift check` and
+  `sift agents check` before every push. Dependabot updates `github-actions` monthly, grouped.
 - **WFA-16** Releases: a signed `v*` tag runs `release.yml` (BigWigs packager, pinned) with this
   version's CHANGELOG entry as notes (`tools/changelog.py`), uploading to GitHub, CurseForge and
   Wago; the TOC carries `X-Curse-Project-ID` and `X-Wago-ID`. Setup is in `wow-addon-publish`.
-- **WFA-17** Every repo has a lean `AGENTS.md` passing `sift agents` in CI, declaring this pack.
+- **WFA-17** Every repo has a lean `AGENTS.md` passing `sift agents check`, declaring this pack.
   Game-client verification the agent cannot do (in-game look, combat behaviour) is listed in the PR
   as a `/reload` test for the user; agents never drive the game.
 
@@ -111,7 +112,7 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 
 - **WFA-18** CI job names are the same in every repo, because the ruleset (WFA-21) requires checks
   by exact name: `check` (luacheck, StyLua, the specs), `typecheck` (lua-language-server),
-  `sift`, `secrets` (gitleaks), `workflows` (actionlint, zizmor), and `python` (ruff) only when
+  `secrets` (gitleaks), `workflows` (actionlint, zizmor), and `python` (ruff) only when
   the Python tooling is big enough to earn its own job. Rename a job and its required check
   together.
 - **WFA-19** `refresh-data.yml`, where a repo has one, dispatches `ci.yml` on the branch it opens

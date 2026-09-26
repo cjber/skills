@@ -44,6 +44,12 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   something else to a player. Find it in the Forever build's listfile on wago.tools, check it exists with
   `/api/casc/<FileDataID>?build=`, and play it with `PlaySoundFile(<FileDataID>, "Master")` beside a
   comment naming the file.
+- **WFA-27** Never stretch art. An icon, atlas or texture is drawn at its native aspect: size it from
+  `C_Texture.GetAtlasInfo` and fit it inside its box, centred, never anchor or size it to a box of another
+  shape. Inline markup (`CreateAtlasMarkup`, `|A`, `|T`) takes whole pixels, so pick sizes within 2% of the
+  native shape and comment the native size. File icons are square; account for any texcoord crop. Only
+  nine-slice pieces, bars, fills, colour textures and masks stretch by design. Each repo's `AGENTS.md`
+  carries this rule under Rules.
 
 ### Assets
 

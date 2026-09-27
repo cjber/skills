@@ -33,7 +33,8 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 - **WFA-4** Looks like the retail default UI. Stock frame templates, `GameFont*` objects, atlases,
   `GameTooltip`, `MenuUtil` menus, `MapCanvasDataProviderMixin` pins — copied from the Blizzard
   source for the Forever build (Gethe/wow-ui-source, branch `forever`). Never custom-styled frames,
-  fonts or colours; addon-drawn art only where no atlas exists, in the atlas's palette.
+  fonts or colours, except that chat prefixes use the family's mint `|cff33ff99`; addon-drawn art
+  only where no atlas exists, in the atlas's palette.
 - **WFA-5** Objective tracker sections sit above quests with a unique negative `uiOrder`. Registry:
   Legacy Forever `0` and `-1`, SkillUp Forever `-2`, Shortest Path Forever `-3`, Adventure Guide Forever `-4`. A new addon takes the
   next free number and adds it here. Attach by hooking `ObjectiveTrackerManager:AddContainer`.

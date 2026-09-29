@@ -1,6 +1,6 @@
 ---
 name: wow-mock-screenshots
-description: Use when a WoW addon (especially cjber's WoW: Forever addons - tweaks-forever, skillup-forever, legacy-here, shortest-path-forever) needs README/store screenshots, or existing screenshots are stale after a UI change, and taking them in game is not wanted. Builds faithful mock screenshots from the client's own UI art, fonts and item data fetched from wago.tools, composed with Pillow, reproducibly from a per-repo tools/screenshots.py.
+description: "Use when a WoW addon (especially cjber's WoW: Forever addons - tweaks-forever, skillup-forever, legacy-here, shortest-path-forever) needs README/store screenshots, or existing screenshots are stale after a UI change, and taking them in game is not wanted. Builds faithful mock screenshots from the client's own UI art, fonts and item data fetched from wago.tools, composed with Pillow, reproducibly from a per-repo tools/screenshots.py."
 ---
 
 # Mock WoW screenshots from the game's own art

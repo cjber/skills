@@ -1,6 +1,6 @@
 ---
 name: wow-forever-addon
-description: Standards pack for cjber's WoW: Forever addons (legacy-forever, skillup-forever, tweaks-forever, shortest-path-forever, any new one) - the numbered requirements every addon repo shares for UI look and feel, assets, README and store pages, code and performance, CI and releases. Load before building or changing an addon's UI, icon, screenshots, README, store page, CI, release process or GitHub repo settings, or when `sift audit` reviews an addon that declares it under `## Standards` in AGENTS.md.
+description: "Standards pack for cjber's WoW: Forever addons (legacy-forever, skillup-forever, tweaks-forever, shortest-path-forever, any new one) - the numbered requirements every addon repo shares for UI look and feel, assets, README and store pages, code and performance, CI and releases. Load before building or changing an addon's UI, icon, screenshots, README, store page, CI, release process or GitHub repo settings, or when `sift audit` reviews an addon that declares it under `## Standards` in AGENTS.md."
 ---
 
 # WoW: Forever addon standards

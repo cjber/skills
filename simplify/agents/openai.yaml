@@ -1,0 +1,4 @@
+interface:
+  display_name: "Simplify"
+  short_description: "Critically simplify a complete PR diff"
+  default_prompt: "Use $simplify to critically simplify this PR before it is pushed."

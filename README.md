@@ -6,8 +6,7 @@ Agent skills I use daily, one per directory, each a self-contained `SKILL.md` pl
 |---|---|
 | [`todos`](#todos) | Decide what to do next across repos, and catch work that is rotting |
 | [`issue`](#issue) | Turn an issue into a file-level plan — or a whole backlog into one PR |
-| [`pr`](#pr) | Ship an approved change as a reviewed, green PR, on two models |
-| [`pr-personal`](#pr-personal) | Ship a change on a personal (`cjber/*`) repo, without the monorepo machinery |
+| [`pr`](#pr) | Ship an approved change as a reviewed, green PR — monorepo or personal |
 | [`simplify`](#simplify) | Shrink a finished diff without changing behaviour |
 | [`review`](#review) | Review a diff for defects that execute, on a fixed budget |
 | [`deadcode`](#deadcode) | Prove code dead before deleting it |
@@ -66,6 +65,8 @@ workload. Session todo lists vanish; this does not.
 
 Plan → isolate → implement → simplify + review → publish → drive green → merge (only when told).
 
+- Routes by owner: `agent-labs-dev/*` runs the full two-model path; a personal `cjber/*` repo runs a
+  single pass and treats its own checks as the gate.
 - Every judgment phase runs on **two models** — a Claude arm and a Codex arm at high effort — which
   critique each other once. A second model does not share the first one's blind spots.
 - Two arms only: no fan-out, no nested agents.
@@ -74,17 +75,6 @@ Plan → isolate → implement → simplify + review → publish → drive green
 - Never `gh pr update-branch` — it strips signatures.
 - `scripts/watch_human.sh` tails the Codex arm for you; `scripts/watch_digest.sh` gives the agent a
   bounded digest with token usage.
-
-## pr-personal
-
-The `/pr` fork for personal repos (`cjber/*` — dotfiles, skills, config). `/pr` is the
-`agent-labs-dev` monorepo path; this is everything else.
-
-- **Never merges** — a green PR awaiting you is the finished state.
-- Drops the monorepo machinery (uv/sift, Postgres, `gh stack`, migrations) and the second Codex arm
-  unless the diff touches destructive shell, secrets, a published surface, or ~3 files / 200 lines.
-- One PR per repo; never a contributor's PR; signed commits, explicit paths, no history rewrite.
-- Cannot run from a Nebula cloud agent — writes to `cjber/*` are refused by installation scope.
 
 ## simplify
 

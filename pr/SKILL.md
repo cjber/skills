@@ -1,6 +1,6 @@
 ---
 name: pr
-description: "Ship an approved change as one reviewed, green PR per repository. Use for 'ship this', 'build this end-to-end', or '/pr'. Use one Claude and one Codex pass for planning, disjoint implementation, and final review without recursive fan-out."
+description: "Ship an approved change as one reviewed, green PR in any repository (the agent-labs-dev monorepo or a personal cjber/* repo). Use for 'ship this', 'build this end-to-end', or '/pr'. One Claude and one Codex pass on the monorepo; a single pass for small personal diffs, without recursive fan-out."
 ---
 
 # Ship one green PR
@@ -10,6 +10,27 @@ phase bounded and avoid spawning any agents beyond those two arms. The agent
 handling the user's request coordinates and counts as its model's arm; launch
 only the other model. Either Claude or Codex can coordinate. Skill references
 such as `/simplify` mean load that shared skill with the host's available tools.
+
+## Route first
+
+Detect the owner with `git remote get-url origin` and scale the workflow:
+
+- **`agent-labs-dev/*`** (nebula, nebula-web, parallax, nebula-desktop) — the full monorepo path: two-model phases, the `sift` gate, isolated databases, and `gh stack` only for an explicitly requested stack.
+- **Personal (`cjber/*` — dotfiles, skills, config)** — the lighter path: a single pass by default, no monorepo machinery (uv/sift, Postgres, `gh stack`, migrations), and the repository's own checks are the whole gate when it has no CI. Add the Codex arm only when the diff touches destructive shell, secrets, a published surface, git history or hooks, or roughly 3 files / 200 lines.
+- **Any other owner** — treat as personal unless the repository documents its own gate, which then wins. Never open a PR against an upstream you do not control.
+
+Personal repositories are public-facing: `.env*`, keys, tokens and machine-local config stay ignored. If a file looks like a credential, stop and report rather than committing it.
+
+Writes to a personal `cjber/*` repo cannot come from a Nebula cloud agent — the workspace GitHub App is installed only for `agent-labs-dev`, so the write is refused by installation scope, not credentials. A cloud agent does the read-only part and stops; it never reaches for a personal access token to work around it.
+
+## Guard rails — these outrank everything below
+
+- **Never merge** without explicit authorization for these specific PRs (§7). A standing preference or an earlier "ship it" is not authorization now.
+- **Never touch a contributor's PR** — do not merge, close, approve, review, rebase, force-push, label or edit one. Report it and take no action.
+- **Never rewrite pushed history** — no force-push, no rebase of pushed history, no amending a pushed commit, no deleting tags, releases or branches.
+- **Never change repository state** — no visibility change, rename, transfer, archival, deletion, branch protection, Actions secrets, deploy keys or webhooks.
+- **Never push to a fork you do not own.**
+- **One PR per repository** — a stack is the exception and requires an explicit request (§2).
 
 ## Resource budget
 
@@ -150,9 +171,11 @@ Isolation itself:
 - Fix the authoritative producer, remove superseded paths, and avoid unrelated
   cleanup.
 - Each arm runs only focused checks for its slice. After both finish, the
-  coordinating agent inspects the combined diff and runs the repo's fast lint/type gate (with
-  [sift](https://github.com/agent-labs-dev/sift) set up, the gate listed in
-  `.agents/skills/sift-project/SKILL.md`; skip the slow test step).
+  coordinating agent inspects the combined diff and runs the repo's fast lint/type gate
+  (`sift check` on the monorepo, where the gate is listed in
+  `.agents/skills/sift-project/SKILL.md`; skip the slow test step). A personal repo with no
+  configured gate uses whatever it has — `make check`, `bun run check`, `npm test`,
+  `shellcheck`, `bash -n` — and the report states exactly what was run.
 - Before integration, exchange short implementation summaries and diffs. Each arm
   checks the other's slice only for seam mismatches, broken assumptions, and
   missing tests; it does not re-review the entire repository or edit the other's
@@ -284,7 +307,9 @@ every review comment has been answered.
 **Waiting on CI is working time, not idle time.** The moment the PR is open,
 start a second `/simplify` and `/review` pass over the published diff and run it
 *concurrently* with the checks — never sit polling a status endpoint. This pass
-is mandatory, not conditional on the pre-publish pass having found something:
+is mandatory, not conditional on the pre-publish pass having found something (on
+the single-pass personal path, run the same `/simplify` + `/review` once — there
+is no second arm to wait on):
 
 - The pre-publish pass in §4 reviewed a diff you had just finished writing. The
   post-publish pass reads it as published, with that round's fixes folded in —
@@ -304,7 +329,9 @@ report what it changed alongside the CI result.
   checks passed. Fix every failure and re-push until all required checks pass.
   If a failure is genuinely environmental or a known-flaky job, say so
   explicitly with the evidence that distinguishes it from a real failure;
-  never silently treat red as green.
+  never silently treat red as green. If the repository has no checks at all,
+  say so plainly and let the local verification above be the stated gate — do
+  not imply a green tick that does not exist.
 - **Read and address review comments, including bot reviewers.** Fetch them
   explicitly: a PR-level review body hides the inline comments, so pull the
   inline set too (`gh api repos/{owner}/{repo}/pulls/{n}/comments`) rather than

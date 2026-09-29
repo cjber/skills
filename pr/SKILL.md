@@ -6,7 +6,10 @@ description: "Ship an approved change as one reviewed, green PR per repository. 
 # Ship one green PR
 
 Use one Claude arm and one Codex arm in the same controlled workflow. Keep each
-phase bounded and avoid spawning any agents beyond those two arms.
+phase bounded and avoid spawning any agents beyond those two arms. The agent
+handling the user's request coordinates and counts as its model's arm; launch
+only the other model. Either Claude or Codex can coordinate. Skill references
+such as `/simplify` mean load that shared skill with the host's available tools.
 
 ## Resource budget
 
@@ -61,8 +64,8 @@ cd "$WORKTREE" && codex exec -m gpt-6-astra -c model_reasoning_effort=xhigh -c s
   --skip-git-repo-check "$PROMPT" < /dev/null
 ```
 
-Prefer the file form, and **write the prompt with the Write tool rather than
-inlining it**. A long prompt inlined into a shell command needs nested quote
+Prefer the file form, and **write the prompt with the host's file-editing tool
+rather than inlining it**. A long prompt inlined into a shell command needs nested quote
 escaping (`'"'"'` chains) that is easy to get wrong and impossible to read back.
 
 Three rules for reading the result, because this failure imitates success:
@@ -86,6 +89,14 @@ Two further flag landmines on this account:
   `codex -m gpt-6-astra -c model_reasoning_effort=xhigh -c service_tier=default review --base origin/main`. And `--base main`
   reviews against the *local* main — always pass `origin/main`.
 
+### Invoking Claude from a Codex coordinator
+
+```sh
+cd "$WORKTREE" && claude -p --model sonnet --effort medium < prompt.md
+```
+
+Scope the prompt to the other arm's work and preserve normal tool permissions.
+
 ## 1. Plan once on both models
 
 - Read applicable `AGENTS.md` and only the domain skills needed for the touched
@@ -94,7 +105,7 @@ Two further flag landmines on this account:
   target but return only decisions, affected files/contracts, risks, and checks.
 - Exchange the two drafts. Each planner returns only: incorrect assumptions,
   missing contracts/risks, and proposed corrections. No rewritten plan.
-- The primary Claude turn resolves that single critique round from source
+- The coordinating agent resolves that single critique round from source
   evidence and synthesizes one implementation plan.
 - For a bug, establish the cheapest durable reproduction before editing.
 - Ask only when a missing decision would materially change behavior.
@@ -105,14 +116,13 @@ Two further flag landmines on this account:
 just because it is open or was touched today — an unrelated lower layer holds the
 upper ones back for no benefit.
 
-Two exceptions, both requiring a real dependency:
+Continue the same coherent effort on its existing PR while it remains open,
+adding commits rather than opening another PR in the same repository.
 
-- **Same coherent effort, PR still open** → add commits to that branch/PR rather
-  than opening a second one. One PR per repo beats a new branch for work already
-  under review.
-- **This change genuinely depends on another unmerged branch of yours**, or a
-  security-sensitive slice must land first → stack on that branch specifically,
-  and say so in the PR body along with the intended merge order.
+Stack only when the user explicitly requests it and this change genuinely
+depends on another unmerged branch. A security-sensitive slice does not waive
+the explicit-request requirement. State the dependency and merge order in the
+PR body. An explicitly requested stack is the exception to one PR per repository.
 
 ```sh
 gh pr list --author "@me" --state open --limit 30 \
@@ -133,19 +143,20 @@ Isolation itself:
 
 - Partition the synthesized plan into two disjoint ownership slices. Claude and
   Codex implement concurrently in the same worktree only when their file sets do
-  not overlap. If the change cannot be split safely, Codex implements and Claude
-  owns integration rather than inventing a second slice.
-- Claude is the only git owner. Codex does not stage, commit, push, or open PRs.
+  not overlap. If the change cannot be split safely, one arm implements and the
+  coordinating agent integrates rather than inventing a second slice.
+- The coordinating agent is the only git owner. The other arm does not stage,
+  commit, push, or open PRs.
 - Fix the authoritative producer, remove superseded paths, and avoid unrelated
   cleanup.
-- Each arm runs only focused checks for its slice. After both finish, Claude
-  inspects the combined diff and runs the repo's fast lint/type gate (with
+- Each arm runs only focused checks for its slice. After both finish, the
+  coordinating agent inspects the combined diff and runs the repo's fast lint/type gate (with
   [sift](https://github.com/agent-labs-dev/sift) set up, the gate listed in
   `.agents/skills/sift-project/SKILL.md`; skip the slow test step).
 - Before integration, exchange short implementation summaries and diffs. Each arm
   checks the other's slice only for seam mismatches, broken assumptions, and
   missing tests; it does not re-review the entire repository or edit the other's
-  owned files. Claude resolves the replies and integrates once.
+  owned files. The coordinating agent resolves the replies and integrates once.
 - If multiple repositories are involved, finish and verify one contract slice
   at a time while recording deployment order and mixed-version compatibility.
 
@@ -170,8 +181,8 @@ Isolation itself:
 - Exchange only exclusive findings. Each reviewer gets one reply to confirm,
   reject with evidence, or adjust severity for findings the other reviewer alone
   found. Do not repeat shared findings or generate a second full review.
-- Claude deduplicates and validates that critique round once, then fixes verified
-  blockers.
+- The coordinating agent deduplicates and validates that critique round once,
+  then fixes verified blockers.
 - **Fix a verified finding in this PR. Filing an issue is not a resolution.**
   Once a finding is confirmed real, the default is a commit on this branch, even
   when the true fix is one layer below the diff — a defect the diff made visible
@@ -207,8 +218,8 @@ let CI be the test gate.
 
 - Stage explicit paths and create signed Conventional Commits.
 - Push one branch and open or update one ready-for-review PR per repository.
-  Task PRs target `main`, except a stacked layer, which targets the layer below
-  it and is published with `gh stack submit --open`. Publishing never merges —
+  Task PRs target `main`. Only an explicitly requested stack (§2) targets the
+  layer below and uses `gh stack submit --open`. Publishing never merges —
   merging is a separate, explicitly authorized step (§7).
 - Include why, scope, tests, risks, rollout order, and deliberate deferrals.
 - If the change contradicts a documented rule or contract (a skill file, an
@@ -256,8 +267,9 @@ edges are the flow between them.
   picks, and a default-themed node can end up invisible.
 
 **When a richer page is warranted** — a large audit, a multi-subsystem change, a
-result someone will refer back to — build it with the Artifact tool (load
-`artifact-design` first) and link it from the PR body. One caveat that decides
+result someone will refer back to — use the Artifact tool when available (load
+`artifact-design` first) and link it from the PR body. Otherwise keep the report
+and diagrams in the PR body. One caveat that decides
 whether this is appropriate: **a published artifact is private to your account
 until you share it from the page's share menu**, so an unshared link is dead for
 every reviewer. Put the diagram itself in the PR body regardless; the artifact is

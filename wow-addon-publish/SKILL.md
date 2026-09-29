@@ -1,6 +1,6 @@
 ---
 name: wow-addon-publish
-description: Use in a WoW addon repo (a .toc at the root; cjber's WoW: Forever addons such as tweaks-forever, skillup-forever, legacy-here, shortest-path-forever) to publish it on CurseForge and Wago, create the store project, set its description/logo/gallery, or cut a release that uploads to both. Not for non-WoW repos.
+description: "Use in a WoW addon repo (a .toc at the root; cjber's WoW: Forever addons such as tweaks-forever, skillup-forever, legacy-here, shortest-path-forever) to publish it on CurseForge and Wago, create the store project, set its description/logo/gallery, or cut a release that uploads to both. Not for non-WoW repos."
 ---
 
 # Publish a WoW addon to CurseForge and Wago

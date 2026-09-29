@@ -22,14 +22,13 @@ flowchart LR
     X[(sift)] -. gate + dead-code sweep .-> P
 ```
 
-Each stands alone. They pair with **[sift](https://github.com/agent-labs-dev/sift)**: `sift setup` records a
+Each stands alone. They pair with a project-gate tool such as **sift**: `sift setup` records a
 project's lint/type/test gate, which `/pr` runs; `sift audit diff` is `/pr`'s dead-code sweep.
 
 ## Install
 
 ```sh
 npx skills add cjber/skills   # pick skills when prompted
-npx skills add cjber/sift     # optional companion
 ```
 
 Or copy the directories into `~/.claude/skills/`. Invoke by name (`/pr`) or describe the task.
@@ -65,8 +64,8 @@ workload. Session todo lists vanish; this does not.
 
 Plan → isolate → implement → simplify + review → publish → drive green → merge (only when told).
 
-- Routes by owner: `agent-labs-dev/*` runs the full two-model path; a personal `cjber/*` repo runs a
-  single pass and treats its own checks as the gate.
+- Routes by owner: a repo with a configured gate runs the full two-model path; a personal repo
+  runs a single pass and treats its own checks as the gate.
 - Every judgment phase runs on **two models** — a Claude arm and a Codex arm at high effort — which
   critique each other once. A second model does not share the first one's blind spots.
 - Two arms only: no fan-out, no nested agents.
@@ -105,7 +104,7 @@ Scanners (`vulture`, `knip`, `ts-prune`, …) give candidates; this skill proves
 - Code referenced only by its test is dead; delete both.
 - Analyse → prove → plan → **approval** → apply → verify. The approval gate is unconditional.
 - Module reachability uses [`grimp`](https://github.com/seddonym/grimp) (Python); elsewhere use the
-  nearest equivalent (`knip` for TS/JS). [sift](https://github.com/agent-labs-dev/sift) wires scanners per
+  nearest equivalent (`knip` for TS/JS). A project-gate tool such as `sift` wires scanners per
   language.
 
 ## autopsy

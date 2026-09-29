@@ -1,6 +1,6 @@
 ---
 name: pr
-description: "Ship an approved change as one reviewed, green PR in any repository (the agent-labs-dev monorepo or a personal cjber/* repo). Use for 'ship this', 'build this end-to-end', or '/pr'. One Claude and one Codex pass on the monorepo; a single pass for small personal diffs, without recursive fan-out."
+description: "Ship an approved change as one reviewed, green PR in any repository. Use for 'ship this', 'build this end-to-end', or '/pr'. One Claude and one Codex pass where the repository has a configured gate; a single pass for small personal diffs, without recursive fan-out."
 ---
 
 # Ship one green PR
@@ -13,15 +13,15 @@ such as `/simplify` mean load that shared skill with the host's available tools.
 
 ## Route first
 
-Detect the owner with `git remote get-url origin` and scale the workflow:
+Scale to the repository in front of you; its own documented gate always wins:
 
-- **`agent-labs-dev/*`** (nebula, nebula-web, parallax, nebula-desktop) — the full monorepo path: two-model phases, the `sift` gate, isolated databases, and `gh stack` only for an explicitly requested stack.
-- **Personal (`cjber/*` — dotfiles, skills, config)** — the lighter path: a single pass by default, no monorepo machinery (uv/sift, Postgres, `gh stack`, migrations), and the repository's own checks are the whole gate when it has no CI. Add the Codex arm only when the diff touches destructive shell, secrets, a published surface, git history or hooks, or roughly 3 files / 200 lines.
-- **Any other owner** — treat as personal unless the repository documents its own gate, which then wins. Never open a PR against an upstream you do not control.
+- **A repository with a configured gate** (`AGENTS.md` / `CONTRIBUTING` naming lint, type and test commands, or a recorded `sift` gate) — the full path: two-model phases, the configured gate, isolated databases for migration work, and stacked PRs only when explicitly requested.
+- **A personal or small repository with no configured gate** — the lighter path: a single pass by default, none of the heavier machinery, and its own checks are the whole gate. Add the Codex arm only when the diff touches destructive shell, secrets, a published surface, git history or hooks, or roughly 3 files / 200 lines.
+- **Any other owner** — never open a PR against an upstream you do not control.
 
-Personal repositories are public-facing: `.env*`, keys, tokens and machine-local config stay ignored. If a file looks like a credential, stop and report rather than committing it.
+Public repositories: `.env*`, keys, tokens and machine-local config stay ignored. If a file looks like a credential, stop and report rather than committing it.
 
-Writes to a personal `cjber/*` repo cannot come from a Nebula cloud agent — the workspace GitHub App is installed only for `agent-labs-dev`, so the write is refused by installation scope, not credentials. A cloud agent does the read-only part and stops; it never reaches for a personal access token to work around it.
+A cloud agent scoped to one organization's repositories cannot write outside that scope — the write is refused by installation scope, not credentials. Such an agent does the read-only part and stops; it never reaches for a personal access token to work around it.
 
 ## Guard rails — these outrank everything below
 
@@ -172,10 +172,10 @@ Isolation itself:
   cleanup.
 - Each arm runs only focused checks for its slice. After both finish, the
   coordinating agent inspects the combined diff and runs the repo's fast lint/type gate
-  (`sift check` on the monorepo, where the gate is listed in
-  `.agents/skills/sift-project/SKILL.md`; skip the slow test step). A personal repo with no
-  configured gate uses whatever it has — `make check`, `bun run check`, `npm test`,
-  `shellcheck`, `bash -n` — and the report states exactly what was run.
+  (the gate the repository documents — a `sift` gate when configured, otherwise its own
+  lint/type command; skip the slow test step). A repo with no configured gate uses whatever
+  it has — `make check`, `bun run check`, `npm test`, `shellcheck`, `bash -n` — and the
+  report states exactly what was run.
 - Before integration, exchange short implementation summaries and diffs. Each arm
   checks the other's slice only for seam mismatches, broken assumptions, and
   missing tests; it does not re-review the entire repository or edit the other's
@@ -187,7 +187,7 @@ Isolation itself:
 
 - Run `/simplify` on the coherent final diff and apply worthwhile reductions.
 - Run the repo's dead-code sweep and clear what the diff itself made dead. With
-  [sift](https://github.com/agent-labs-dev/sift), that is `sift audit diff`: it runs the
+  a project-gate tool such as `sift`, that is `sift audit diff`: it runs the
   language's dead-code scanner, reviews the diff's blast radius (searches still
   cover the whole repo) and classifies each hit's fate; otherwise run your own
   scanner. Removing a

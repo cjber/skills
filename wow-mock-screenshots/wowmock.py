@@ -24,6 +24,7 @@ per UI unit.
     tooltip_backdrop(canvas, x, y, w, h)    # legacy BackdropTemplate's tooltip textures, not NineSlice
     dialog_border(canvas, x, y, w, h); panel_tabs(canvas, x, y, ["HUD", "Windows"], selected=1)
     minimal_slider(canvas, x, y, 180, 32, 100, 50, 150); ui_panel_button(canvas, x, y, w, h, "Okay")
+    basic_panel(ui, "Nearby services", 380, 400)  # canvas and frame origin (x, y)
     edit_mode_checkbox(canvas, x, y, "Label", True); edit_mode_selection(canvas, x, y, w, h, "Name")
 
 Widgets return (Canvas, rects) where rects locate interesting parts in UI units, so a scene can place a
@@ -43,7 +44,7 @@ from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
-BUILD = "1.60.1.69913"
+BUILD = "1.60.1.70124"
 USER_AGENT = "wowmock/1.0"
 # WoW: Forever draws its "c60" art (atlas set 1) wherever an atlas element has a member in that set.
 FOREVER_ATLAS_SET = 1
@@ -1678,3 +1679,30 @@ def edit_mode_selection(canvas, x, y, w, h, label=None, selected=True):
     if selected and label:
         font = FONTS["GameFontHighlightLarge"]
         canvas.text(x, y, label, font, justify="CENTER", width=w, box_height=h)
+
+
+def basic_panel(ui, title, w, h):
+    # BasicFrameTemplateWithInset: Blizzard_UIPanelTemplates/Mainline/UIPanelTemplates.xml:558–704.
+    canvas = ui.canvas(w + 12, h + 8)
+    x, y = 6, 1
+    rock = ui.texture("interface/framegeneral/ui-background-rock.blp")
+    marble = ui.texture("interface/framegeneral/ui-background-marble.blp")
+    tiled(canvas, rock, x + 2, y + 21, w - 4, h - 23, rock.width / ui.scale, rock.height / ui.scale)
+    canvas.draw(ui.atlas("_UI-Frame-TopTileStreaks"), x, y + 21, w - 2, 43)
+    tiled(canvas, marble, x + 4, y + 24, w - 10, h - 28, marble.width / ui.scale, marble.height / ui.scale)
+    draw_nine_slice(canvas, INSET_FRAME_LAYOUT, x + 4, y + 24, w - 10, h - 28)
+    layout = {
+        "TopLeftCorner": {"atlas": "UI-Frame-TopLeftCorner", "x": -6, "y": 1},
+        "TopRightCorner": {"atlas": "UI-Frame-TopCornerRight", "y": 1},
+        "BottomLeftCorner": {"atlas": "UI-Frame-BotCornerLeft", "x": -6, "y": -5},
+        "BottomRightCorner": {"atlas": "UI-Frame-BotCornerRight", "y": -5},
+        "TopEdge": {"atlas": "_UI-Frame-TitleTile"},
+        "BottomEdge": {"atlas": "_UI-Frame-Bot"},
+        "LeftEdge": {"atlas": "!UI-Frame-LeftTile"},
+        "RightEdge": {"atlas": "!UI-Frame-RightTile", "x": 1},
+    }
+    canvas.draw(ui.atlas("_UI-Frame-TitleTileBg"), x + 2, y + 1, w - 27, 18)
+    draw_nine_slice(canvas, layout, x, y, w, h)
+    close_button(canvas, x + w - 2, y - 1)
+    canvas.text(x - 6, y + 4, title, FONTS["GameFontNormal"], NORMAL, justify="CENTER", width=w)
+    return canvas, x, y

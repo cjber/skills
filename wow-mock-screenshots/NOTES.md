@@ -5,7 +5,7 @@ Things learned building WoW: Forever mock screenshots from wago.tools data. Firs
 
 ## wago.tools endpoints
 
-- DB2 as CSV: `https://wago.tools/db2/<Table>/csv?build=<build>`. The Forever build is `1.60.1.69913`; list
+- DB2 as CSV: `https://wago.tools/db2/<Table>/csv?build=<build>`. The Forever build is `1.60.1.70124`; list
   builds at `https://wago.tools/api/builds/latest`.
 - File bytes: `https://wago.tools/api/casc/<fdid>?download&build=<build>`. **Always pass `&build=`.** Without it
   you get current retail (12.x), whose UI art differs. An unknown build returns HTTP 400.
@@ -258,3 +258,5 @@ that repo's git history.
 - `Canvas.nine_slice` honours a piece's own `mirrorLayout`, as NineSlice.lua does.
 - Edit Mode's real screen also shows every HUD system's blue highlight box over the game world; a scene
   on the plain backdrop leaves them out. No reference capture of the Windows tab exists yet.
+
+`basic_panel(ui, title, w, h)` renders BasicFrameTemplateWithInset, including its inset, stock title and close button. Layout follows Blizzard_UIPanelTemplates/Mainline/UIPanelTemplates.xml:558–704; used for Tweaks gear groups/quest abandonment and SPF nearby services.

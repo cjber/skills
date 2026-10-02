@@ -408,6 +408,13 @@ sweep as a gate rather than a formality**:
    (`gh api repos/{owner}/{repo}` → `allow_squash_merge` / `allow_merge_commit`
    / `allow_rebase_merge`; assume nothing).
 
+**Landing a stack:** retarget every PR in it to `main` (`gh pr edit <n> --base main`) before merging
+the first. Where the repository deletes branches on merge, the first merge deletes the next PR's base
+and GitHub closes that PR, and a closed PR cannot be retargeted. To recover, push the merged PR's head
+commit back to the deleted branch name, reopen the child, retarget it, then delete the branch again.
+A squash-merged parent also leaves each child conflicting with `main`: merge `main` into the child
+locally (signed) and confirm the tree is what was tested before pushing.
+
 If a comment arrives between the authorization and the merge, the
 authorization does not carry over it — report the new comment and ask again.
 

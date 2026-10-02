@@ -1,6 +1,6 @@
 ---
 name: wow-forever-addon
-description: "Standards pack for cjber's WoW: Forever addons (legacy-forever, skillup-forever, tweaks-forever, shortest-path-forever, any new one) - the numbered requirements every addon repo shares for UI look and feel, assets, README and store pages, code and performance, CI and releases. Load before building or changing an addon's UI, icon, screenshots, README, store page, CI, release process or GitHub repo settings, or when `sift audit` reviews an addon that declares it under `## Standards` in AGENTS.md."
+description: "Standards pack for cjber's WoW: Forever addons (legacy-forever, skillup-forever, tweaks-forever, shortest-path-forever, any new one) - the numbered requirements every addon repo shares for UI look and feel, assets, README and store pages, code and performance, CI and releases. Load before building or changing an addon's UI, icon, screenshots, README, store page, CI, release process or GitHub repo settings, when debugging taint, a blocked action, in-game layout or load time, or when `sift audit` reviews an addon that declares it under `## Standards` in AGENTS.md."
 ---
 
 # WoW: Forever addon standards
@@ -94,7 +94,8 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 
 - **WFA-13** Fast in both senses: time to a result and per-frame cost. Benchmark the short and long
   case before and after a change to a hot path; no frame over 3 ms; no idle `OnUpdate` or timers;
-  bounded work per event.
+  bounded work per event. A one-off job the player is waiting on (a catalogue built at login) may take
+  a larger slice, measured in game: 2 s of work at 1 ms a frame is 40 s of empty UI at 60 fps.
 - **WFA-14** Saved variables never assume a key: every default is declared in one place (a
   `DEFAULTS` table, or the feature registry's `default =`), and a missing key reads as its default,
   so a new option and an old save file always agree.
@@ -113,8 +114,10 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   version's CHANGELOG entry as notes (`tools/changelog.py`), uploading to GitHub, CurseForge and
   Wago; the TOC carries `X-Curse-Project-ID` and `X-Wago-ID`. Setup is in `wow-addon-publish`.
 - **WFA-17** Every repo has a lean `AGENTS.md` passing `python3 .sift/agents.py check`, declaring
-  this pack at a full commit SHA. Game-client verification the agent cannot do (in-game look, combat
-  behaviour) is listed in the PR as a `/reload` test for the user; agents never drive the game.
+  this pack at a full commit SHA. Headless specs pass on builds that are broken in game, so a change
+  to anything the player sees or to combat behaviour is verified live in game before it merges, and
+  the PR says what was checked. [debugging.md](debugging.md) covers taint, profiling and reading
+  results out of the client.
 
 ### Repository
 

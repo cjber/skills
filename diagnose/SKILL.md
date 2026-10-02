@@ -77,4 +77,5 @@ bug with no seam to test it through is itself a finding: report it.
 - The commit or PR message names the confirmed hypothesis and the producer that was fixed.
 - Hand the change to `/pr`, or report the diagnosis if no fix was requested.
 
-Adapted from mattpocock/skills `diagnosing-bugs` (MIT).
+Adapted from mattpocock/skills `diagnosing-bugs`, (c) 2026 Matt Pocock, MIT.
+Notice: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

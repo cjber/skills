@@ -96,4 +96,5 @@ Done when the frontier and the fog are both empty: nothing is left to decide. Ha
 `/issue` as the spec. Other sessions may be editing the tracker concurrently; re-query the
 frontier before claiming.
 
-Adapted from mattpocock/skills `wayfinder`, `research` and `prototype` (MIT).
+Adapted from mattpocock/skills `wayfinder`, `research` and `prototype`, (c) 2026 Matt Pocock, MIT.
+Notice: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

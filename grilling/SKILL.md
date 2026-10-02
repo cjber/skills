@@ -39,4 +39,5 @@ the resolved design in a few lines and wait for the user to confirm before actin
 
 A task with one obvious interpretation skips it: state the default and proceed.
 
-Adapted from mattpocock/skills `grilling` and `grill-with-docs` (MIT).
+Adapted from mattpocock/skills `grilling` and `grill-with-docs`, (c) 2026 Matt Pocock, MIT.
+Notice: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

@@ -175,7 +175,8 @@ words, pruning, and when a skill should be model- or user-invoked.
 - Merge before adding: a new behaviour is first a branch in the skill that owns the concept.
 
 `grilling`, `wayfinder`, `diagnose`, `retro`, `handoff` and `skill-writing` are adapted from
-[mattpocock/skills](https://github.com/mattpocock/skills) (MIT).
+[mattpocock/skills](https://github.com/mattpocock/skills), (c) 2026 Matt Pocock, MIT. Each carries
+the upstream notice in its own `THIRD_PARTY_NOTICES.md`.
 
 ## wow-forever-addon
 
@@ -205,4 +206,5 @@ Each addon keeps a small `tools/screenshots.py` for its scenes.
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE). Adapted third-party work is listed in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -92,4 +92,5 @@ more available; reserve `never` for hard safety and data rules, and give the rea
 - When user-invoked skills outgrow memory, one **router** skill lists them and when to reach
   for each.
 
-Adapted from mattpocock/skills `writing-for-agents` (MIT).
+Adapted from mattpocock/skills `writing-for-agents`, (c) 2026 Matt Pocock, MIT.
+Notice: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

@@ -47,4 +47,5 @@ Steering files and the memory index are always-loaded **context load**. On every
 - **Promotions**: a steering rule that is really mechanical moves to a check and leaves the file.
 - An index over its size limit is a finding by itself: merge and shorten until it loads whole.
 
-Adapted from mattpocock/skills `retro` (MIT).
+Adapted from mattpocock/skills `retro`, (c) 2026 Matt Pocock, MIT.
+Notice: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

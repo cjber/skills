@@ -22,4 +22,5 @@ Contents, in order:
 Redact secrets and personal data. Done when a reader with only this file and the repo could
 take the next step without asking.
 
-Adapted from mattpocock/skills `handoff` (MIT).
+Adapted from mattpocock/skills `handoff`, (c) 2026 Matt Pocock, MIT.
+Notice: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

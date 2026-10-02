@@ -128,7 +128,8 @@ Scope the prompt to the other arm's work and preserve normal tool permissions.
   missing contracts/risks, and proposed corrections. No rewritten plan.
 - The coordinating agent resolves that single critique round from source
   evidence and synthesizes one implementation plan.
-- For a bug, establish the cheapest durable reproduction before editing.
+- For a bug, establish the cheapest durable reproduction before editing; when
+  the cause is not already evident, run `/diagnose` first.
 - Ask only when a missing decision would materially change behavior.
 
 ## 2. Isolate

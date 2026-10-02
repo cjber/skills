@@ -5,12 +5,18 @@ Agent skills I use daily, one per directory, each a self-contained `SKILL.md` pl
 | Skill | Use it to |
 |---|---|
 | [`todos`](#todos) | Decide what to do next across repos, and catch work that is rotting |
+| [`grilling`](#grilling) | Resolve a plan's open decisions one question at a time before building |
+| [`wayfinder`](#wayfinder) | Plan an effort too big for one session as a map of decision tickets |
 | [`issue`](#issue) | Turn an issue into a file-level plan — or a whole backlog into one PR |
+| [`diagnose`](#diagnose) | Build a loop that goes red on a bug, then fix it at the producer |
 | [`pr`](#pr) | Ship an approved change as a reviewed, green PR — monorepo or personal |
 | [`simplify`](#simplify) | Shrink a finished diff without changing behaviour |
 | [`review`](#review) | Review a diff for defects that execute, on a fixed budget |
 | [`deadcode`](#deadcode) | Prove code dead before deleting it |
 | [`autopsy`](#autopsy) | Account for every second and defect of one agent run |
+| [`retro`](#retro) | Turn a session's friction into a change to checks, steering files or skills |
+| [`handoff`](#handoff) | Compact a conversation into a document a fresh agent can continue from |
+| [`skill-writing`](#skill-writing) | Write and prune skills and steering files; holds the shared glossary |
 | [`wow-forever-addon`](#wow-forever-addon) | Hold every WoW: Forever addon to one look, icon family, docs shape and CI baseline |
 | [`wow-addon-publish`](#wow-addon-publish) | Publish a WoW addon to CurseForge and Wago, and cut releases |
 | [`wow-mock-screenshots`](#wow-mock-screenshots) | Render WoW addon screenshots from the game's own art, without the client |
@@ -18,7 +24,11 @@ Agent skills I use daily, one per directory, each a self-contained `SKILL.md` pl
 ```mermaid
 flowchart LR
     T[todos] --> I[issue] --> P[pr]
+    W[wayfinder] --> I
+    G[grilling] -.-> W & I
+    I & P -. bug .-> DG[diagnose]
     P --> S[simplify] & R[review] & D[deadcode]
+    RT[retro] -. writes with .-> SW[skill-writing]
     X[(sift)] -. gate + dead-code sweep .-> P
 ```
 
@@ -119,6 +129,55 @@ logs. Bare `/autopsy` samples the worst production runs and ranks defects by use
   `.claude/autopsy.md`, never the skill.
 - Failure classes: [`references/taxonomy.md`](autopsy/references/taxonomy.md).
 
+## grilling
+
+One question at a time, each with a recommended answer, until no open branch would change what
+gets built.
+
+- Facts are the agent's job to look up; only decisions go to the user.
+- Hard-to-reverse decisions become ADRs; sharpened terms go into the repo's glossary.
+
+## wayfinder
+
+`/wayfinder <idea>` charts a **map** issue and its decision tickets; `/wayfinder <map>` resolves
+one ticket per session.
+
+- Tickets are questions (`grilling`, `research`, `prototype`, `task`), wired with native blocking
+  so the frontier shows in the tracker.
+- What cannot yet be asked sharply stays as fog on the map.
+- It plans; a clear map is handed to `/issue`.
+
+## diagnose
+
+No theory until one command goes red on the bug.
+
+- Loop → minimise → 3-5 falsifiable hypotheses → one-variable probes → fix at the producer.
+- The loop becomes a permanent test only when it earns its upkeep.
+- For one production agent run, use `autopsy`.
+
+## retro
+
+Reads a session for friction and routes each piece to the cheapest home that would have prevented
+it: a deterministic check first, a sentence in a steering file last.
+
+- Every run also prunes steering files and the memory index: no-ops, sediment, duplication.
+
+## handoff
+
+Goal, state, open items and pointers to existing artifacts, written outside the workspace.
+
+## skill-writing
+
+Reference for anything an agent reads: pointers, the two loads, completion criteria, leading
+words, pruning, and when a skill should be model- or user-invoked.
+
+- [`GLOSSARY.md`](skill-writing/GLOSSARY.md) is the one vocabulary every skill here uses.
+- Merge before adding: a new behaviour is first a branch in the skill that owns the concept.
+
+`grilling`, `wayfinder`, `diagnose`, `retro`, `handoff` and `skill-writing` are adapted from
+[mattpocock/skills](https://github.com/mattpocock/skills), (c) 2026 Matt Pocock, MIT. Each carries
+the upstream notice in its own `THIRD_PARTY_NOTICES.md`.
+
 ## wow-forever-addon
 
 A standards pack: numbered requirements (`WFA-1`…) every WoW: Forever addon shares — retail-UI
@@ -147,4 +206,5 @@ Each addon keeps a small `tools/screenshots.py` for its scenes.
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE). Adapted third-party work is listed in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

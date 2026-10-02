@@ -52,6 +52,12 @@ rather than baking a guess into the steps and dumping it in "Open
 questions." Open questions are for things to confirm at review time;
 they are not a place to launder decisions you could have made now.
 
+If the issue is too big for one session and the way to it is still
+unclear - several open decisions that depend on each other - stop and
+offer `/wayfinder` instead of writing one oversized plan. If it reports a
+bug whose cause the investigation did not pin down, the plan's first
+step is `/diagnose`.
+
 Write to `~/.claude/plans/<slug>.md` where `<slug>` = `<repo>-<issue#>-<kebab-title>`. Sections, in order:
 
 1. **Issue summary** - 2 to 4 sentences. What's broken or wanted, who reported it, current state, link to the issue.

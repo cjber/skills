@@ -18,6 +18,13 @@ blocked. Find the read, not the call.
   not taint the others. What taints Blizzard's own code is state an addon wrote that it later reads:
   a field written by calling a Blizzard method from addon code, or a lazy cache first filled during
   an addon's call. `tools/lint_taint.py` lists the calls already known to do this; add each new one.
+- A provider's inherited `RegisterEvent` goes through the map (`AddDataProviderEvent`) and writes the
+  addon's taint into the event counts every provider shares. Blizzard's quest provider then runs
+  tainted and its pins hit `ADDON_ACTION_BLOCKED ... SetPassThroughButtons()` in combat, blamed on the
+  addon. `CVarMapCanvasDataProviderMixin` does this from `OnShow`: build on `MapCanvasDataProviderMixin`
+  and listen on a frame of your own.
+- The taint is planted when the map opens out of combat and the block fires on a later open in combat,
+  so reproduce in that order.
 - An addon's own map pins are acquired through `AcquirePin`, which calls the protected
   `SetPassThroughButtons`. HereBeDragons-Pins makes that a no-op on its pin mixin.
 

@@ -25,6 +25,13 @@ blocked. Find the read, not the call.
   and listen on a frame of your own.
 - The taint is planted when the map opens out of combat and the block fires on a later open in combat,
   so reproduce in that order.
+- Opening or retargeting the world map from addon code (`OpenWorldMap`, `ToggleWorldMap`, `OpenQuestLog`,
+  `WorldMapFrame:SetMapID`, `QuestMapFrame_ShowQuestDetails`) taints its map fields until a reload, with
+  the same blocked pins in combat. `C_Map.OpenWorldMap(uiMapID)` has the game open and retarget it from
+  its own code, and the map is shown before the call returns. Nothing clean brings back a collapsed quest
+  sidebar or opens the quest details page.
+- `issecurevariable` can read secure while the block still follows (the `OpenQuestLog` case). Count
+  blocked actions over several map opens in combat; treat the field check as a hint.
 - An addon's own map pins are acquired through `AcquirePin`, which calls the protected
   `SetPassThroughButtons`. HereBeDragons-Pins makes that a no-op on its pin mixin.
 

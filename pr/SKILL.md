@@ -179,7 +179,7 @@ Isolation itself:
   report states exactly what was run.
 - Before integration, exchange short implementation summaries and diffs. Each arm
   checks the other's slice only for seam mismatches, broken assumptions, and
-  missing tests; it does not re-review the entire repository or edit the other's
+  unverified behaviour; it does not re-review the entire repository or edit the other's
   owned files. The coordinating agent resolves the replies and integrates once.
 - If multiple repositories are involved, finish and verify one contract slice
   at a time while recording deployment order and mixed-version compatibility.
@@ -230,9 +230,10 @@ Isolation itself:
 - Run the fast lint/type gate once after the diff is stable.
 
 **Never run the full test suite locally.** CI runs the tests, and it runs the
-integration and migration jobs against separate databases. Locally, run ONLY a
-test you just wrote or one individually-targeted test — enough to show it fails
-without the fix and passes with it. Do not run the whole suite, integration trees,
+integration and migration jobs against separate databases. Locally, run only
+an individually-targeted check: the reproduction that fails without the fix and
+passes with it, or one named test file the change touches. A change does not
+need a new test; the repository's testing rules decide whether one is kept. Do not run the whole suite, integration trees,
 or any gate that starts check groups concurrently against shared local
 infrastructure: one group's migration or teardown can wipe state out from under
 another and produce hundreds of errors that say nothing about the diff. Push and
@@ -245,7 +246,7 @@ let CI be the test gate.
   Task PRs target `main`. Only an explicitly requested stack (§2) targets the
   layer below and uses `gh stack submit --open`. Publishing never merges —
   merging is a separate, explicitly authorized step (§7).
-- Include why, scope, tests, risks, rollout order, and deliberate deferrals.
+- Include why, scope, how it was verified, risks, rollout order, and deliberate deferrals.
 - If the change contradicts a documented rule or contract (a skill file, an
   architecture doc, an invariant list), update that document in the same PR.
   A canonical contract left describing the old behaviour is a defect.

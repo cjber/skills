@@ -57,7 +57,8 @@ the relevant producer, consumers, and tests.
   fixtures larger than the behavior they prove.
 - Challenge every mock. Four or more collaborators usually means the test is
   verifying its own setup; move to a pure function or real integration seam.
-- Preserve one sharp regression for every bug and high-risk contract. Never use
+- A bug fix keeps a regression test only when the repository's testing rules
+  say that defect class needs one. Never use
   simplification to erase evidence for auth, workspace isolation, billing,
   persistence, concurrency, cancellation, or migration safety.
 

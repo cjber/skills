@@ -64,7 +64,7 @@ Write to `~/.claude/plans/<slug>.md` where `<slug>` = `<repo>-<issue#>-<kebab-ti
 2. **Current behaviour** - what the code does today, with `path/to/file.py:LN` refs for each relevant function or branch. Quote short snippets only when they clarify a subtlety.
 3. **Desired behaviour** - what should change, derived from the issue and comments. If the comments reframed the problem, lead with the reframed version.
 4. **Approach** - numbered implementation steps. Each step names the file and roughly where (function, class, or section). Each step should map to one logical commit.
-5. **Tests and verification** - how we'll know it works. Defer to the repo's CLAUDE.md and existing test patterns; favour pure-function unit tests, integration tests for orchestration, and project-specific benchmark runs for any behaviour that depends on an LLM. Avoid constant-checking and mock-the-world tests.
+5. **Tests and verification** - how we'll know it works, starting with the reproduction or command that shows it. The repo's testing rules decide whether any test is added. When one is, prefer a row in an existing table-driven test, an integration test for orchestration, and a project-specific benchmark run for behaviour that depends on an LLM.
 6. **Risks and edge cases** - what could regress; concurrent-write hazards; soft-delete cascades; cache invalidation; LLM-judgment fragility; auth-scope changes; migration ordering.
 7. **Out of scope** - adjacent things the issue might tempt us into but we're explicitly deferring.
 8. **Open questions** - what to confirm with the user, the issue author, or a reviewer before merging. Empty list is fine.

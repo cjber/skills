@@ -23,6 +23,15 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 - **WFA-2** Zero setup. Every feature works out of the box: no required settings, extra downloads
   or companion installs. Data ships in the release zip (`.pkgmeta` `move-folders` for a
   load-on-demand data addon). Anything off by default is off because it acts for the player.
+- **WFA-28** Game data has two sources: the installed QuestieDB (quests, NPCs, objects, spawns,
+  vendors, trainers' places) and AtlasLoot (bosses, loot, recipes, drop rates), read at runtime
+  through their public tables. Neither is copied into the repo or the zip: QuestieDB carries no
+  licence and AtlasLoot is GPL v2. This is the one companion install WFA-2 allows; without it the
+  feature says in one plain line what to install and the rest of the addon works. A dataset neither
+  holds (trainer fees, transports) is a named exception in the repo's `AGENTS.md` under `## Waivers`,
+  stating its source, and the player sees a live in-game value over the bundled one wherever the
+  client offers it. A server-emulator dump (CMaNGOS classic-db) describes Classic Era, not Forever:
+  it is never the source for a dataset QuestieDB or AtlasLoot holds.
 - **WFA-3** Minimal surface. Options live in one place: a Settings > AddOns page (Blizzard's
   settings API), or a menu on the addon's own UI when every option is about that UI (Legacy Forever's
   map menu). A slash command (short form plus the full name) and an addon compartment entry

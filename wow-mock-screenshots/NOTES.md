@@ -108,7 +108,7 @@ Compare against real in-game screenshots, cropped and enlarged side by side with
 The addons' README images are mocks now, so the real captures come from the revisions before they were
 replaced (`git show <rev>:<path> > /tmp/x.png`):
 
-- legacy-here `8afee98:docs/screenshots/menu.png`: context menu (border, tick squares, yellow check, arrow,
+- legacy-forever `8afee98:docs/screenshots/menu.png`: context menu (border, tick squares, yellow check, arrow,
   gold highlight, divider); `map.png` and `tracker.png` at the same revision.
 - skillup-forever `be11638:docs/screenshots/tooltip.png`: tooltip border and centre colour (this caught the
   c60-centre mistake: ours was near-black, the real one blue-grey ~(19, 18, 28)).
@@ -116,9 +116,9 @@ replaced (`git show <rev>:<path> > /tmp/x.png`):
 
 Blizzard's UI source for layout numbers: `~/drive/proj/wow-handoff/blizzard-ui/Interface/AddOns`.
 
-## Legacy Here scenes (world map, tracker)
+## Legacy Forever scenes (world map, tracker)
 
-Built for `legacy-here/tools/screenshots.py` (map, menu, tracker). Legacy Here's own real captures, which the
+Built for `legacy-forever/tools/screenshots.py` (map, menu, tracker). Legacy Forever's own real captures, which the
 mocks replaced, stay in that repo's git history (`git log -- docs/screenshots`); use those revisions, not
 the current files, as ground truth.
 
@@ -127,7 +127,7 @@ the current files, as ground truth.
 - Map art: UiMap -> UiMapXMapArt (PhaseID 0) -> UiMapArt -> UiMapArtStyleLayer (layer size, tile size) ->
   UiMapArtTile rows. `map_art` stitches the base layer. WorldMapOverlay rows name OffsetX/Y, TextureWidth/Height
   and WorldMapOverlayTile rows; tiles are power-of-two textures that `draw_overlay` crops to the real size.
-  Explored overlays draw at full colour; Legacy Here shades unexplored ones by drawing the same tiles tinted
+  Explored overlays draw at full colour; Legacy Forever shades unexplored ones by drawing the same tiles tinted
   (0, 0, 0, 0.25).
 - WorldMapFrame (Camelot, minimized, quest log hidden): 702x534, title spacer 67, map container (2, 67) sized
   697x465. The map is fitted with min(697/1002, 465/668) and centred. The rock background tiles at the file's

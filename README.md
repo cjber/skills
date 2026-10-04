@@ -4,7 +4,6 @@ Agent skills I use daily, one per directory, each a self-contained `SKILL.md` pl
 
 | Skill | Use it to |
 |---|---|
-| [`todos`](#todos) | Decide what to do next across repos, and catch work that is rotting |
 | [`grilling`](#grilling) | Resolve a plan's open decisions one question at a time before building |
 | [`wayfinder`](#wayfinder) | Plan an effort too big for one session as a map of decision tickets |
 | [`issue`](#issue) | Turn an issue into a file-level plan — or a whole backlog into one PR |
@@ -23,7 +22,7 @@ Agent skills I use daily, one per directory, each a self-contained `SKILL.md` pl
 
 ```mermaid
 flowchart LR
-    T[todos] --> I[issue] --> P[pr]
+    I[issue] --> P[pr]
     W[wayfinder] --> I
     G[grilling] -.-> W & I
     I & P -. bug .-> DG[diagnose]
@@ -50,18 +49,6 @@ Or copy the directories into `~/.claude/skills/`. Invoke by name (`/pr`) or desc
 are personal habits. Without sift, name your own gate in `/pr`.
 
 ---
-
-## todos
-
-A judgment layer over [beads](https://github.com/gastownhall/beads) (`bd`) for a durable, cross-repo
-workload. Session todo lists vanish; this does not.
-
-- File follow-ups **when found**, with the file and line that prove them.
-- `/todos review` checks six leaks: uncaptured, stale, aging decisions, blocked on nothing, drift,
-  unlinked.
-- `/todos board` renders the graph as a standalone HTML page (`scripts/dashboard.py`).
-- Finds its workspace from `$BEADS_WORKSPACE` or the nearest `.beads/`; track names come from your
-  epics.
 
 ## issue
 

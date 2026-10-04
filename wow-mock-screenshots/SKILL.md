@@ -1,6 +1,6 @@
 ---
 name: wow-mock-screenshots
-description: "Use when a WoW addon (especially cjber's WoW: Forever addons - tweaks-forever, skillup-forever, legacy-here, shortest-path-forever) needs README/store screenshots, or existing screenshots are stale after a UI change, and taking them in game is not wanted. Builds faithful mock screenshots from the client's own UI art, fonts and item data fetched from wago.tools, composed with Pillow, reproducibly from a per-repo tools/screenshots.py."
+description: "Use when a WoW addon (especially cjber's WoW: Forever addons - tweaks-forever, skillup-forever, legacy-forever, shortest-path-forever) needs README/store screenshots, or existing screenshots are stale after a UI change, and taking them in game is not wanted. Builds faithful mock screenshots from the client's own UI art, fonts and item data fetched from wago.tools, composed with Pillow, reproducibly from a per-repo tools/screenshots.py."
 ---
 
 # Mock WoW screenshots from the game's own art
@@ -67,6 +67,6 @@ Requirements: Python 3 with Pillow 12+. Everything else is fetched from wago.too
   image is about an option.
 - Put every bar, meter and count at 0 in at least one scene. The client takes a width of 0 as unset, so a
   left-anchored fill set to 0 draws at its art's full width; the layout pass does the same, but only a
-  scene with an empty state shows it (Adventure Guide Forever #33 shipped that bug past its mocks).
+  scene with an empty state shows it.
 - When the client build moves, bump `BUILD` in `wowmock.py`, regenerate every repo's screenshots and
   re-verify; art does change between builds.

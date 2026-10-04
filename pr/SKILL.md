@@ -69,9 +69,7 @@ A cloud agent scoped to one organization's repositories cannot write outside tha
 **`codex exec` waits for stdin to reach EOF before it starts, whenever stdin is
 not a TTY.** A backgrounded Bash call hands it a pipe that never closes, so it
 blocks forever having printed only `Reading additional input from stdin...`.
-This is the single most repeated failure in this skill's history: it has burned
-a launch round-trip on 2026-07-24 and again on 2026-08-17, the latter costing
-25 minutes of wall-clock for zero work while looking like a healthy running arm.
+This is the skill's most repeated failure, and it looks like a healthy running arm.
 
 So every invocation redirects stdin. Two correct shapes, both verified:
 
@@ -92,8 +90,7 @@ escaping (`'"'"'` chains) that is easy to get wrong and impossible to read back.
 Three rules for reading the result, because this failure imitates success:
 
 - **`Reading additional input from stdin...` means the prompt never arrived.**
-  Treat that string as a hard failure, whatever the exit code — the 2026-08-17
-  occurrence exited **0**.
+  Treat that string as a hard failure, whatever the exit code: the hang can exit **0**.
 - **A fast exit is not a fast success.** Before trusting a quick return, confirm
   the arm actually changed something (`git status`, or the artifact it owed).
 - **Silence is not progress.** An arm with no output after ~5 minutes has almost

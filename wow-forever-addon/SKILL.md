@@ -59,7 +59,9 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   shape. Inline markup (`CreateAtlasMarkup`, `|A`, `|T`) takes whole pixels, so pick sizes within 2% of the
   native shape and comment the native size. File icons are square; account for any texcoord crop. Only
   nine-slice pieces, bars, fills, colour textures and masks stretch by design. Each repo's `AGENTS.md`
-  carries this rule under Rules.
+  carries this rule under Rules and its gate runs `tools/lint_art.py` (`forever_tools.art`): art is set only in
+  the repo's art helper file, or on a line that says why its shape is right (`art-ok: reason`). A texture reused
+  for a file icon after an atlas keeps the atlas's crop: reset its texcoords first.
 
 ### Assets
 

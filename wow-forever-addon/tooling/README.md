@@ -12,6 +12,7 @@ the producer commit the copy came from.
 | `toc` | TOC and nested XML traversal, orphan Lua check per addon `runtime_dirs`, LuaLS coverage gate |
 | `multivalue` | `select()` and multi-return expansion lint; `Rules` carries the addon's policy |
 | `taint` | Taint lint; `Policy` carries the map openers, frames and getters (`C_Map.OpenWorldMap` is the safe call) |
+| `art` | Art lint (WFA-27): raw texture, atlas and markup calls outside the addon's art helper files need an `art-ok` reason |
 | `changelog`, `release_check`, `latest_build` | Release gates and the newest Forever build |
 | `csvtable`, `wago` | Strict DB2 CSV parsing and cached, validated downloads |
 | `fsio` | `atomic_write`, and `publish` for multi-output generators (stage all, replace, roll back on failure) |
@@ -19,7 +20,7 @@ the producer commit the copy came from.
 | `generated` | The fresh-then-offline generated-data gate and `data_report` |
 | `sync` | `check`, `update`, `pin`, `manifest` |
 
-A repo's `tools/*.py` entry points stay thin (`changelog.py`, `release_check.py`, `lint_taint.py`,
+A repo's `tools/*.py` entry points stay thin (`changelog.py`, `release_check.py`, `lint_taint.py`, `lint_art.py`,
 `lint_multivalue.py`, `typecheck_coverage.py`) and add only per-addon policy such as `RUNTIME_DIRS`.
 Addon-specific generators and hints stay in the repo.
 

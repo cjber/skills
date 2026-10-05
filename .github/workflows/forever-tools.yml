@@ -1,0 +1,32 @@
+name: Forever tooling
+
+on:
+  push:
+    branches: [main]
+    paths: ['wow-forever-addon/tooling/**', '.github/workflows/forever-tools.yml']
+  pull_request:
+    paths: ['wow-forever-addon/tooling/**', '.github/workflows/forever-tools.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.10', '3.14']
+    defaults:
+      run:
+        working-directory: wow-forever-addon/tooling
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python3 -m unittest discover -s tests -t .
+      - run: python3 forever_tools/sync.py check --allow-unpinned
+      - run: pipx run ruff==0.16.8 check .
+      - run: pipx run ruff==0.16.8 format --check .

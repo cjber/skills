@@ -27,8 +27,8 @@ never talks to a backend itself.
 
 Usage:  autopsy.py trace.jsonl [--out DIR]          one run: DIR/timeline.md + DIR/findings.json
         autopsy.py a.jsonl b.jsonl ... [--out DIR]  sweep: per-run dirs + DIR/sweep.md (detector
-                                                    classes ranked by severity and how many runs hit them) Every
-detector hit is a CANDIDATE for the auditor to explain with evidence, not a verdict.
+                                                    classes ranked by severity and how many runs hit them)
+Every detector hit is a CANDIDATE for the auditor to explain with evidence, not a verdict.
 """
 
 from __future__ import annotations

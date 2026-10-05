@@ -23,6 +23,15 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 - **WFA-2** Zero setup. Every feature works out of the box: no required settings, extra downloads
   or companion installs. Data ships in the release zip (`.pkgmeta` `move-folders` for a
   load-on-demand data addon). Anything off by default is off because it acts for the player.
+- **WFA-28** Game data has two sources: the installed QuestieDB (quests, NPCs, objects, spawns,
+  vendors, trainers' places) and AtlasLoot (bosses, loot, recipes, drop rates), read at runtime
+  through their public tables. Neither is copied into the repo or the zip: QuestieDB carries no
+  licence and AtlasLoot is GPL v2. This is the one companion install WFA-2 allows; without it the
+  feature says in one plain line what to install and the rest of the addon works. A dataset neither
+  holds (trainer fees, transports) is a named exception in the repo's `AGENTS.md` under `## Waivers`,
+  stating its source, and the player sees a live in-game value over the bundled one wherever the
+  client offers it. A server-emulator dump (CMaNGOS classic-db) describes Classic Era, not Forever:
+  it is never the source for a dataset QuestieDB or AtlasLoot holds.
 - **WFA-3** Minimal surface. Options live in one place: a Settings > AddOns page (Blizzard's
   settings API), or a menu on the addon's own UI when every option is about that UI (Legacy Forever's
   map menu). A slash command (short form plus the full name) and an addon compartment entry
@@ -50,7 +59,9 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   shape. Inline markup (`CreateAtlasMarkup`, `|A`, `|T`) takes whole pixels, so pick sizes within 2% of the
   native shape and comment the native size. File icons are square; account for any texcoord crop. Only
   nine-slice pieces, bars, fills, colour textures and masks stretch by design. Each repo's `AGENTS.md`
-  carries this rule under Rules.
+  carries this rule under Rules and its gate runs `tools/lint_art.py` (`forever_tools.art`): art is set only in
+  the repo's art helper file, or on a line that says why its shape is right (`art-ok: reason`). A texture reused
+  for a file icon after an atlas keeps the atlas's crop: reset its texcoords first.
 
 ### Assets
 
@@ -144,3 +155,9 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   security updates on; private vulnerability reporting on (public repos only); Actions may create
   pull requests (for WFA-19); Actions require full-SHA pinning; topics `wow-addon`,
   `world-of-warcraft`, `wow-forever`, `lua` plus one or two for what the addon does.
+- **WFA-29** The Python tooling every addon shares (changelog and release checks, TOC and XML
+  traversal, the Lua lexer with its taint and multi-value lints, strict DB2 CSV parsing, atomic
+  writes, the generated-data gate and its semantic report) is [tooling/](tooling/README.md): one
+  producer here, vendored byte for byte into each repo as `tools/forever_tools/` and pinned by
+  `MANIFEST.json`. Edit it here, never in a repo; `python3 tools/forever_tools/sync.py check` runs
+  in `typecheck.sh`. A repo's own `tools/` keeps only thin entry points and its generators.

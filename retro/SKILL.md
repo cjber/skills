@@ -26,7 +26,7 @@ session starts ahead. It proposes; it applies only what the user picks.
 
 | Friction | Home |
 |---|---|
-| A **mechanical** violation: fixed syntactic pattern, banned API, import shape, file location | A deterministic check in the repo's own gate (lint rule, hook, CI job). Read the gate first: a check that exists but is unwired or silently broken is the finding. |
+| A **mechanical** violation: fixed syntactic pattern, banned API, import shape, file location | A deterministic check in the repo's own gate (lint rule, hook, CI job). Read the gate first: a check that exists but is unwired or silently broken is the finding, and so is a repo with no gate at all (no hook and no CI job running its lint, type check or tests). |
 | A judgment-call standard the diff could show | The review standard the reviewer reads, where review has little context pressure. |
 | Slow to find the right file or doc; a hidden dependency | A **pointer** in the nearest steering file or skill description. |
 | A crucial fact was unreachable (logs, a third-party dashboard, a read-only credential) | Information access: tee the logs, add the read path. |
@@ -45,6 +45,8 @@ Steering files and the memory index are always-loaded **context load**. On every
 - **Duplication**: one meaning in two files. Keep the single source of truth and point at it.
 - **Caches**: text restating what one command or one file would show.
 - **Promotions**: a steering rule that is really mechanical moves to a check and leaves the file.
+- **Disclosures**: a steering section only some tasks reach moves to a doc behind a **pointer**.
+  What stays is what every task needs: commands, hard rules, gotchas and pointers.
 - An index over its size limit is a finding by itself: merge and shorten until it loads whole.
 
 Adapted from mattpocock/skills `retro`, (c) 2026 Matt Pocock, MIT.

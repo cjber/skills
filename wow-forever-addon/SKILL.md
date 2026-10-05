@@ -153,3 +153,9 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   security updates on; private vulnerability reporting on (public repos only); Actions may create
   pull requests (for WFA-19); Actions require full-SHA pinning; topics `wow-addon`,
   `world-of-warcraft`, `wow-forever`, `lua` plus one or two for what the addon does.
+- **WFA-29** The Python tooling every addon shares (changelog and release checks, TOC and XML
+  traversal, the Lua lexer with its taint and multi-value lints, strict DB2 CSV parsing, atomic
+  writes, the generated-data gate and its semantic report) is [tooling/](tooling/README.md): one
+  producer here, vendored byte for byte into each repo as `tools/forever_tools/` and pinned by
+  `MANIFEST.json`. Edit it here, never in a repo; `python3 tools/forever_tools/sync.py check` runs
+  in `typecheck.sh`. A repo's own `tools/` keeps only thin entry points and its generators.

@@ -28,3 +28,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+The `prototype` skill is installed from mattpocock/skills under the MIT license
+above. The maintained `web-design-guidelines` skill is adapted from
+https://github.com/vercel-labs/agent-skills/tree/main/skills/web-design-guidelines.

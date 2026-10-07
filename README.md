@@ -16,6 +16,8 @@ Agent skills I use daily, one per directory, each a self-contained `SKILL.md` pl
 | [`retro`](#retro) | Turn a session's friction into a change to checks, steering files or skills |
 | [`handoff`](#handoff) | Compact a conversation into a document a fresh agent can continue from |
 | [`skill-writing`](#skill-writing) | Write and prune skills and steering files; holds the shared glossary |
+| [`prototype`](prototype/SKILL.md) | Explore design questions with disposable UI or logic prototypes |
+| [`web-design-guidelines`](web-design-guidelines/SKILL.md) | Audit rendered websites and UI code for accessibility, navigation and responsive behavior |
 | [`docs-writing`](docs-writing/SKILL.md) | Write verified documentation around reader goals and remove agent-generated filler |
 | [`wow-forever-addon`](#wow-forever-addon) | Hold every WoW: Forever addon to one look, icon family, docs shape and CI baseline |
 | [`wow-addon-publish`](#wow-addon-publish) | Publish a WoW addon to CurseForge and Wago, and cut releases |

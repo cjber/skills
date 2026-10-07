@@ -334,7 +334,10 @@ report what it changed alongside the CI result.
 - **Read and address review comments, including bot reviewers.** Fetch them
   explicitly: a PR-level review body hides the inline comments, so pull the
   inline set too (`gh api repos/{owner}/{repo}/pulls/{n}/comments`) rather than
-  relying on `gh pr view`. Automated reviewers (Codex, Copilot, CodeQL) count.
+  relying on `gh pr view`. Also fetch issue-level PR comments
+  (`gh api repos/{owner}/{repo}/issues/{n}/comments`): Jev CI advisories live
+  there and count even when they do not block merging. Automated reviewers
+  (Codex, Copilot, CodeQL, Jev) count.
 - **Every comment gets a reply on the PR — accepted, rejected, or already
   fixed. No exceptions.** Evaluate each on its merits against the actual code,
   then reply in its own thread so the resolution is visible where the comment
@@ -361,6 +364,13 @@ report what it changed alongside the CI result.
   Verify a comment's claim against the code before answering it, including a
   bot's. Confirming a wrong finding to look agreeable puts a defect in the
   branch; measure first, then reply with what you measured.
+- **Close validated findings after the repair is verified.** Check each current
+  Jev finding against its run/head and the current code. Repair valid defects,
+  push the signed fix, wait for green CI, and post the verdict with evidence.
+  Resolve addressed review threads. For issue-level advisories, link a verdict
+  to each comment and minimize it as resolved after addressing every finding;
+  superseded reports name the passing replacement head. Keep unresolved or
+  unverified findings visible. Re-fetch comments before completion and merging.
 - Commits pushed for CI or review fixes go through the same gates as the
   original diff: `/simplify` on substantive changes, the fast lint/type gate,
   and a signed commit.

@@ -6,14 +6,14 @@ description: "Set up Parallax evaluation tracking, run or compare agent evaluati
 # Parallax evaluations
 
 For `setup`, locate the user's Parallax checkout and read its `AGENTS.md` and
-`docs/tracking.md`. Use the installed CLI's `parallax setup --help`; the executable
+`docs/tracking.md`. Use `uv run parallax setup --help` from the checkout, or the installed CLI; the executable
 command is `parallax setup`, while `/parallax setup` invokes this skill.
 
 1. Find the intended non-production tracking project in the consuming repository's
    testing documentation. Obtain project-scoped credentials through the host's
    authorized secret manager or private environment. Keep keys out of command
    arguments, Git, artifacts, logs and user sandboxes.
-2. Install the checkout's optional tracking dependencies. Run `parallax setup` with
+2. Install the checkout's optional tracking dependencies. Run `uv run parallax setup` from that checkout with
    the documented project and regional service address. Setup is complete when the
    CLI verifies project access and reports its private configuration path.
 3. Explain automatic tracking and `--no-track`. Use `parallax track dashboard` when

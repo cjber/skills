@@ -35,3 +35,7 @@ retries, held-out panels and real-provider evidence distinguishable. Scope dashb
 charts with `--run-id`; do not pool incompatible panels or treat a dashboard as a
 promotion decision. Finish with verified run and dashboard links, results, remaining
 gaps, and the location of private artifacts without exposing their contents.
+
+For automated Nebula campaigns, read Parallax's `docs/tracking.md` and
+`.github/workflows/nebula-evals.yml`. Pin the evaluator and judge, name explicit
+baseline IDs, and verify the initial campaign before enabling nightly runs.

@@ -39,3 +39,5 @@ gaps, and the location of private artifacts without exposing their contents.
 For automated Nebula campaigns, read Parallax's `docs/tracking.md` and
 `.github/workflows/nebula-evals.yml`. Pin the evaluator and judge, name explicit
 baseline IDs, and verify the initial campaign before enabling nightly runs.
+Verify encrypted CI evidence can be recovered locally using the repository's
+tracking instructions. Keep the private decryption key outside the runner.

@@ -1,34 +1,26 @@
 # Store and post voice
 
-How cjber writes about his addons in public: store descriptions, Reddit/forum/Discord posts,
-release announcements. Taken from his own pre-AI writing (GitHub issue comments 2019-2022, tweets)
-and the way he talks about the addons. AI was used to build them and that is fine to say when asked;
-the copy just has to read like one person wrote it.
+Rules for addon descriptions, READMEs, posts and release announcements.
 
-## The pitch (WFA-23)
+## Describe the addon (WFA-23)
 
-Every addon is pitched the same way: **it looks like it came with the game.** Blizzard's own frames,
-fonts, icons, tooltips, map pins and settings, nothing bolted on. Say it early, in plain words, and
-back it with something concrete from this addon (retail's dungeon icon, the game's junk coin, a tab
-in Edit Mode, the Professions window's own rows). Then the second promise: it steps aside for
-addons you already run.
-
-The lead image shows the addon looking native, and where the change is subtle it is shown against
-the stock UI.
+Lead with what the addon does and how the player uses it, in one or two short sentences.
+Put feature details under the relevant feature. Screenshots show how it fits the game's UI;
+name a specific frame or control only when that helps the player understand the feature.
 
 ## Voice (WFA-24)
 
-- First person, singular, sparing: "I wanted...", "I got tired of...". One or two lines on why it
-  exists, then what it does.
-- Short sentences, short paragraphs. Sentence case. British spelling (colour, realise, levelling).
-- Undersell. A dry closing line beats a claim: "Early days, feedback welcome." "Still a few rough
-  edges." Never promise, never hype.
-- Say what it does not do. One honest limit reads as a person.
-- Concrete over adjectives: name the frame, the zone, the number. "Clean", "sleek" and "minimal"
-  say nothing; "uses retail's dungeon icon" does.
-- Credit what it builds on or works with (Questie, Leatrix, Auctionator, Blizzard's UI source).
-- Casual posts may be looser (lowercase, "w/", "haha", one emoji at most); store pages stay in the
-  plain public register.
+- Use short sentences, sentence case and British spelling (colour, realise, levelling).
+- State concrete behaviour. Remove generic benefits, slogans, origin stories and preambles.
+- Use first person only for an experience or intention cjber actually supplied. Do not invent
+  motives, anecdotes, a development history or a quotation to make copy sound personal.
+- Attribute work to the actual author or credited project. Do not invent a team, studio,
+  organisation or community, or add collective credits such as "Shortest Path Forever Team".
+  A team credit needs evidence; otherwise use the author's name where a credit is required.
+- Include limits when they affect a player's decision or use of the addon. Do not add a
+  disclaimer, apology, "early days" closing or feedback invitation just to sound human.
+- Credit real dependencies and integrations. Preserve licence notices and contributor credits.
+- Casual posts may use cjber's own phrasing; store pages stay direct and factual.
 
 ## Never
 

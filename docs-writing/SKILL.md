@@ -74,6 +74,11 @@ Replace vague benefits and generic claims with concrete behaviour. Remove stock
 introductions, repeated summaries, inflated adjectives, artificial contrasts,
 announcements of what the next paragraph explains, and headings with no useful content.
 
+Lead product copy with what it does and how to use it. Attribute it to the actual author;
+do not invent a team, company, community, origin story or personal experience. First-person
+claims need facts the author supplied. Remove slogans, preambles and obligatory feedback
+closings. Preserve accurate contributor credits and licence notices.
+
 Use the product's vocabulary consistently. Prefer direct verbs and concrete subjects.
 Use passive voice when the actor is unknown or irrelevant. Keep qualifications that
 affect correctness, and explain a technical term when the intended reader needs it.

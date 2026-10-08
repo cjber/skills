@@ -1,9 +1,6 @@
 # Store and post voice
 
-How cjber writes about his addons in public: store descriptions, Reddit/forum/Discord posts,
-release announcements. Taken from his own pre-AI writing (GitHub issue comments 2019-2022, tweets)
-and the way he talks about the addons. AI was used to build them and that is fine to say when asked;
-the copy just has to read like one person wrote it.
+Rules for addon descriptions, READMEs, posts and release announcements.
 
 ## Describe the addon (WFA-23)
 

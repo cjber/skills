@@ -5,7 +5,7 @@ description: "Reference for writing any document an agent reads: a skill, AGENTS
 
 # Writing for agents
 
-For human-facing product documentation, use [`docs-writing`](../docs-writing/SKILL.md).
+For human-facing copy, use [`copywriting`](../copywriting/SKILL.md).
 
 All reference. The goal is a document that makes the agent take the same *process* every run.
 Shared vocabulary for every skill in this repo lives in [`GLOSSARY.md`](GLOSSARY.md); use those

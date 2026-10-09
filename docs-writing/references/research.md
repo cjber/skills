@@ -154,3 +154,12 @@ This is original synthesis informed by the linked primary publications and guide
 It does not reproduce a third-party skill or import a publisher's entire house
 style. Source recommendations, measured findings and our workflow are distinguished
 above so they can be challenged or updated independently.
+
+## Website and interface copy
+
+[GOV.UK: Writing for user interfaces](https://www.gov.uk/service-manual/design/writing-for-user-interfaces)
+recommends putting useful words first, keeping interface text short and direct, and
+using descriptive headings and links. Apply this to labels and help text as well as
+page prose. Its government-specific tone and typography rules do not override a
+product's own style. This supports a coverage check and reader-focused editing,
+not a forbidden-word list or a claim that polished prose proves AI authorship.

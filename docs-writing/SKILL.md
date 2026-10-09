@@ -1,6 +1,6 @@
 ---
 name: docs-writing
-description: Write or review human-facing software documentation, READMEs, how-to guides, tutorials, reference pages and troubleshooting instructions. Use for documentation audits and removing agent-generated filler while preserving technical meaning. For skills, AGENTS.md and other agent-facing instructions, use skill-writing instead.
+description: Write or review human-facing software documentation, READMEs, how-to guides, tutorials, reference pages, website copy and troubleshooting instructions. Use for documentation audits and removing agent-generated filler while preserving technical meaning. For skills, AGENTS.md and other agent-facing instructions, use skill-writing instead.
 ---
 
 # Documentation writing
@@ -88,6 +88,24 @@ Judge the passage in context. A word, punctuation mark, sentence length, detecto
 or smooth tone does not prove AI authorship or poor quality. Apply local style preferences
 as preferences, not as scientific rules. Edit for accuracy and usefulness rather than
 for passing an AI detector or making prose artificially irregular.
+
+## Review website and interface copy
+
+For a website copy sweep, read every public route, shared component, page title,
+description, accessible label and empty or error state. Follow fetched documentation
+to its canonical source; do not patch only the rendered copy. Record the coverage and
+check changed wording in the rendered pages.
+
+Name the subject or action directly. Replace narrator copy such as "A structural
+comparison, not a scoreboard" with "Compare browser actions, answers and credentials".
+Keep source attribution beside the claims it supports. Explain a material limitation
+concretely: "Browser environments and run limits differ" tells the reader more than
+"not a controlled ranking". Retain the limitation and its consequence for interpreting
+results. Do not remove a qualification just because it sounds negative.
+
+Use technical detail where it helps the reader act or judge a claim. A landing page
+can say "steps, model calls and cost"; an API reference may need the exact ledger fields.
+Avoid replacing accurate names, controls or statuses with vague everyday synonyms.
 
 ## Check the delivered documentation
 

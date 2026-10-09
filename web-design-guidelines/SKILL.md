@@ -49,3 +49,8 @@ source. Include navigation, theme discoverability and persistence, landmarks,
 keyboard access, touch targets, motion, media, metadata and responsive content.
 Verify findings before changing code, then add browser coverage for the behavior
 that failed. Report remaining limitations separately from verified fixes.
+
+For a copy audit, apply [docs-writing](../docs-writing/SKILL.md) to public text,
+metadata, labels and empty states. Preserve factual limits and measurement caveats;
+verify the rewritten text in the rendered interface. Prose-only changes do not need
+a test that repeats the new wording.

@@ -15,27 +15,27 @@ such as `/simplify` mean load that shared skill with the host's available tools.
 
 Scale to the repository in front of you; its own documented gate always wins:
 
-- **A repository with a configured gate** (`AGENTS.md` / `CONTRIBUTING` naming lint, type and test commands, or a recorded `sift` gate) — the full path: two-model phases, the configured gate, isolated databases for migration work, and stacked PRs only when explicitly requested.
-- **A personal or small repository with no configured gate** — the lighter path: a single pass by default, none of the heavier machinery, and its own checks are the whole gate. Add the Codex arm only when the diff touches destructive shell, secrets, a published surface, git history or hooks, or roughly 3 files / 200 lines.
-- **Any other owner** — never open a PR against an upstream you do not control.
+- **A repository with a configured gate** (`AGENTS.md` / `CONTRIBUTING` naming lint, type and test commands, or a recorded `sift` gate), the full path: two-model phases, the configured gate, isolated databases for migration work, and stacked PRs only when explicitly requested.
+- **A personal or small repository with no configured gate**, the lighter path: a single pass by default, none of the heavier machinery, and its own checks are the whole gate. Add the Codex arm only when the diff touches destructive shell, secrets, a published surface, git history or hooks, or roughly 3 files / 200 lines.
+- **Any other owner**, never open a PR against an upstream you do not control.
 
 Public repositories: `.env*`, keys, tokens and machine-local config stay ignored. If a file looks like a credential, stop and report rather than committing it.
 
-A cloud agent scoped to one organization's repositories cannot write outside that scope — the write is refused by installation scope, not credentials. Such an agent does the read-only part and stops; it never reaches for a personal access token to work around it.
+A cloud agent scoped to one organization's repositories cannot write outside that scope, the write is refused by installation scope, not credentials. Such an agent does the read-only part and stops; it never reaches for a personal access token to work around it.
 
-## Guard rails — these outrank everything below
+## Guard rails, these outrank everything below
 
 - **Never merge** without explicit authorization for these specific PRs (§7). A standing preference or an earlier "ship it" is not authorization now.
-- **Never touch a contributor's PR** — do not merge, close, approve, review, rebase, force-push, label or edit one. Report it and take no action.
-- **Never rewrite pushed history** — no force-push, no rebase of pushed history, no amending a pushed commit, no deleting tags, releases or branches.
-- **Never change repository state** — no visibility change, rename, transfer, archival, deletion, branch protection, Actions secrets, deploy keys or webhooks.
+- **Never touch a contributor's PR**, do not merge, close, approve, review, rebase, force-push, label or edit one. Report it and take no action.
+- **Never rewrite pushed history**, no force-push, no rebase of pushed history, no amending a pushed commit, no deleting tags, releases or branches.
+- **Never change repository state**, no visibility change, rename, transfer, archival, deletion, branch protection, Actions secrets, deploy keys or webhooks.
 - **Never push to a fork you do not own.**
-- **One PR per repository** — a stack is the exception and requires an explicit request (§2).
+- **One PR per repository**, a stack is the exception and requires an explicit request (§2).
 
 ## Resource budget
 
 - Claude uses Sonnet at medium effort by default.
-- **Codex uses Sol at `xhigh` reasoning effort for every phase** — planning,
+- **Codex uses Sol at `xhigh` reasoning effort for every phase**, planning,
   implementation, and review alike. Sol at xhigh is the point of running a second
   model at all: the value of the Codex arm is that it thinks hard enough to catch
   what the Claude arm assumed, and a cheaper tier spends the coordination
@@ -49,7 +49,7 @@ A cloud agent scoped to one organization's repositories cannot write outside tha
 
   **Always pass `-c service_tier=default` on every codex invocation.** The
   "fast" tier is `priority` ("2x speed, increased usage") and is billed in
-  credits, not against the plan allowance — it spends real money while the
+  credits, not against the plan allowance, it spends real money while the
   usage meter barely moves. Passing it explicitly makes the skill immune to
   whatever `service_tier` `~/.codex/config.toml` happens to carry.
 
@@ -64,7 +64,7 @@ A cloud agent scoped to one organization's repositories cannot write outside tha
 - Escalate one judgment turn to Opus only for security, billing, data-loss,
   migration, or architecture risk that neither arm can resolve on its own.
 
-### Invoking Codex — always redirect stdin
+### Invoking Codex, always redirect stdin
 
 **`codex exec` waits for stdin to reach EOF before it starts, whenever stdin is
 not a TTY.** A backgrounded Bash call hands it a pipe that never closes, so it
@@ -78,7 +78,7 @@ So every invocation redirects stdin. Two correct shapes, both verified:
 cd "$WORKTREE" && codex exec -m gpt-6-astra -c model_reasoning_effort=xhigh -c service_tier=default \
   --skip-git-repo-check - < prompt.md
 
-# Prompt as an argument — still requires closing stdin explicitly:
+# Prompt as an argument, still requires closing stdin explicitly:
 cd "$WORKTREE" && codex exec -m gpt-6-astra -c model_reasoning_effort=xhigh -c service_tier=default \
   --skip-git-repo-check "$PROMPT" < /dev/null
 ```
@@ -95,17 +95,17 @@ Three rules for reading the result, because this failure imitates success:
   the arm actually changed something (`git status`, or the artifact it owed).
 - **Silence is not progress.** An arm with no output after ~5 minutes has almost
   certainly hit this; check rather than wait. Do not let a long-running process
-  reassure you — the hang and the instant no-op share one cause.
+  reassure you, the hang and the instant no-op share one cause.
 
 Two further flag landmines on this account:
 
 - **`codex exec resume <id>` rejects `--cd` and `--sandbox`** (exit 2,
-  `unexpected argument`). Resume is cwd-aware, so `cd` into the worktree first —
+  `unexpected argument`). Resume is cwd-aware, so `cd` into the worktree first -
   which is why every example above `cd`s rather than passing `--cd`. Sandbox mode
   is inherited from the original `exec`.
 - **`codex review` takes `-m`/`-c` as TOP-LEVEL flags**, before the subcommand:
   `codex -m gpt-6-astra -c model_reasoning_effort=xhigh -c service_tier=default review --base origin/main`. And `--base main`
-  reviews against the *local* main — always pass `origin/main`.
+  reviews against the *local* main, always pass `origin/main`.
 
 ### Invoking Claude from a Codex coordinator
 
@@ -132,7 +132,7 @@ Scope the prompt to the other arm's work and preserve normal tool permissions.
 ## 2. Isolate
 
 **Branch from fresh `origin/main` by default.** Do not stack onto unrelated work
-just because it is open or was touched today — an unrelated lower layer holds the
+just because it is open or was touched today, an unrelated lower layer holds the
 upper ones back for no benefit.
 
 Continue the same coherent effort on its existing PR while it remains open,
@@ -155,7 +155,7 @@ Isolation itself:
   permitted ignored local configuration such as `.env`; never commit it.
 - Use an isolated database for migration work. Never test branch migrations
   against the shared primary database.
-- Never use `gh pr update-branch` — it strips commit signatures. Rebase locally
+- Never use `gh pr update-branch`, it strips commit signatures. Rebase locally
   so `commit.gpgsign` re-signs.
 
 ## 3. Implement on both models
@@ -170,9 +170,9 @@ Isolation itself:
   cleanup.
 - Each arm runs only focused checks for its slice. After both finish, the
   coordinating agent inspects the combined diff and runs the repo's fast lint/type gate
-  (the gate the repository documents — a `sift` gate when configured, otherwise its own
+  (the gate the repository documents, a `sift` gate when configured, otherwise its own
   lint/type command; skip the slow test step). A repo with no configured gate uses whatever
-  it has — `make check`, `bun run check`, `npm test`, `shellcheck`, `bash -n` — and the
+  it has, `make check`, `bun run check`, `npm test`, `shellcheck`, `bash -n`, and the
   report states exactly what was run.
 - Before integration, exchange short implementation summaries and diffs. Each arm
   checks the other's slice only for seam mismatches, broken assumptions, and
@@ -192,7 +192,7 @@ Isolation itself:
   branch, a call site, or a config entry orphans the code behind it, and that
   residue is invisible to `/simplify` (which reads the diff, not the whole
   program) and to reviewers (who see what changed, not what stopped being
-  reached). Treat every hit as a candidate, not a verdict — a hit inside the
+  reached). Treat every hit as a candidate, not a verdict, a hit inside the
   diff's blast radius is usually real; one elsewhere is usually a framework
   entrypoint or a dynamic-dispatch false positive, and belongs in its own sweep,
   not this PR. Prove non-use before deleting; `/deadcode` carries the full
@@ -206,7 +206,7 @@ Isolation itself:
   then fixes verified blockers.
 - **Fix a verified finding in this PR. Filing an issue is not a resolution.**
   Once a finding is confirmed real, the default is a commit on this branch, even
-  when the true fix is one layer below the diff — a defect the diff made visible
+  when the true fix is one layer below the diff, a defect the diff made visible
   is the diff's to fix, and the producer fix is usually smaller than the
   write-up explaining why it was deferred. Do not reach for `gh issue create`
   because the fix touches a shared seam, a contract other surfaces also use, or
@@ -216,7 +216,7 @@ Isolation itself:
   Defer only when the fix genuinely cannot land here: it needs a migration or
   rollout the PR is not carrying, it depends on an unmerged change elsewhere, or
   it is a redesign whose scope the user should choose. Then say so in your report
-  and let the user decide — do not file and move on. If you do file, the issue is
+  and let the user decide, do not file and move on. If you do file, the issue is
   a record of a decision the user made, never a substitute for one you avoided.
 
   When you catch yourself writing "tracked separately", "out of scope", or "filed
@@ -241,7 +241,7 @@ let CI be the test gate.
 - Stage explicit paths and create signed Conventional Commits.
 - Push one branch and open or update one ready-for-review PR per repository.
   Task PRs target `main`. Only an explicitly requested stack (§2) targets the
-  layer below and uses `gh stack submit --open`. Publishing never merges —
+  layer below and uses `gh stack submit --open`. Publishing never merges -
   merging is a separate, explicitly authorized step (§7).
 - Include why, scope, how it was verified, risks, rollout order, and deliberate deferrals.
 - If the change contradicts a documented rule or contract (a skill file, an
@@ -257,13 +257,13 @@ what a diagram cannot say: why, deliberate deferrals, rollout order, and what
 cannot be backfilled.
 
 GitHub renders mermaid natively in a PR body, so this costs a fenced ```mermaid
-block and nothing else — no image hosting, no attachment, and every reviewer sees
+block and nothing else, no image hosting, no attachment, and every reviewer sees
 it including bots. Two diagrams is usually the right number:
 
-1. **How the subsystem works now** — the lanes, the shared seam, the gate or
+1. **How the subsystem works now**, the lanes, the shared seam, the gate or
    invariant everything passes through. Someone who has never opened these files
    should be able to name the pieces after reading it.
-2. **Before → after** — each defect paired with its fix, so the review question
+2. **Before → after**, each defect paired with its fix, so the review question
    becomes "is this the right fix" rather than "what changed".
 
 Draw the *domain*, not the call graph: a diagram that is one node per function is
@@ -274,7 +274,7 @@ edges are the flow between them.
 
 - **Never use HTML in a node label.** Some renderers run with `htmlLabels` off
   and *delete* the tags rather than honour them, so `a<br/>b` silently becomes
-  `ab` — the failure looks like a typo, not a config difference. Use mermaid's
+  `ab`, the failure looks like a typo, not a config difference. Use mermaid's
   markdown-string form instead, which is a real newline inside backticks:
 
   ```
@@ -288,8 +288,8 @@ edges are the flow between them.
 - Set explicit `classDef` fills. Diagrams render on whatever ground the host
   picks, and a default-themed node can end up invisible.
 
-**When a richer page is warranted** — a large audit, a multi-subsystem change, a
-result someone will refer back to — use the Artifact tool when available (load
+**When a richer page is warranted**, a large audit, a multi-subsystem change, a
+result someone will refer back to, use the Artifact tool when available (load
 `artifact-design` first) and link it from the PR body. Otherwise keep the report
 and diagrams in the PR body. One caveat that decides
 whether this is appropriate: **a published artifact is private to your account
@@ -305,13 +305,13 @@ every review comment has been answered.
 
 **Waiting on CI is working time, not idle time.** The moment the PR is open,
 start a second `/simplify` and `/review` pass over the published diff and run it
-*concurrently* with the checks — never sit polling a status endpoint. This pass
+*concurrently* with the checks, never sit polling a status endpoint. This pass
 is mandatory, not conditional on the pre-publish pass having found something (on
-the single-pass personal path, run the same `/simplify` + `/review` once — there
+the single-pass personal path, run the same `/simplify` + `/review` once, there
 is no second arm to wait on):
 
 - The pre-publish pass in §4 reviewed a diff you had just finished writing. The
-  post-publish pass reads it as published, with that round's fixes folded in —
+  post-publish pass reads it as published, with that round's fixes folded in -
   a different artifact, and those fixes are themselves unreviewed code until
   this pass looks at them.
 - Findings cost nothing here. The branch is already pushed, so a fix is one more
@@ -324,12 +324,12 @@ Run it as one `/simplify` followed by `/review` over `git diff origin/main`, and
 report what it changed alongside the CI result.
 
 - **CI must pass completely.** Wait for the checks to finish and read the
-  result — never assume green because the push succeeded or because local
+  result, never assume green because the push succeeded or because local
   checks passed. Fix every failure and re-push until all required checks pass.
   If a failure is genuinely environmental or a known-flaky job, say so
   explicitly with the evidence that distinguishes it from a real failure;
   never silently treat red as green. If the repository has no checks at all,
-  say so plainly and let the local verification above be the stated gate — do
+  say so plainly and let the local verification above be the stated gate, do
   not imply a green tick that does not exist.
 - **Read and address review comments, including bot reviewers.** Fetch them
   explicitly: a PR-level review body hides the inline comments, so pull the
@@ -338,7 +338,7 @@ report what it changed alongside the CI result.
   (`gh api repos/{owner}/{repo}/issues/{n}/comments`): Jev CI advisories live
   there and count even when they do not block merging. Automated reviewers
   (Codex, Copilot, CodeQL, Jev) count.
-- **Every comment gets a reply on the PR — accepted, rejected, or already
+- **Every comment gets a reply on the PR, accepted, rejected, or already
   fixed. No exceptions.** Evaluate each on its merits against the actual code,
   then reply in its own thread so the resolution is visible where the comment
   was made:
@@ -348,16 +348,16 @@ report what it changed alongside the CI result.
     -f body="$REPLY"
   ```
 
-  A fix pushed without a reply reads as an ignored comment — the reviewer has
+  A fix pushed without a reply reads as an ignored comment, the reviewer has
   to diff the branch to discover you agreed. Silence is the one response that
   costs a review cycle no matter which way you decided.
 
   Each reply states the verdict and the evidence, in one or two sentences:
-  - **Accepted** — name the commit that fixes it and what it changed.
-  - **Rejected** — the specific evidence that disproves it (the guard that
+  - **Accepted**, name the commit that fixes it and what it changed.
+  - **Rejected**, the specific evidence that disproves it (the guard that
     already exists, the call site that cannot produce the shape, the test that
     covers it). Never reject on assertion alone.
-  - **Partially accepted** — say which part you took, which you did not, and
+  - **Partially accepted**, say which part you took, which you did not, and
     why. This is common on suggestions whose diagnosis is right but whose
     proposed fix conflicts with something the reviewer could not see.
 
@@ -377,7 +377,7 @@ report what it changed alongside the CI result.
 - **Every push reopens the comment window.** A push invalidates the sweep you
   did before it: bot reviewers re-run against the new head, and a human reading
   the PR comments on what they now see. So after each push, poll for *both*
-  checks and new comments, and keep polling until the checks settle — a review
+  checks and new comments, and keep polling until the checks settle, a review
   posted while CI was still running is the one most easily missed, because the
   natural stopping point is the green tick.
 
@@ -389,7 +389,7 @@ report what it changed alongside the CI result.
   A top-level comment with no reply of yours beneath it is unaddressed. Treat
   the reply itself as a push: after posting one, check once more before you
   call the PR done.
-- Poll efficiently — use the available wait/monitor mechanism instead of
+- Poll efficiently, use the available wait/monitor mechanism instead of
   burning model turns on repeated status checks.
 
 ## 7. Merge only on explicit authorization
@@ -398,7 +398,7 @@ report what it changed alongside the CI result.
 skill; merging is the user's decision and requires them to say so for these
 specific PRs. A standing preference, an old approval, or "ship it" from earlier
 in the session is not authorization for a merge now. If merging seems like the
-obvious next step, say so and ask — do not infer it.
+obvious next step, say so and ask, do not infer it.
 
 When the user does authorize it, **sweep for comments first, and treat the
 sweep as a gate rather than a formality**:
@@ -424,7 +424,7 @@ A squash-merged parent also leaves each child conflicting with `main`: merge `ma
 locally (signed) and confirm the tree is what was tested before pushing.
 
 If a comment arrives between the authorization and the merge, the
-authorization does not carry over it — report the new comment and ask again.
+authorization does not carry over it, report the new comment and ask again.
 
 **Merge order across repositories is part of the ask.** When PRs in two repos
 form one contract change, state the required order and follow it; merging a
@@ -436,11 +436,11 @@ yet.
 Report PR URLs and bases, branches/worktrees, commits, the **final CI state**,
 how each review comment was resolved, rollout constraints, and real blockers.
 Do not narrate routine exploration. Do not report success while CI is red,
-still running, or unchecked, or while any review comment lacks a posted reply —
+still running, or unchecked, or while any review comment lacks a posted reply -
 a comment is addressed when the reply is on the PR, not when the fix is in the
 diff.
 
 State the merge status plainly: green and awaiting authorization, or merged and
 by whose instruction. A green PR left unmerged is the expected end of this
-skill, not an unfinished task — say so rather than implying something is
+skill, not an unfinished task, say so rather than implying something is
 outstanding.

@@ -6,9 +6,9 @@ Agent skills I use daily, one per directory, each a self-contained `SKILL.md` pl
 |---|---|
 | [`grilling`](#grilling) | Resolve a plan's open decisions one question at a time before building |
 | [`wayfinder`](#wayfinder) | Plan an effort too big for one session as a map of decision tickets |
-| [`issue`](#issue) | Turn an issue into a file-level plan — or a whole backlog into one PR |
+| [`issue`](#issue) | Turn an issue into a file-level plan, or a whole backlog into one PR |
 | [`diagnose`](#diagnose) | Build a loop that goes red on a bug, then fix it at the producer |
-| [`pr`](#pr) | Ship an approved change as a reviewed, green PR — monorepo or personal |
+| [`pr`](#pr) | Ship an approved change as a reviewed, green PR, monorepo or personal |
 | [`simplify`](#simplify) | Shrink a finished diff without changing behaviour |
 | [`review`](#review) | Review a diff for defects that execute, on a fixed budget |
 | [`deadcode`](#deadcode) | Prove code dead before deleting it |
@@ -56,8 +56,8 @@ are personal habits. Without sift, name your own gate in `/pr`.
 
 ## issue
 
-- `/issue 123 456` — plan only: reads the issue and the code, writes a file-level plan.
-- `/issue` — triages the whole backlog, plans in parallel, builds **serially** onto one branch (one
+- `/issue 123 456`, plan only: reads the issue and the code, writes a file-level plan.
+- `/issue`, triages the whole backlog, plans in parallel, builds **serially** onto one branch (one
   signed commit per issue), and opens one PR that closes them all.
 - A red gate drops that issue back to plan-only; commits stage explicit paths, never `git add -A`.
 
@@ -67,12 +67,12 @@ Plan → isolate → implement → simplify + review → publish → drive green
 
 - Routes by owner: a repo with a configured gate runs the full two-model path; a personal repo
   runs a single pass and treats its own checks as the gate.
-- Every judgment phase runs on **two models** — a Claude arm and a Codex arm at high effort — which
+- Every judgment phase runs on **two models**, a Claude arm and a Codex arm at high effort, which
   critique each other once. A second model does not share the first one's blind spots.
 - Two arms only: no fan-out, no nested agents.
 - Fix verified findings in the PR; filing an issue is not a resolution.
 - Every review comment, bots included, gets a reply. Every push reopens that window.
-- Never `gh pr update-branch` — it strips signatures.
+- Never `gh pr update-branch`, it strips signatures.
 - `scripts/watch_human.sh` tails the Codex arm for you; `scripts/watch_digest.sh` gives the agent a
   bounded digest with token usage.
 
@@ -171,7 +171,7 @@ the upstream notice in its own `THIRD_PARTY_NOTICES.md`.
 
 ## wow-forever-addon
 
-A standards pack: numbered requirements (`WFA-1`…) every WoW: Forever addon shares — retail-UI
+A standards pack: numbered requirements (`WFA-1`…) every WoW: Forever addon shares, retail-UI
 look, one icon family, README and store-page budgets, CI and release baseline, repo settings and
 the `main` ruleset. Each addon declares it under `## Standards` in its `AGENTS.md`, and
 `sift audit` reviews against it.

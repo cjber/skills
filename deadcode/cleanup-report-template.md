@@ -1,4 +1,4 @@
-# Cleanup Analysis — <project>
+# Cleanup Analysis: <project>
 
 > Fill this from the **real files on disk**. Every removal candidate cites a real `path:line` AND the reachability paths you ruled out.
 > Present this and WAIT for approval before deleting or editing anything.
@@ -15,11 +15,11 @@
 |---|-------------------------|----------|----------|-------------|------------------|-------------|-----------------|--------|--------|
 
 - **Category:** dead-code / unused-import / unused-var / unused-file / commented-out / orphaned-dep / complexity
-- All **five** reachability columns must each be explicitly ruled **out** before a row can be **Proven dead**. Each cell must contain the ACTUAL evidence that ruled it out (the command run + key output, the registry/decorator body inspected, the route/config string grepped) — **not a bare yes/no**. A cell with no cited evidence counts as NOT ruled out, and the row defaults to KEEP.
+- All **five** reachability columns must each be explicitly ruled **out** before a row can be **Proven dead**. Each cell must contain the ACTUAL evidence that ruled it out (the command run + key output, the registry/decorator body inspected, the route/config string grepped): **not a bare yes/no**. A cell with no cited evidence counts as NOT ruled out, and the row defaults to KEEP.
 - **Bucket:** proven-dead · live-via-indirect · public-API · deliberate-artifact · just-complex
 
 ### Kept deliberately (looked unused but isn't)
-- `<file:line>` — why it's alive (dynamic dispatch / export / docs / config / DO-NOT-DELETE marker): `<...>`
+- `<file:line>`: why it's alive (dynamic dispatch / export / docs / config / DO-NOT-DELETE marker): `<...>`
 
 ## 3. Prioritized plan (value vs. risk)
 

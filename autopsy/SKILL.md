@@ -3,7 +3,7 @@ name: autopsy
 description: "Forensic audit of LLM agent runs. With no argument, sweeps production: samples the worst runs plus a baseline, clusters defects by root cause, and ranks them by users affected. Give it a thread/run/trace id, a screenshot, or pasted text; it pulls the full trace (observability spans, app events, cloud logs), rebuilds one timeline, and reports every harness, tool, prompt, orchestration, environment, provider and model-behaviour defect with evidence, root cause and fix. Use when a run was slow, looped, failed, lied, or 'just felt wrong', or when asked why an agent task took so long."
 ---
 
-# /autopsy — explain every second and every oddity of one agent run
+# /autopsy, explain every second and every oddity of one agent run
 
 The job is not "find the bug". It is: **account for the whole run**. Every second
 of wall clock goes into a budget. Every anomaly gets a cause backed by evidence.
@@ -54,7 +54,7 @@ model just does that". Those are what you write when you haven't found the cause
    one release? Compare against the previous window and the deployed-version change.
    Correlate with the platform-health logs.
 7. **Deep-walk the top findings.** For each of the top ~5 clusters, pick its worst
-   run and do the full per-run audit below (steps 5–8) to get a root cause at
+   run and do the full per-run audit below (steps 5-8) to get a root cause at
    file:line.
 8. **Report.** Findings ranked by users affected × cost. Give each the runs and users
    affected, the seconds lost, one exemplar run id, root cause, fix, class guard and

@@ -98,7 +98,7 @@ remainder is a finding.
 | Repetition / oscillation | the same tool+args hash 3+ times; A-B-A-B |
 | Premature stop | an announced next step never happens; acceptance criteria unmet |
 | Runaway | steps or tokens far above p95 with nothing new learned |
-| Reasoning–action mismatch | the plan says X, the next call is Y |
+| Reasoning-action mismatch | the plan says X, the next call is Y |
 | Reward hacking | tests skipped or stubbed; "verification" that only re-reads its own output |
 
 ## Sources

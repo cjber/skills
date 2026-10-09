@@ -1,4 +1,4 @@
-# Evidence and decisions for documentation writing
+# Evidence and decisions for copywriting
 
 The skill's workflow is a synthesis. Published style guides supply editorial
 recommendations, accessibility standards supply specific requirements, and the

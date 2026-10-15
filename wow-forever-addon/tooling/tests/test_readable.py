@@ -1,10 +1,10 @@
 import unittest
 
-from forever_tools import secret
+from forever_tools import readable
 
 
-def codes(source, policy=secret.DEFAULT_POLICY):
-    return [message.split(":", 1)[0] for _, message in secret.check(source, policy)]
+def codes(source, policy=readable.DEFAULT_POLICY):
+    return [message.split(":", 1)[0] for _, message in readable.check(source, policy)]
 
 
 class SecretTest(unittest.TestCase):
@@ -37,7 +37,7 @@ class SecretTest(unittest.TestCase):
         self.assertEqual(codes("local x = ns.Readable(UnitGUID(unit) .. 'x')\n"), ["secret-unguarded"])
 
     def test_policy_names_the_guard_and_safe_units(self):
-        policy = secret.Policy(guards=frozenset({"Safe"}), safe_units=frozenset({"player", "pet"}))
+        policy = readable.Policy(guards=frozenset({"Safe"}), safe_units=frozenset({"player", "pet"}))
         self.assertEqual(codes("local g = Safe(UnitGUID(u))\nlocal p = UnitName('pet')\n", policy), [])
         self.assertEqual(codes("local g = Readable(UnitGUID(u))\n", policy), ["secret-unguarded"])
 
@@ -85,7 +85,7 @@ class SecretTest(unittest.TestCase):
         usable = late.replace("\ttooltip:AddLine(x)\n\tif tooltip:IsForbidden()", "\tif not ns.Usable(tooltip)")
         self.assertEqual(codes(usable), [])
         self.assertEqual(
-            codes(usable, secret.Policy(forbidden_checks=frozenset({"IsForbidden"}))), ["secret-forbidden"]
+            codes(usable, readable.Policy(forbidden_checks=frozenset({"IsForbidden"}))), ["secret-forbidden"]
         )
 
     def test_hook_data_fields_need_a_guard(self):
@@ -98,7 +98,7 @@ class SecretTest(unittest.TestCase):
             '\tlocal bracket = data["guid"]\n'
             "end)\n"
         )
-        found = secret.check(source)
+        found = readable.check(source)
         self.assertEqual(
             found,
             [
@@ -114,8 +114,8 @@ class SecretTest(unittest.TestCase):
         self.assertEqual(codes("local g = UnitGUID(u) -- secret-ok:\n"), ["secret-unguarded", "secret-unused"])
 
     def test_malformed_lua_raises(self):
-        with self.assertRaises(secret.LuaSyntaxError):
-            secret.check("TooltipDataProcessor.AddTooltipPostCall(x, function(t)\n")
+        with self.assertRaises(readable.LuaSyntaxError):
+            readable.check("TooltipDataProcessor.AddTooltipPostCall(x, function(t)\n")
 
 
 if __name__ == "__main__":

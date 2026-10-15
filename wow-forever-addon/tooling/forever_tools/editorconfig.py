@@ -17,6 +17,8 @@ from pathlib import Path
 
 __all__ = ["TEMPLATE", "check", "main", "parse"]
 
+LUA, PY = "{*.lua,.luacheckrc}", "*.py"
+
 TEMPLATE = """\
 # Editor defaults for the WoW: Forever addons (cjber/skills wow-forever-addon/tooling, forever_tools.editorconfig).
 # StyLua and ruff still format Lua and Python; tools/check_editorconfig.py keeps these sections in step with them.
@@ -28,7 +30,8 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.lua]
+# .luacheckrc is Lua and .pkgmeta is YAML, neither with the extension.
+[{*.lua,.luacheckrc}]
 indent_style = tab
 indent_size = 4
 max_line_length = 120
@@ -42,7 +45,7 @@ max_line_length = 120
 indent_style = tab
 indent_size = 4
 
-[*.{yml,yaml,json}]
+[{*.yml,*.yaml,*.json,.pkgmeta}]
 indent_style = space
 indent_size = 2
 
@@ -60,13 +63,17 @@ trim_trailing_whitespace = unset
 """
 
 
+class _Parser(configparser.ConfigParser):
+    """Keys compared case-insensitively, as EditorConfig does."""
+
+    def optionxform(self, optionstr: str) -> str:
+        return optionstr.lower()
+
+
 def parse(text: str) -> dict[str, dict[str, str]]:
     """Sections as {glob: {key: value}}, keys and values lower-cased as EditorConfig compares them."""
     # A repeated section is legal EditorConfig; later keys win, as they do for an editor.
-    parser = configparser.ConfigParser(
-        interpolation=None, comment_prefixes=("#", ";"), inline_comment_prefixes=None, strict=False
-    )
-    parser.optionxform = str.lower
+    parser = _Parser(interpolation=None, comment_prefixes=("#", ";"), inline_comment_prefixes=None, strict=False)
     parser.read_string("[__preamble__]\n" + text)
     return {
         name: {key: value.strip().lower() for key, value in parser[name].items()}
@@ -95,9 +102,9 @@ def check(root: Path) -> list[str]:
             found = have.get(section, {}).get(key)
             if found is None:
                 problems.append(f".editorconfig [{section}]: {key} is missing (the family uses {value})")
-            elif found != value and section not in {"*.lua", "*.py"}:  # those two follow stylua and ruff below
+            elif found != value and section not in {LUA, PY}:  # those two follow stylua and ruff below
                 problems.append(f".editorconfig [{section}]: {key} = {found}, the family uses {value}")
-    lua = have.get("*.lua", {})
+    lua = have.get(LUA, {})
     stylua = root / "stylua.toml"
     if stylua.is_file():
         text = stylua.read_text(encoding="utf-8")
@@ -109,8 +116,8 @@ def check(root: Path) -> list[str]:
         }
         for key, value in expected.items():
             if lua.get(key) != value:
-                problems.append(f".editorconfig [*.lua]: {key} = {lua.get(key)}, stylua.toml says {value}")
-    python = have.get("*.py", {})
+                problems.append(f".editorconfig [{LUA}]: {key} = {lua.get(key)}, stylua.toml says {value}")
+    python = have.get(PY, {})
     ruff = next((p for p in (root / "ruff.toml", root / "tools/ruff.toml") if p.is_file()), None)
     if ruff is not None:
         text = ruff.read_text(encoding="utf-8")
@@ -121,7 +128,7 @@ def check(root: Path) -> list[str]:
         }
         for key, value in expected.items():
             if python.get(key) != value:
-                problems.append(f".editorconfig [*.py]: {key} = {python.get(key)}, {ruff.name} says {value}")
+                problems.append(f".editorconfig [{PY}]: {key} = {python.get(key)}, {ruff.name} says {value}")
     return problems
 
 

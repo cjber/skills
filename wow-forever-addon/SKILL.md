@@ -152,7 +152,8 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   required checks: approve those runs from the PR's merge box before merging.
 - **WFA-20** `.gitattributes` normalises text to LF and marks generated data files
   `linguist-generated`, so their diffs collapse in review. `.editorconfig` is the family template
-  (`forever_tools.editorconfig`), checked against `stylua.toml` and `ruff.toml` in `typecheck.sh`. Community health files (contributing,
+  (`forever_tools.editorconfig`, `.luacheckrc` and `.pkgmeta` included), checked against `stylua.toml` and
+  `ruff.toml` in `typecheck.sh`. Community health files (contributing,
   security policy, issue and PR templates) are inherited from `cjber/.github`; a repo carries its
   own copy only to override one.
 - **WFA-21** `main` is protected by one ruleset: force-push and deletion blocked; changes land by

@@ -30,3 +30,6 @@ jobs:
       - run: python3 forever_tools/sync.py check --allow-unpinned
       - run: pipx run ruff==0.16.8 check .
       - run: pipx run ruff==0.16.8 format --check .
+      # tweaks-forever type-checks its tools/ with ty, the vendored copy included.
+      - if: matrix.python == '3.10'
+        run: pipx run ty==0.0.83 check --python-version 3.10 forever_tools

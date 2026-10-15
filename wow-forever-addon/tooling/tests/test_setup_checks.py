@@ -110,7 +110,7 @@ class EditorconfigTest(unittest.TestCase):
         (self.root / "stylua.toml").write_text('column_width = 100\nindent_type = "Spaces"\nindent_width = 2\n')
         problems = editorconfig.check(self.root)
         self.assertEqual(len(problems), 3, problems)
-        self.assertTrue(all("stylua.toml" in p for p in problems))
+        self.assertTrue(all("stylua.toml" in p and "[{*.lua,.luacheckrc}]" in p for p in problems))
 
 
 if __name__ == "__main__":

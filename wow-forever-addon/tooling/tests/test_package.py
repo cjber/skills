@@ -69,6 +69,24 @@ class PackageTest(unittest.TestCase):
         self.assertIn("Addon/Core.lua:1: names Interface\\AddOns\\Addon\\media\\Dot", problems[0] + problems[1])
         self.assertIn("Lib: not in", problems[0] + problems[1])
 
+    def test_the_client_rules_for_case_prefixes_absolute_includes_and_flavours(self):
+        files = self.good()
+        files["Addon/Addon.toc"] = files["Addon/Addon.toc"].replace("Core.lua", "core.lua")
+        files["Addon/Core.lua"] += 'local P = "Interface\\\\AddOns\\\\Addon\\\\media\\\\class_" .. class\n'
+        files["Addon/UI/ui.xml"] = '<Ui><Script file="Interface\\AddOns\\Addon\\UI\\ui.lua"/></Ui>'
+        files["Addon/Addon_Vanilla.toc"] = "Gone.lua\n"
+        files["Addon/Tests/x.lua"] = ""
+        problems = package.check(self.make(files), POLICY)
+        self.assertEqual(len(problems), 2, problems)
+        self.assertIn("Addon/Tests: shipped", problems[0])
+        self.assertIn("Addon/Gone.lua: missing (loaded by Addon/Addon_Vanilla.toc)", problems[1])
+
+    def test_missing_support_is_a_problem_not_a_crash(self):
+        root = self.make({})
+        release = self.make({"Addon/Addon.toc": ""})
+        policy = package.Policy(addons=("Addon",), specs=("tests/a_spec.lua",))
+        self.assertIn("tests: not in the checkout", package.run_specs(root, release, policy)[0])
+
     @unittest.skipUnless(shutil.which("luajit"), "needs luajit")
     def test_specs_run_on_the_package_with_the_support_laid_over(self):
         root = self.make({"tests/a_spec.lua": 'assert(loadfile("Core.lua"))()\n', "Core.lua": ""})

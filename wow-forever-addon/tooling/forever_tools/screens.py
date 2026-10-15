@@ -62,16 +62,26 @@ def read(folder: Path) -> dict[str, tuple[str, str]]:
     return entries
 
 
-def record(folder: Path, scenes: Scenes) -> list[str]:
-    """Write the record for every scene from the images on disk and freshly computed dumps; returns the lines."""
-    lines = [
-        f"{name} {sha256((folder / name).read_bytes())} {sha256(scenes[name]())}"
-        for name in sorted(scenes)
-        if (folder / name).is_file()
-    ]
+def record(folder: Path, scenes: Scenes, force: bool = False) -> list[str]:
+    """Write the record for every scene from the images on disk and freshly computed dumps; returns the lines.
+
+    An image whose dump moved while the image stayed byte for byte the same is the stale case `check` exists for, so
+    it is refused unless `force` says a fresh render really drew the same pixels."""
     missing = sorted(name for name in scenes if not (folder / name).is_file())
     if missing:
         raise SystemExit(f"no image for {', '.join(missing)}; run tools/screenshots.py first")
+    recorded = read(folder)
+    lines, stale = [], []
+    for name in sorted(scenes):
+        image, dump = sha256((folder / name).read_bytes()), sha256(scenes[name]())
+        if name in recorded and recorded[name][0] == image and recorded[name][1] != dump:
+            stale.append(name)
+        lines.append(f"{name} {image} {dump}")
+    if stale and not force:
+        raise SystemExit(
+            f"{', '.join(stale)}: what it shows changed but the image did not; run tools/screenshots.py, "
+            "or pass --force if it rendered the same pixels"
+        )
     header = "# image sha256 dump-sha256; written by tools/check_screenshots.py --record, checked in CI\n"
     (folder / RECORD).write_text(header + "\n".join(lines) + "\n", encoding="utf-8")
     return lines
@@ -106,9 +116,10 @@ def check(folder: Path, scenes: Scenes) -> list[str]:
 def main(folder: Path, scenes: Scenes, argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--record", action="store_true", help=f"write {RECORD} from the images and dumps now")
+    parser.add_argument("--force", action="store_true", help="with --record: accept an image a fresh render left as is")
     args = parser.parse_args(argv)
     if args.record:
-        lines = record(folder, scenes)
+        lines = record(folder, scenes, args.force)
         print(f"Screenshots: recorded {len(lines)} images in {RECORD}")
         return 0
     problems = check(folder, scenes)

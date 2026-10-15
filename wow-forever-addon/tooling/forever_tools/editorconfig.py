@@ -62,7 +62,10 @@ trim_trailing_whitespace = unset
 
 def parse(text: str) -> dict[str, dict[str, str]]:
     """Sections as {glob: {key: value}}, keys and values lower-cased as EditorConfig compares them."""
-    parser = configparser.ConfigParser(interpolation=None, comment_prefixes=("#", ";"), inline_comment_prefixes=None)
+    # A repeated section is legal EditorConfig; later keys win, as they do for an editor.
+    parser = configparser.ConfigParser(
+        interpolation=None, comment_prefixes=("#", ";"), inline_comment_prefixes=None, strict=False
+    )
     parser.optionxform = str.lower
     parser.read_string("[__preamble__]\n" + text)
     return {
@@ -81,13 +84,19 @@ def check(root: Path) -> list[str]:
     path = root / ".editorconfig"
     if not path.is_file():
         return [".editorconfig: missing; start it from `tools/check_editorconfig.py --print`"]
-    have, want = parse(path.read_text(encoding="utf-8")), parse(TEMPLATE)
+    try:
+        have = parse(path.read_text(encoding="utf-8"))
+    except configparser.Error as error:
+        return [f".editorconfig: {error}"]
+    want = parse(TEMPLATE)
     problems = []
     for section, keys in want.items():
         for key, value in keys.items():
             found = have.get(section, {}).get(key)
             if found is None:
                 problems.append(f".editorconfig [{section}]: {key} is missing (the family uses {value})")
+            elif found != value and section not in {"*.lua", "*.py"}:  # those two follow stylua and ruff below
+                problems.append(f".editorconfig [{section}]: {key} = {found}, the family uses {value}")
     lua = have.get("*.lua", {})
     stylua = root / "stylua.toml"
     if stylua.is_file():

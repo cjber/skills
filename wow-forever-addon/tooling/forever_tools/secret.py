@@ -2,14 +2,15 @@
 
 In combat and other restricted states the client returns some unit and tooltip values as secrets: a value addon
 code may pass along but not compare, index, concatenate or call a method on (`guid:match` raises). And a tooltip
-the client has marked forbidden raises on any method call. Each addon routes these reads through one helper
-(`Readable`: the value, or nil when it is secret) and starts every tooltip hook by returning on `IsForbidden()`.
+the client has marked forbidden must not be read or drawn on. Each addon routes these reads through one helper
+(`ns.Readable`: the value, or nil when it is secret) and starts every tooltip hook by returning when the tooltip is
+not usable (`ns.Usable(tooltip)`, false for nil or a forbidden tooltip).
 
 - `secret-unguarded`: a call to a source (`UnitGUID`, `UnitName`, ...) that is not the whole argument of a guard,
   `Readable(UnitGUID(unit))`; a unit the policy calls safe (`"player"`, written as a literal) is exempt.
 - `secret-unguarded`: a tooltip hook's data field that may be secret (`data.guid`) read outside a guard.
-- `secret-forbidden`: a `TooltipDataProcessor` call or an `OnTooltip*` script hook whose callback never calls
-  `IsForbidden`.
+- `secret-forbidden`: a `TooltipDataProcessor` call or an `OnTooltip*` script hook whose callback does not start
+  with an `if` that skips a forbidden tooltip (`tooltip:IsForbidden()`, or the repo's `ns.Usable(tooltip)`).
 
 An exception carries `-- secret-ok: <reason>` on its line or the line above; one that excuses nothing is refused.
 """
@@ -43,12 +44,14 @@ MARK = re.compile(r"secret-ok")
 class Policy:
     """`guards`: the helper names that make a value safe (the last name of `ns.Readable`). `sources`: calls whose
     results may be secret. `safe_units`: literal unit tokens never secret. `data_fields`: tooltip data fields that may
-    be secret inside a hook."""
+    be secret inside a hook. `forbidden_checks`: the calls a hook's first `if` may use to skip a forbidden tooltip
+    (`tooltip:IsForbidden()`, or the repo's `ns.Usable(tooltip)`)."""
 
     guards: frozenset[str] = frozenset({"Readable"})
     sources: frozenset[str] = SOURCES
     safe_units: frozenset[str] = frozenset({"player"})
     data_fields: frozenset[str] = frozenset({"guid"})
+    forbidden_checks: frozenset[str] = frozenset({"IsForbidden", "Usable"})
 
 
 DEFAULT_POLICY = Policy()
@@ -104,7 +107,7 @@ def callbacks(tokens: list[Token]) -> list[tuple[int, int | str]]:
     for index, token in enumerate(tokens):
         is_hook = token.text in HOOKS and tokens[index - 1].text in {".", ":"}
         is_script = (
-            token.text == "HookScript"
+            token.text in {"HookScript", "SetScript"}
             and tokens[index + 2].kind == "string"
             and tokens[index + 2].text[1:-1].startswith("OnTooltip")
         )
@@ -146,6 +149,21 @@ def definition(tokens: list[Token], name: str) -> int | None:
     return None
 
 
+def forbidden_first(tokens: list[Token], function: int, checks: frozenset[str]) -> bool:
+    """Whether the function's first statement is an `if` whose condition calls one of `checks`."""
+    cursor = function + 1
+    while tokens[cursor].text != ")":
+        cursor += 1
+    if tokens[cursor + 1].text != "if":
+        return False
+    cursor += 2
+    while tokens[cursor].text != "then":
+        if tokens[cursor].text in checks and tokens[cursor + 1].text == "(":
+            return True
+        cursor += 1
+    return False
+
+
 def parameters(tokens: list[Token], function: int) -> list[str]:
     cursor = function + 1
     while tokens[cursor].text != "(":
@@ -163,13 +181,19 @@ def _check(source: str, policy: Policy) -> list[tuple[int, str]]:
     lines = source.splitlines()
     raw: list[tuple[int, str]] = []
     for index, token in enumerate(tokens):
-        if token.kind != "name" or token.text not in policy.sources or tokens[index + 1].text != "(":
+        if token.kind != "name" or token.text not in policy.sources:
+            continue
+        following = tokens[index + 1]
+        if following.text != "(" and following.kind != "string":  # `UnitName"target"` is a call too
             continue
         start = chain_start(tokens, index)
         if start >= 1 and tokens[start - 1].text == "function":
             continue
-        end = closing(tokens, index + 1)
-        argument = tokens[index + 2 : end]
+        if following.kind == "string":
+            end, argument = index + 1, [following]
+        else:
+            end = closing(tokens, index + 1)
+            argument = tokens[index + 2 : end]
         if len(argument) == 1 and argument[0].kind == "string" and argument[0].text[1:-1] in policy.safe_units:
             continue
         if not guarded(tokens, start, end, policy):
@@ -181,23 +205,29 @@ def _check(source: str, policy: Policy) -> list[tuple[int, str]]:
             continue
         end = block_end(tokens, function)
         body = tokens[function:end]
-        if not any(t.text == "IsForbidden" for t in body):
-            raw.append((tokens[hook].line, "secret-forbidden: the hook never returns on tooltip:IsForbidden()"))
+        if not forbidden_first(tokens, function, policy.forbidden_checks):
+            raw.append(
+                (tokens[hook].line, "secret-forbidden: the hook must start by returning on tooltip:IsForbidden()")
+            )
         names = parameters(tokens, function)
         data = names[1] if len(names) > 1 else None
         for offset, token in enumerate(body):
             at = function + offset
-            if (
-                data
-                and token.text == data
-                and tokens[at + 1].text == "."
-                and tokens[at + 2].text in policy.data_fields
-                and tokens[at - 1].text not in {".", ":"}
-                and tokens[at + 3].text != "="
-                and not guarded(tokens, at, at + 2, policy)
+            if not data or token.text != data or tokens[at - 1].text in {".", ":"}:
+                continue
+            if tokens[at + 1].text == "." and tokens[at + 2].text in policy.data_fields:
+                last, field = at + 2, tokens[at + 2].text
+            elif (
+                tokens[at + 1].text == "["
+                and tokens[at + 2].kind == "string"
+                and tokens[at + 2].text[1:-1] in policy.data_fields
+                and tokens[at + 3].text == "]"
             ):
-                field = f"{data}.{tokens[at + 2].text}"
-                raw.append((token.line, f"secret-unguarded: {field} may be a secret; read it through a guard"))
+                last, field = at + 3, tokens[at + 2].text[1:-1]
+            else:
+                continue
+            if tokens[last + 1].text != "=" and not guarded(tokens, at, last, policy):
+                raw.append((token.line, f"secret-unguarded: {data}.{field} may be a secret; read it through a guard"))
     findings, excused = [], set()
     for number, message in sorted(set(raw)):
         waiver = next((at for at in (number, number - 1) if at >= 1 and WAIVER.search(lines[at - 1])), None)

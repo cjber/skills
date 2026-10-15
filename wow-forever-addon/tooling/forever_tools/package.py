@@ -32,6 +32,7 @@ FORBIDDEN = (".agents", ".github", ".sift", "AGENTS.md", "tests", "tools", "type
 # What the client accepts for a texture, font or sound path given without its extension.
 EXTENSIONS = ("", ".tga", ".blp", ".png", ".jpg", ".ttf", ".otf", ".ogg", ".mp3")
 LOAD_TAGS = {"Include", "Script"}
+SPEC_TIMEOUT = 900
 
 
 @dataclass(frozen=True)
@@ -57,30 +58,34 @@ def addon_path(text: str, release: Path, addons: tuple[str, ...]) -> Path | None
     return None if folder is None else release.joinpath(folder, *parts[3:])
 
 
-def present(path: Path) -> bool:
-    """Whether the client would find `path`, extension optional and case ignored, as Windows does."""
-    folder = path.parent
-    if not folder.is_dir():
-        # Resolve each missing component case-insensitively.
-        current = Path(path.anchor) if path.is_absolute() else Path()
-        for part in folder.parts[len(current.parts) :]:
-            match = next((child for child in current.iterdir() if child.name.lower() == part.lower()), None)
-            if match is None or not match.is_dir():
-                return False
-            current = match
-        folder = current
-    names = {child.name.lower() for child in folder.iterdir()}
-    return any((path.name + extension).lower() in names for extension in EXTENSIONS)
+def locate(path: Path, extensions: tuple[str, ...] = ("",)) -> Path | None:
+    """The file the client would load for `path`: case ignored, as on Windows, with any of `extensions` added."""
+    absolute = path.is_absolute()
+    current = Path(path.anchor) if absolute else Path(".")
+    for part in path.parent.parts[1 if absolute else 0 :]:
+        step = current / part
+        if not step.is_dir():
+            children = current.iterdir() if current.is_dir() else ()
+            step = next((child for child in children if child.is_dir() and child.name.lower() == part.lower()), None)
+            if step is None:
+                return None
+        current = step
+    files = {child.name.lower(): child for child in current.iterdir() if child.is_file()}
+    return next((files[key] for key in ((path.name + e).lower() for e in extensions) if key in files), None)
 
 
 def lua_strings(source: str) -> list[tuple[int, str]]:
-    """Each whole string literal in a Lua file with its line, escapes for backslashes and quotes undone."""
+    """Each whole string literal in a Lua file with its line, escapes for backslashes and quotes undone. A string
+    joined to another value with `..` is only part of a path, so it is left out."""
     tokens, _ = tokenize(source)
     found = []
-    for token in tokens:
-        if token.kind == "string" and token.text[:1] in "\"'":
-            body = token.text[1:-1]
-            found.append((token.line, body.replace("\\\\", "\\").replace('\\"', '"').replace("\\'", "'")))
+    for index, token in enumerate(tokens):
+        if token.kind != "string" or token.text[:1] not in "\"'":
+            continue
+        if ".." in (tokens[index - 1].text if index else "", tokens[index + 1].text):
+            continue
+        body = token.text[1:-1]
+        found.append((token.line, body.replace("\\\\", "\\").replace('\\"', '"').replace("\\'", "'")))
     return found
 
 
@@ -92,14 +97,21 @@ def check(release: Path, policy: Policy) -> list[str]:
         if not folder.is_dir():
             problems.append(f"{addon}: not in {release}; check package-as and move-folders in .pkgmeta")
             continue
+        forbidden = {name.lower() for name in policy.forbidden}
         for child in sorted(folder.iterdir()):
-            if child.name in policy.forbidden:
+            if child.name.lower() in forbidden:
                 problems.append(f"{addon}/{child.name}: shipped; add it to .pkgmeta's ignore list")
-        toc = folder / f"{addon}.toc"
-        if not toc.is_file():
+        # The addon's own TOC, and any flavour TOC beside it (Addon_Vanilla.toc, Addon-Classic.toc).
+        tocs = [
+            toc
+            for toc in sorted(folder.glob("*.toc"))
+            if toc.stem.lower() == addon.lower()
+            or toc.stem.lower().startswith((f"{addon}_".lower(), f"{addon}-".lower()))
+        ]
+        if not tocs:
             problems.append(f"{addon}/{addon}.toc: missing")
-            continue
-        problems += check_loaded(release, folder, toc, policy.addons)
+        for toc in tocs:
+            problems += check_loaded(release, folder, toc, policy.addons)
     if policy.addons and (release / policy.addons[0]).is_dir():
         for name in policy.required:
             if not (release / policy.addons[0] / name).exists():
@@ -117,17 +129,18 @@ def check_loaded(release: Path, folder: Path, toc: Path, addons: tuple[str, ...]
 
     def named(source: Path, line: int, text: str) -> None:
         target = addon_path(text, release, addons)
-        if target is not None and not present(target):
+        if target is not None and locate(target, EXTENSIONS) is None:
             at = f"{where(source)}:{line}" if line else where(source)
             problems.append(f"{at}: names {text.strip()}, which is not in the package")
 
-    def visit(path: Path, by: str) -> None:
+    def visit(wanted: Path, by: str) -> None:
+        path = locate(wanted)
+        if path is None:
+            problems.append(f"{where(wanted)}: missing (loaded by {by}); check .pkgmeta's ignore list")
+            return
         if path in seen:
             return
         seen.add(path)
-        if not path.is_file():
-            problems.append(f"{where(path)}: missing (loaded by {by}); check .pkgmeta's ignore list")
-            return
         if path.suffix.lower() == ".xml":
             try:
                 elements = list(ET.parse(path).iter())
@@ -136,7 +149,9 @@ def check_loaded(release: Path, folder: Path, toc: Path, addons: tuple[str, ...]
                 return
             for element in elements:
                 if element.tag.rsplit("}", 1)[-1] in LOAD_TAGS and "file" in element.attrib:
-                    visit(path.parent / element.attrib["file"].replace("\\", "/"), where(path))
+                    file = element.attrib["file"]
+                    target = addon_path(file, release, addons) or path.parent / file.replace("\\", "/")
+                    visit(target, where(path))
                 for value in element.attrib.values():
                     named(path, 0, value)
         elif path.suffix.lower() == ".lua":
@@ -171,13 +186,23 @@ def run_specs(root: Path, release: Path, policy: Policy) -> list[str]:
             source, target = root / name, work / name
             if target.exists():
                 return [f"{name}: shipped in the package, so the specs cannot tell it from the checkout's"]
+            if not source.exists():
+                return [f"{name}: not in the checkout; fix the package policy's support paths"]
             if source.is_dir():
                 shutil.copytree(source, target)
             else:
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, target)
         for spec in policy.specs:
-            result = subprocess.run(["luajit", spec], cwd=work, capture_output=True, text=True)
+            if shutil.which("luajit") is None:
+                return ["luajit: not found on PATH; install it to run the specs on the package"]
+            try:
+                result = subprocess.run(
+                    ["luajit", spec], cwd=work, capture_output=True, text=True, timeout=SPEC_TIMEOUT
+                )
+            except subprocess.TimeoutExpired:
+                problems.append(f"{spec}: still running on the packaged files after {SPEC_TIMEOUT} s")
+                continue
             if result.returncode:
                 tail = "\n".join((result.stdout + result.stderr).strip().splitlines()[-20:])
                 problems.append(f"{spec}: fails on the packaged files (exit {result.returncode}):\n{tail}")

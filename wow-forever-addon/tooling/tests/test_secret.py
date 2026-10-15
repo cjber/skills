@@ -15,6 +15,7 @@ class SecretTest(unittest.TestCase):
             "local name = UnitName(unit)\n",
             "local name = TooltipUtil.GetDisplayedUnit(tooltip)\n",
             "local id = Model.NpcId(UnitGUID(unit))\n",
+            'local name = UnitName"mouseover"\n',
         ):
             with self.subTest(source=source):
                 self.assertEqual(codes(source), ["secret-unguarded"])
@@ -66,6 +67,26 @@ class SecretTest(unittest.TestCase):
             ["secret-forbidden"],
         )
         self.assertEqual(codes('frame:HookScript("OnShow", function(self) self:Show() end)\n'), [])
+        self.assertEqual(
+            codes('GameTooltip:SetScript("OnTooltipSetUnit", function(self) self:Show() end)\n'),
+            ["secret-forbidden"],
+        )
+
+    def test_the_forbidden_check_comes_first(self):
+        late = (
+            "TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(tooltip)\n"
+            "\ttooltip:AddLine(x)\n\tif tooltip:IsForbidden() then return end\nend)\n"
+        )
+        self.assertEqual(codes(late), ["secret-forbidden"])
+        either = late.replace(
+            "\ttooltip:AddLine(x)\n\tif tooltip:IsForbidden()", "\tif not ok or tooltip:IsForbidden()"
+        )
+        self.assertEqual(codes(either), [])
+        usable = late.replace("\ttooltip:AddLine(x)\n\tif tooltip:IsForbidden()", "\tif not ns.Usable(tooltip)")
+        self.assertEqual(codes(usable), [])
+        self.assertEqual(
+            codes(usable, secret.Policy(forbidden_checks=frozenset({"IsForbidden"}))), ["secret-forbidden"]
+        )
 
     def test_hook_data_fields_need_a_guard(self):
         source = (
@@ -74,10 +95,17 @@ class SecretTest(unittest.TestCase):
             "\tlocal guid = data.guid\n"
             "\tlocal safe = ns.Readable(data.guid)\n"
             "\tlocal other = entry.guid\n"
+            '\tlocal bracket = data["guid"]\n'
             "end)\n"
         )
         found = secret.check(source)
-        self.assertEqual(found, [(3, "secret-unguarded: data.guid may be a secret; read it through a guard")])
+        self.assertEqual(
+            found,
+            [
+                (3, "secret-unguarded: data.guid may be a secret; read it through a guard"),
+                (6, "secret-unguarded: data.guid may be a secret; read it through a guard"),
+            ],
+        )
 
     def test_a_waiver_excuses_its_line_and_must_excuse_something(self):
         self.assertEqual(codes("local g = UnitGUID(u) -- secret-ok: own pet, never secret\n"), [])

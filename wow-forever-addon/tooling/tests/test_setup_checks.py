@@ -25,7 +25,7 @@ CI = """jobs:
       - run: |
           curl -sSfL -o l.tar.gz https://github.com/LuaLS/lua-language-server/releases/download/3.19.1/x.tar.gz
 """
-TYPECHECK = "annotations=.types/vscode-wow-api\nrevision=" + "a" * 40 + "\n"
+TYPECHECK = 'annotations=.types/vscode-wow-api\nrevision="' + "a" * 40 + '"\n'
 
 
 class DoctorTest(unittest.TestCase):
@@ -104,6 +104,8 @@ class EditorconfigTest(unittest.TestCase):
         self.assertIn("missing", editorconfig.check(self.root)[0])
         (self.root / ".editorconfig").write_text(editorconfig.TEMPLATE.replace("[*.md]", "[*.markdown]"))
         self.assertTrue(any("[*.md]" in p for p in editorconfig.check(self.root)))
+        (self.root / ".editorconfig").write_text(editorconfig.TEMPLATE + "[*]\nend_of_line = crlf\n")
+        self.assertEqual(editorconfig.check(self.root), [".editorconfig [*]: end_of_line = crlf, the family uses lf"])
         (self.root / ".editorconfig").write_text(editorconfig.TEMPLATE)
         (self.root / "stylua.toml").write_text('column_width = 100\nindent_type = "Spaces"\nindent_width = 2\n')
         problems = editorconfig.check(self.root)

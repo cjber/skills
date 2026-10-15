@@ -172,7 +172,8 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   in `typecheck.sh`. A repo's own `tools/` keeps only thin entry points and its generators.
 - **WFA-30** Values the client may return as secrets (unit GUIDs and names, tooltip unit data) are read
   through the repo's one helper, `ns.Readable` (the value, or nil when it is secret), and every tooltip hook
-  returns first on `tooltip:IsForbidden()`. `tools/lint_secret.py` (`forever_tools.secret`) runs in `typecheck.sh`
+  returns first when `ns.Usable(tooltip)` is false (nil or forbidden). Both live in a small file with no other
+  addon state (Adventure Guide Forever's `Core/Secret.lua`), so it copies across the family as is. `tools/lint_secret.py` (`forever_tools.secret`) runs in `typecheck.sh`
   and refuses an unguarded read unless its line says why it is safe (`-- secret-ok: reason`).
 - **WFA-31** `THIRD_PARTY.md` lists every input: what it is, where its pin lives (the constant in `tools/`, never
   a copied value that a data refresh would leave stale), its licence, and whether it ships in the zip or is

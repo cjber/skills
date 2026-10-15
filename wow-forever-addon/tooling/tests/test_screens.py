@@ -29,6 +29,10 @@ class ScreensTest(unittest.TestCase):
         problems = screens.check(self.folder, self.scenes())
         self.assertEqual(len(problems), 1)
         self.assertIn("a.png: what it shows changed but the image did not", problems[0])
+        with self.assertRaisesRegex(SystemExit, "a.png: what it shows changed"):
+            screens.record(self.folder, self.scenes())
+        screens.record(self.folder, self.scenes(), force=True)
+        self.assertEqual(screens.check(self.folder, self.scenes()), [])
 
     def test_a_new_image_without_a_record_fails_until_recorded(self):
         screens.record(self.folder, self.scenes())

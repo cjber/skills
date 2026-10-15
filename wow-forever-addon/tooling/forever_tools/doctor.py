@@ -123,12 +123,13 @@ def pins(root: Path) -> Pins:
     if "lua-check" in wanted or re.search(r"^\s*-? ?run: luacheck", ci, re.MULTILINE):
         fix = "sudo apt-get install -y lua-check" if linux() else "brew install luarocks && luarocks install luacheck"
         found.tools.append(Tool("luacheck", ("luacheck", "--version"), None, fix))
-    revision, directory = (
-        first(r"^revision=([0-9a-f]{40})", typecheck),
-        first(r"^(?:annotations|library)=(\S+)", typecheck),
-    )
+    revision = first(r"^revision=['\"]?([0-9a-f]{40})", typecheck)
+    directory = first(r"^(?:annotations|library)=['\"]?([^'\"\s]+)", typecheck)
     if revision and directory:
-        found.annotations = (directory, revision)
+        if "$" in directory:
+            found.missing.append(f"tools/typecheck.sh: the annotations path {directory} is not a plain path to check")
+        else:
+            found.annotations = (directory, revision)
     screenshots = root / "tools/screenshots.py"
     if screenshots.is_file():
         text = screenshots.read_text(encoding="utf-8")

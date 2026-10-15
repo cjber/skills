@@ -75,7 +75,9 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   ships (load-on-demand data or map addons), pointing at the parent's icon, so none shows a `?`.
 - **WFA-9** Screenshots come from `tools/screenshots.py` via the `wow-mock-screenshots` skill, one
   per headline feature, regenerated in the same PR as any UI change they show. README, store page
-  and store gallery use the same files from `docs/screenshots/`.
+  and store gallery use the same files from `docs/screenshots/`. `docs/screenshots/scenes.sha256` records each
+  image's hash beside its scene dump's (`forever_tools.screens`); CI recomputes the dumps headlessly
+  (`tools/check_screenshots.py`) and fails when a dump moved but its image did not.
 
 ### Docs
 
@@ -99,6 +101,8 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   are one image, composed in `tools/screenshots.py` as one `scene()` with both widgets as layers.
 - **WFA-12** `CHANGELOG.md` follows Keep a Changelog with prose: `## [Unreleased]` on top,
   `## [x.y.z] - YYYY-MM-DD`, bullets led by a bold sentence then why it matters, in player terms.
+  A version that changes a public API puts those notes under an optional `### For addon authors` subsection
+  after the player bullets, so players read their changes first; the release notes carry it as written.
 
 ### Code and performance
 
@@ -119,7 +123,12 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   history. Extra checks (shellcheck) are welcome. Downloaded binaries are pinned by sha256. A job
   named `sift` runs the vendored `python3 .sift/gate.py --base "origin/$BASE"` and
   `python3 .sift/agents.py check`; `sift setup` vendors both and `sift update` refreshes them.
-  Dependabot updates `github-actions` monthly, grouped.
+  Dependabot updates `github-actions` monthly, grouped. A `package` job runs the pinned BigWigs packager
+  with `args: -d -z` (no upload) and `tools/check_package.py` (`forever_tools.package`) on its output: every file a
+  TOC or XML loads and every `Interface\AddOns\<addon>\` path is in the zip, no `tests`, `tools`, `types` or
+  `.agents` ships, LICENSE does, and the smoke spec passes on the packaged folder. `tools/doctor.py`
+  (`forever_tools.doctor`) checks a machine against every pin in `ci.yml` and `typecheck.sh` and prints a fix for
+  each problem; AGENTS.md lists it under Commands.
 - **WFA-16** Releases: a signed `v*` tag runs `release.yml` (BigWigs packager, pinned) with this
   version's CHANGELOG entry as notes (`tools/changelog.py`), uploading to GitHub, CurseForge and
   Wago; the TOC carries `X-Curse-Project-ID` and `X-Wago-ID`. Setup is in `wow-addon-publish`.
@@ -142,7 +151,8 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   its `pull_request` CI only as runs awaiting approval, and a dispatched run never counts toward
   required checks: approve those runs from the PR's merge box before merging.
 - **WFA-20** `.gitattributes` normalises text to LF and marks generated data files
-  `linguist-generated`, so their diffs collapse in review. Community health files (contributing,
+  `linguist-generated`, so their diffs collapse in review. `.editorconfig` is the family template
+  (`forever_tools.editorconfig`), checked against `stylua.toml` and `ruff.toml` in `typecheck.sh`. Community health files (contributing,
   security policy, issue and PR templates) are inherited from `cjber/.github`; a repo carries its
   own copy only to override one.
 - **WFA-21** `main` is protected by one ruleset: force-push and deletion blocked; changes land by
@@ -160,3 +170,10 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   producer here, vendored byte for byte into each repo as `tools/forever_tools/` and pinned by
   `MANIFEST.json`. Edit it here, never in a repo; `python3 tools/forever_tools/sync.py check` runs
   in `typecheck.sh`. A repo's own `tools/` keeps only thin entry points and its generators.
+- **WFA-30** Values the client may return as secrets (unit GUIDs and names, tooltip unit data) are read
+  through the repo's one helper, `ns.Readable` (the value, or nil when it is secret), and every tooltip hook
+  returns first on `tooltip:IsForbidden()`. `tools/lint_secret.py` (`forever_tools.secret`) runs in `typecheck.sh`
+  and refuses an unguarded read unless its line says why it is safe (`-- secret-ok: reason`).
+- **WFA-31** `THIRD_PARTY.md` lists every input: what it is, where its pin lives (the constant in `tools/`, never
+  a copied value that a data refresh would leave stale), its licence, and whether it ships in the zip or is
+  build-only. An embedded library (LibStub and the like) ships with its licence and is credited there.

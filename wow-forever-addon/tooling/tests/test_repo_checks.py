@@ -23,6 +23,17 @@ class ChangelogTest(unittest.TestCase):
             changelog.check("## [1.0.0] - 2026-01-01\n- x\n", ["1.0.0"])
         changelog.check(LOG, ["1.0.0"])
 
+    def test_subsections_pass_through_to_the_release_notes(self):
+        log = (
+            "## [Unreleased]\n\n## [1.1.0] - 2026-02-01\n- **A fix.** Players see it.\n\n"
+            "### For addon authors\n\n- **`API.Thing` takes a map.** Callers pass one.\n\n"
+            "## [1.0.0] - 2026-01-01\n- first\n"
+        )
+        notes = changelog.section(log, "1.1.0")
+        self.assertTrue(notes.startswith("- **A fix.**"))
+        self.assertIn("### For addon authors\n\n- **`API.Thing` takes a map.**", notes)
+        self.assertNotIn("first", notes)
+
     def test_empty_section_fails(self):
         with self.assertRaisesRegex(SystemExit, "empty"):
             changelog.section("## [1.0.0] - 2026-01-01\n\n## [0.9.0] - 2025-01-01\n- y\n", "1.0.0")

@@ -52,6 +52,15 @@ indent_size = 2
 # A Markdown line break is two trailing spaces.
 trim_trailing_whitespace = false
 
+# Lua and YAML files without the extension.
+[.luacheckrc]
+indent_style = tab
+indent_size = 4
+
+[.pkgmeta]
+indent_style = space
+indent_size = 2
+
 [*.{png,gif,tga,blp,ttf}]
 charset = unset
 end_of_line = unset
@@ -60,13 +69,17 @@ trim_trailing_whitespace = unset
 """
 
 
+class _Parser(configparser.ConfigParser):
+    """Keys compared case-insensitively, as EditorConfig does."""
+
+    def optionxform(self, optionstr: str) -> str:
+        return optionstr.lower()
+
+
 def parse(text: str) -> dict[str, dict[str, str]]:
     """Sections as {glob: {key: value}}, keys and values lower-cased as EditorConfig compares them."""
     # A repeated section is legal EditorConfig; later keys win, as they do for an editor.
-    parser = configparser.ConfigParser(
-        interpolation=None, comment_prefixes=("#", ";"), inline_comment_prefixes=None, strict=False
-    )
-    parser.optionxform = str.lower
+    parser = _Parser(interpolation=None, comment_prefixes=("#", ";"), inline_comment_prefixes=None, strict=False)
     parser.read_string("[__preamble__]\n" + text)
     return {
         name: {key: value.strip().lower() for key, value in parser[name].items()}

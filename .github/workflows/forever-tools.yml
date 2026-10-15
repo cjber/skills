@@ -30,3 +30,5 @@ jobs:
       - run: python3 forever_tools/sync.py check --allow-unpinned
       - run: pipx run ruff==0.16.8 check .
       - run: pipx run ruff==0.16.8 format --check .
+      # tweaks-forever type-checks its tools/ with ty, the vendored copy included.
+      - run: pipx run ty==0.0.83 check forever_tools

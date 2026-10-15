@@ -96,6 +96,14 @@ class SyncTest(unittest.TestCase):
             [sys.executable, str(self.copy / "sync.py"), *args], capture_output=True, text=True, check=False
         )
 
+    def test_manifest_refuses_a_module_gitleaks_would_flag(self):
+        (self.copy / "secret_store.py").write_text("")
+        result = self.sync("manifest")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("rename secret_store.py", result.stderr)
+        (self.copy / "secret_store.py").unlink()
+        self.assertEqual(self.sync("manifest").returncode, 0)
+
     def test_unpinned_copy_passes_only_with_the_allowance(self):
         self.assertEqual(self.sync("check", "--allow-unpinned").returncode, 0)
         refused = self.sync("check")

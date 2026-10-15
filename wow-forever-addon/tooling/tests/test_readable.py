@@ -7,7 +7,7 @@ def codes(source, policy=readable.DEFAULT_POLICY):
     return [message.split(":", 1)[0] for _, message in readable.check(source, policy)]
 
 
-class SecretTest(unittest.TestCase):
+class ReadableTest(unittest.TestCase):
     def test_an_unguarded_source_is_flagged(self):
         for source in (
             "local guid = UnitGUID(unit)\n",

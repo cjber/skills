@@ -54,5 +54,6 @@ Addon-specific generators and hints stay in the repo.
 2. `python3 forever_tools/sync.py manifest`, commit, note the commit.
 3. In each repo, from a clean producer checkout at that commit:
    `python3 tools/forever_tools/sync.py update --source <producer checkout>`.
+   `update` deletes a module the producer dropped or renamed, so update the repo's entry points in the same sync.
    `check` runs offline in `typecheck.sh` and fails on any edited, missing or extra file or an unpinned
    manifest; `check --source <checkout>` also compares with the producer.

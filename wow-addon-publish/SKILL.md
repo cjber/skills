@@ -22,7 +22,10 @@ prompt reads empty stdin and stores an empty secret), `gh secret set <NAME> -R <
   with `CF_API_KEY`, `WAGO_API_TOKEN` and `GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}`, and
   `permissions: contents: write`. Copy it from `cjber/skillup-forever` rather than writing one.
 - Release notes = this version's CHANGELOG entry only (`tools/changelog.py <tag>`, also in skillup-forever),
-  prose style, `## [x.y.z] - YYYY-MM-DD` headings.
+  prose style, `## [x.y.z] - YYYY-MM-DD` headings. API changes go under an optional `### For addon authors`
+  subsection after the player bullets; the notes carry it to GitHub, CurseForge and Wago as written.
+- A `package` CI job builds with the packager's `-d -z` and runs `tools/check_package.py`
+  (`wow-forever-addon` WFA-15), so `.pkgmeta` drift fails before a tag, not after an upload.
 - `docs/curseforge.md`: the store description, pitched and worded per `wow-forever-addon` WFA-23/24
   (`voice.md`); run its `check_copy.py docs/curseforge.md README.md` before every paste (Markdown; screenshots referenced by
   `raw.githubusercontent.com/<owner>/<repo>/main/docs/screenshots/*.png`). Make screenshots with the

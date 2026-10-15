@@ -13,6 +13,11 @@ the producer commit the copy came from.
 | `multivalue` | `select()` and multi-return expansion lint; `Rules` carries the addon's policy |
 | `taint` | Taint lint; `Policy` carries the map openers, frames and getters (`C_Map.OpenWorldMap` is the safe call) |
 | `art` | Art lint (WFA-27): raw texture, atlas and markup calls outside the addon's art helper files need an `art-ok` reason |
+| `secret` | Secret-value lint (WFA-30): `UnitGUID`, `UnitName` and tooltip data reads go through the `Readable` guard, tooltip hooks check `IsForbidden`; `Policy` names the guard and safe units |
+| `package` | The packaged-zip check: TOC/XML-loaded files and addon paths present, no development folders, LICENSE ships, specs pass on the packaged files |
+| `doctor` | Every tool pin in `ci.yml` and `typecheck.sh` checked on this machine, each problem with its fix |
+| `screens` | `docs/screenshots/scenes.sha256`: each image's hash beside its scene dump's, and the CI check for a stale image |
+| `editorconfig` | The family `.editorconfig` template and its check against `stylua.toml` and `ruff.toml` |
 | `changelog`, `release_check`, `latest_build` | Release gates and the newest Forever build |
 | `csvtable`, `wago` | Strict DB2 CSV parsing and cached, validated downloads |
 | `fsio` | `atomic_write`, and `publish` for multi-output generators (stage all, replace, roll back on failure) |
@@ -21,7 +26,26 @@ the producer commit the copy came from.
 | `sync` | `check`, `update`, `pin`, `manifest` |
 
 A repo's `tools/*.py` entry points stay thin (`changelog.py`, `release_check.py`, `lint_taint.py`, `lint_art.py`,
-`lint_multivalue.py`, `typecheck_coverage.py`) and add only per-addon policy such as `RUNTIME_DIRS`.
+`lint_multivalue.py`, `lint_secret.py`, `typecheck_coverage.py`, `check_package.py`, `check_screenshots.py`,
+`check_editorconfig.py`, `doctor.py`) and add only per-addon policy such as `RUNTIME_DIRS`.
+
+The packaged-zip check runs in its own CI job, after the pinned packager builds without uploading:
+
+```yaml
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@<sha> # pinned as the repo's other jobs
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - run: printf 'Package check\n' > .release-notes.md # .pkgmeta's manual-changelog
+      - uses: BigWigsMods/packager@<sha> # the release workflow's pin
+        with:
+          args: -d -z
+      - run: python3 tools/check_package.py
+```
 Addon-specific generators and hints stay in the repo.
 
 ## Change and update

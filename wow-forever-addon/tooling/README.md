@@ -13,7 +13,7 @@ the producer commit the copy came from.
 | `multivalue` | `select()` and multi-return expansion lint; `Rules` carries the addon's policy |
 | `taint` | Taint lint; `Policy` carries the map openers, frames and getters (`C_Map.OpenWorldMap` is the safe call) |
 | `art` | Art lint (WFA-27): raw texture, atlas and markup calls outside the addon's art helper files need an `art-ok` reason |
-| `secret` | Secret-value lint (WFA-30): `UnitGUID`, `UnitName` and tooltip data reads go through the `Readable` guard, tooltip hooks check `IsForbidden`; `Policy` names the guard and safe units |
+| `readable` | Secret-value lint (WFA-30): `UnitGUID`, `UnitName` and tooltip data reads go through the `Readable` guard, tooltip hooks check `IsForbidden`; `Policy` names the guard and safe units |
 | `package` | The packaged-zip check: TOC/XML-loaded files and addon paths present, no development folders, LICENSE ships, specs pass on the packaged files |
 | `doctor` | Every tool pin in `ci.yml` and `typecheck.sh` checked on this machine, each problem with its fix |
 | `screens` | `docs/screenshots/scenes.sha256`: each image's hash beside its scene dump's, and the CI check for a stale image |
@@ -54,5 +54,6 @@ Addon-specific generators and hints stay in the repo.
 2. `python3 forever_tools/sync.py manifest`, commit, note the commit.
 3. In each repo, from a clean producer checkout at that commit:
    `python3 tools/forever_tools/sync.py update --source <producer checkout>`.
+   `update` deletes a module the producer dropped or renamed, so update the repo's entry points in the same sync.
    `check` runs offline in `typecheck.sh` and fails on any edited, missing or extra file or an unpinned
    manifest; `check --source <checkout>` also compares with the producer.

@@ -131,8 +131,9 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   Dependabot updates `github-actions` monthly, grouped. A `package` job runs the pinned BigWigs packager
   with `args: -d -z` (no upload) and `tools/check_package.py` (`forever_tools.package`) on its output: every file a
   TOC or XML loads and every `Interface\AddOns\<addon>\` path is in the zip, no `tests`, `tools`, `types` or
-  `.agents` ships, LICENSE and THIRD_PARTY.md do with the WFA-10 and WFA-31 credits sections, every other packaged
-  folder ships a licence file, and the smoke spec passes on the packaged folder. `tools/doctor.py`
+  `.agents` ships, every packaged folder ships a licence file (LICENSE, LICENCE, COPYING or UNLICENSE), THIRD_PARTY.md
+  and the WFA-10 and WFA-31 credits sections ship with text under them, and the smoke spec passes on the packaged
+  folder. `tools/doctor.py`
   (`forever_tools.doctor`) checks a machine against every pin in `ci.yml` and `typecheck.sh` and prints a fix for
   each problem; AGENTS.md lists it under Commands.
 - **WFA-16** Releases: a signed `v*` tag runs `release.yml` (BigWigs packager, pinned) with this

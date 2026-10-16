@@ -43,8 +43,8 @@ class Policy:
     """`addons`: every folder the package holds, the main addon first (`package-as`, then each `move-folders`
     target). `forbidden`: names that must not appear at any addon folder's top level. Every folder must ship a
     licence file (`licence_file`). `required`: other files the main addon folder must ship. `credits`: (file,
-    heading) pairs the main addon folder must ship, each file holding that heading (`has_section`) with text under
-    it. `specs`: repository-relative specs to run on the packaged files, with `support` (paths in the checkout,
+    heading) pairs the main addon folder must ship, each file holding that ATX heading (`has_section`) with text
+    under it. `specs`: repository-relative specs to run on the packaged files, with `support` (paths in the checkout,
     never shipped) laid over a copy of the package first."""
 
     addons: tuple[str, ...]
@@ -100,7 +100,8 @@ def lua_strings(source: str) -> list[tuple[int, str]]:
 
 LICENCE_NAMES = frozenset({"LICENSE", "LICENCE", "COPYING", "UNLICENSE"})
 HEADING = re.compile(r"^ {0,3}(#{1,6})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$")
-FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+BREAK = re.compile(r"^ {0,3}([-*_=])(?:[ \t]*\1){2,}[ \t]*$")
 
 
 def licence_file(name: str) -> bool:
@@ -108,36 +109,49 @@ def licence_file(name: str) -> bool:
     return name.split(".", 1)[0].upper() in LICENCE_NAMES
 
 
+def _prose(text: str) -> list[str]:
+    """`text`'s lines with HTML comments blanked and fenced code replaced by a "```" marker line, so a heading in a
+    comment or a code block never counts and a code block still counts as content."""
+    text = re.sub(r"<!--.*?(?:-->|\Z)", lambda match: "\n" * match.group(0).count("\n"), text, flags=re.S)
+    lines, fence = [], ""
+    for line in text.splitlines():
+        found = FENCE.match(line)
+        if fence:
+            if (
+                found
+                and found.group(1)[0] == fence[0]
+                and len(found.group(1)) >= len(fence)
+                and not found.group(2).strip()
+            ):
+                fence = ""
+            continue
+        if found and not (found.group(1)[0] == "`" and "`" in found.group(2)):
+            fence = found.group(1)
+            lines.append("```")
+            continue
+        lines.append(line)
+    return lines
+
+
 def has_section(text: str, heading: str) -> bool:
-    """Whether Markdown `text` has `heading` (such as `## Credits`) with some text under it. The match takes
-    CommonMark's leeway (up to three leading spaces, closing hashes, any case) and skips fenced code blocks; the
-    section runs to the next heading of the same or a higher level."""
+    """Whether Markdown `text` has the ATX `heading` (such as `## Credits`) with some content under it, before the
+    next heading of the same or a higher level. Up to three leading spaces, closing hashes and any case are allowed;
+    headings inside HTML comments or fenced code don't count, and neither do thematic breaks as content. A repeated
+    heading is checked again when an earlier copy is empty."""
     want = HEADING.match(heading)
     if want is None:
-        raise ValueError(f"not a Markdown heading: {heading!r}")
+        raise ValueError(f"not an ATX Markdown heading: {heading!r}")
     level, title = len(want.group(1)), (want.group(2) or "").casefold()
-    inside, fence = False, ""
-    for line in text.splitlines():
-        opened = FENCE.match(line)
-        if fence:
-            if opened and opened.group(1)[0] == fence[0] and len(opened.group(1)) >= len(fence):
-                fence = ""
-            elif inside:
-                return True
-            continue
-        if opened:
-            fence = opened.group(1)
-            if inside:
-                return True
-            continue
+    inside = False
+    for line in _prose(text):
         found = HEADING.match(line)
         if found:
             if inside and len(found.group(1)) <= level:
-                return False
+                inside = False
             if len(found.group(1)) == level and (found.group(2) or "").casefold() == title:
                 inside = True
             continue
-        if inside and line.strip():
+        if inside and line.strip() and not BREAK.match(line):
             return True
     return False
 
@@ -165,14 +179,13 @@ def check(release: Path, policy: Policy) -> list[str]:
             problems.append(f"{addon}/{addon}.toc: missing")
         for toc in tocs:
             problems += check_loaded(release, folder, toc, policy.addons)
-    for addon in policy.addons:
-        folder = release / addon
-        if folder.is_dir() and not any(child.is_file() and licence_file(child.name) for child in folder.iterdir()):
+        if not any(child.is_file() and licence_file(child.name) for child in folder.iterdir()):
             problems.append(f"{addon}/LICENSE: missing; every packaged folder ships its licence")
     if policy.addons and (release / policy.addons[0]).is_dir():
         main, name = release / policy.addons[0], policy.addons[0]
+        # A licence named in `required` is the licence rule's to check, under any of its names.
         for file in dict.fromkeys(policy.required + tuple(file for file, _ in policy.credits)):
-            if not (main / file).exists():
+            if not licence_file(file) and not (main / file).exists():
                 problems.append(f"{name}/{file}: missing; it must ship")
         for file, heading in policy.credits:
             if not (main / file).is_file():
@@ -182,7 +195,12 @@ def check(release: Path, policy: Policy) -> list[str]:
             except UnicodeDecodeError:
                 problems.append(f"{name}/{file}: not UTF-8")
                 continue
-            if not has_section(text, heading):
+            try:
+                found = has_section(text, heading)
+            except ValueError as error:
+                problems.append(f"{name}/{file}: {error}; fix the policy's credits heading")
+                continue
+            if not found:
                 problems.append(f"{name}/{file}: no `{heading}` section with text; credit what the addon uses")
     return problems
 

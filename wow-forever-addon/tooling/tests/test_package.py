@@ -66,7 +66,7 @@ class PackageTest(unittest.TestCase):
     def test_credits_and_every_folders_licence_must_ship(self):
         files = self.good()
         del files["Lib/LICENSE.txt"]
-        files["Addon/README.md"] = "# A\n\nCredits are thin here. ## Credits\n"
+        files["Addon/README.md"] = "# A\n\nCredits are thin here. ## Credits\nThanks.\n"
         files["Addon/THIRD_PARTY.md"] = "# Inputs\n\n### Ideas and contributors\n\nNone.\n"
         problems = package.check(self.make(files), POLICY)
         self.assertEqual(
@@ -107,6 +107,9 @@ class PackageTest(unittest.TestCase):
             "   ## credits ##\nThanks.\n",
             "## Credits  \n\n- a\n",
             "## Credits\n### People\nThanks.\n",
+            "## Credits\n\n## Other\nx\n## Credits\nThanks.\n",
+            "## Credits\r\n\r\nThanks.\r\n",
+            "## Credits\n~~~\ncode\n~~~\n",
         ):
             self.assertTrue(package.has_section(text, "## Credits"), text)
         for text in (
@@ -117,8 +120,26 @@ class PackageTest(unittest.TestCase):
             "```\n## Credits\nThanks.\n```\n",
             "## Credits and more\nThanks.\n",
             "Text ## Credits\nThanks.\n",
+            "## Credits\n\n<!-- TODO: credit libraries -->\n",
+            "<!--\n## Credits\nThanks\n-->\n",
+            "```\n``` example\n## Credits\nfoo\n```\n",
+            "## Credits\n\n---\n",
         ):
             self.assertFalse(package.has_section(text, "## Credits"), text)
+
+    def test_a_licence_in_required_takes_any_licence_name(self):
+        files = self.good()
+        del files["Addon/LICENSE"]
+        files["Addon/LICENCE.txt"] = "MIT"
+        policy = package.Policy(addons=("Addon", "Lib"), required=("LICENSE", "THIRD_PARTY.md"))
+        self.assertEqual(package.check(self.make(files), policy), [])
+
+    def test_a_policy_heading_that_is_not_markdown_is_named(self):
+        policy = package.Policy(addons=("Addon", "Lib"), credits=(("README.md", "Credits:"),))
+        self.assertEqual(
+            package.check(self.make(self.good()), policy),
+            ["Addon/README.md: not an ATX Markdown heading: 'Credits:'; fix the policy's credits heading"],
+        )
 
     def test_a_non_utf8_credits_file_is_named(self):
         root = self.make(self.good())

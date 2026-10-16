@@ -181,7 +181,7 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 - **WFA-31** `THIRD_PARTY.md` lists every input: what it is, where its pin lives (the constant in `tools/`, never
   a copied value that a data refresh would leave stale), its licence, and whether it ships in the zip or is
   build-only. An embedded library (LibStub and the like) ships with its licence and is credited there.
-- **WFA-32** README.md and docs/curseforge.md each carry the family block, "My other Forever addons", once,
+- **WFA-32** README.md and docs/curseforge.md each carry the family block, "The Forever addons", once,
   between `<!-- forever-family:start -->` and `<!-- forever-family:end -->`, in place of any hand-written list of
   the other addons. The text is `forever_tools.family` and never edited in a repo: `tools/check_family.py` runs in
   `typecheck.sh` and fails on any difference (`--fix` rewrites it after a sync, `--print` gives it to place). Prose

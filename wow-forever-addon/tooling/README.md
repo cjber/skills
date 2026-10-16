@@ -18,7 +18,7 @@ the producer commit the copy came from.
 | `doctor` | Every tool pin in `ci.yml` and `typecheck.sh` checked on this machine, each problem with its fix |
 | `screens` | `docs/screenshots/scenes.sha256`: each image's hash beside its scene dump's, and the CI check for a stale image |
 | `editorconfig` | The family `.editorconfig` template and its check against `stylua.toml` and `ruff.toml` |
-| `family` | The shared "My other Forever addons" block and its check in `README.md` and `docs/curseforge.md` |
+| `family` | The shared "The Forever addons" block and its check in `README.md` and `docs/curseforge.md` |
 | `changelog`, `release_check`, `latest_build` | Release gates and the newest Forever build |
 | `csvtable`, `wago` | Strict DB2 CSV parsing and cached, validated downloads |
 | `fsio` | `atomic_write`, and `publish` for multi-output generators (stage all, replace, roll back on failure) |

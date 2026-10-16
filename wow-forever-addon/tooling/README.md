@@ -18,6 +18,7 @@ the producer commit the copy came from.
 | `doctor` | Every tool pin in `ci.yml` and `typecheck.sh` checked on this machine, each problem with its fix |
 | `screens` | `docs/screenshots/scenes.sha256`: each image's hash beside its scene dump's, and the CI check for a stale image |
 | `editorconfig` | The family `.editorconfig` template and its check against `stylua.toml` and `ruff.toml` |
+| `locales` | The translation check (WFA-34): every `Locales/<locale>.lua` parses, is loaded by the TOC, uses only the template's keys and keeps English's placeholders and escapes; prints each locale's coverage |
 | `family` | The shared "The Forever addons" block and its check in `README.md` and `docs/curseforge.md` |
 | `changelog`, `release_check`, `latest_build` | Release gates and the newest Forever build |
 | `csvtable`, `wago` | Strict DB2 CSV parsing and cached, validated downloads |
@@ -28,7 +29,7 @@ the producer commit the copy came from.
 
 A repo's `tools/*.py` entry points stay thin (`changelog.py`, `release_check.py`, `lint_taint.py`, `lint_art.py`,
 `lint_multivalue.py`, `lint_secret.py`, `typecheck_coverage.py`, `check_package.py`, `check_screenshots.py`,
-`check_editorconfig.py`, `check_family.py`, `doctor.py`) and add only per-addon policy such as `RUNTIME_DIRS`.
+`check_editorconfig.py`, `check_family.py`, `check_locales.py`, `doctor.py`) and add only per-addon policy such as `RUNTIME_DIRS`.
 
 The packaged-zip check runs in its own CI job, after the pinned packager builds without uploading:
 

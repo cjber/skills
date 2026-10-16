@@ -139,6 +139,9 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 - **WFA-16** Releases: a signed `v*` tag runs `release.yml` (BigWigs packager, pinned) with this
   version's CHANGELOG entry as notes (`tools/changelog.py`), uploading to GitHub, CurseForge and
   Wago; the TOC carries `X-Curse-Project-ID` and `X-Wago-ID`. Setup is in `wow-addon-publish`.
+  Release prep starts by translating every phrase added since the last tag into each shipped locale (WFA-34):
+  `tools/check_locales.py` lists each locale's coverage, and `--release` fails until every shipped locale is back at
+  100%.
 - **WFA-17** Every repo has a lean `AGENTS.md` passing `python3 .sift/agents.py check`, declaring
   this pack at a full commit SHA. Headless specs pass on builds that are broken in game, so a change
   to anything the player sees or to combat behaviour is verified live in game before it merges, and
@@ -202,3 +205,14 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   generic thanks instead. Praise, and requests that weren't built, are not credited. The org PR template
   (`cjber/.github`) carries the checklist line `- [ ] A reporter or requester is credited in the changelog bullet and
   THIRD_PARTY.md (WFA-33)`.
+- **WFA-34** Every addon ships in the client languages the Forever client offers besides English (deDE, esES,
+  esMX, frFR, itIT, koKR, ptBR, ruRU, zhCN and zhTW, less any the client lacks), one `Locales/<locale>.lua` each,
+  loaded by the TOC after `Locales\enUS.lua` and keyed exactly as `Locales/phrases.txt`. A human translation wins:
+  keep each human line and fill only the gaps, and never overwrite one with a machine line. A machine-translated file
+  starts with `-- Machine translated (<date>); corrections welcome: <the repo's translation issue form>`, and in a
+  file that mixes the two each machine line ends `-- mt`. Use the client's own GlobalStrings terms; never change
+  placeholders, colour, texture, atlas or link escapes, newlines, slash commands or addon names. Store and README
+  copy stay English, with one line naming the languages and the translation form. `tools/check_locales.py`
+  (`forever_tools.locales`) runs in `typecheck.sh`: it fails on an unknown key, a file LuaJIT can't parse or the TOC
+  doesn't load, and a placeholder or escape that differs from English, and prints each locale's coverage (a gap falls
+  back to English, so it never fails).

@@ -83,8 +83,11 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 
 - **WFA-10** README shape: centred 96 px icon, `<h1 align="center">`, one-line pitch, CI and
   release badges; then Features, Install, Usage (slash commands), optional sections for how the
-  numbers or data work, Works alongside, Development, Licence. Under 1,200 words: a feature is one
-  bullet led by a bold name, at most ~60 words; depth moves to `docs/`. The WFA-32 family block is not
+  numbers or data work, Works alongside, Development, Credits, Licence. Under 1,200 words: a feature is one
+  bullet led by a bold name, at most ~60 words; depth moves to `docs/`. `## Credits` is a short paragraph that
+  thanks, by name and with a link, the data sources, the addons whose ideas a feature took (even when no code was
+  copied, saying so), translators and the people who reported bugs or asked for features (GitHub handles and named
+  CurseForge users; a generic thanks for the rest). THIRD_PARTY.md (WFA-31) holds the full list. The WFA-32 family block is not
   counted; `check_copy.py --words` gives the count every repo uses.
 - **WFA-11** `docs/curseforge.md` is the store description: the pitch, the headline screenshots,
   Features, Usage, a source/licence line; under 600 words; no Install or Development sections. It
@@ -128,7 +131,8 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   Dependabot updates `github-actions` monthly, grouped. A `package` job runs the pinned BigWigs packager
   with `args: -d -z` (no upload) and `tools/check_package.py` (`forever_tools.package`) on its output: every file a
   TOC or XML loads and every `Interface\AddOns\<addon>\` path is in the zip, no `tests`, `tools`, `types` or
-  `.agents` ships, LICENSE does, and the smoke spec passes on the packaged folder. `tools/doctor.py`
+  `.agents` ships, LICENSE and THIRD_PARTY.md do with the WFA-10 and WFA-31 credits sections, every other packaged
+  folder ships a licence file, and the smoke spec passes on the packaged folder. `tools/doctor.py`
   (`forever_tools.doctor`) checks a machine against every pin in `ci.yml` and `typecheck.sh` and prints a fix for
   each problem; AGENTS.md lists it under Commands.
 - **WFA-16** Releases: a signed `v*` tag runs `release.yml` (BigWigs packager, pinned) with this
@@ -180,9 +184,20 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   and refuses an unguarded read unless its line says why it is safe (`-- secret-ok: reason`).
 - **WFA-31** `THIRD_PARTY.md` lists every input: what it is, where its pin lives (the constant in `tools/`, never
   a copied value that a data refresh would leave stale), its licence, and whether it ships in the zip or is
-  build-only. An embedded library (LibStub and the like) ships with its licence and is credited there.
+  build-only. An embedded library (LibStub and the like) ships with its licence and is credited there; every
+  `move-folders` folder ships a licence file of its own (public-domain code such as LibStub carries it in its
+  header). Media made for the addon (icons, textures) is named as the addon's own, with the script that draws it. Its `## Ideas and contributors` table names each addon an idea came
+  from (with the issue numbers), each translator and each reporter. `tools/check_package.py` fails a zip without
+  THIRD_PARTY.md, that section or README's `## Credits`.
 - **WFA-32** README.md and docs/curseforge.md each carry the family block, "The Forever addons", once,
   between `<!-- forever-family:start -->` and `<!-- forever-family:end -->`, in place of any hand-written list of
   the other addons. The text is `forever_tools.family` and never edited in a repo: `tools/check_family.py` runs in
   `typecheck.sh` and fails on any difference (`--fix` rewrites it after a sync, `--print` gives it to place). Prose
   outside the block says only what a sibling really adds to this addon.
+- **WFA-33** A player who reported a bug we fix, or asked for a feature we build, is credited by name in the same PR,
+  whether they wrote on GitHub or in store comments: the changelog bullet ends "thanks to X for the report" (or "for
+  the idea"), and THIRD_PARTY.md's `## Ideas and contributors` table gains or extends their row with what came of it.
+  Use the handle they posted under; an anonymous store handle (`user_` and random characters) gets the table's
+  generic thanks instead. Praise, and requests that weren't built, are not credited. The org PR template
+  (`cjber/.github`) carries the checklist line `- [ ] A reporter or requester is credited in the changelog bullet and
+  THIRD_PARTY.md (WFA-33)`.

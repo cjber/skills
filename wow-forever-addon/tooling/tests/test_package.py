@@ -67,14 +67,14 @@ class PackageTest(unittest.TestCase):
         files = self.good()
         del files["Lib/LICENSE.txt"]
         files["Addon/README.md"] = "# A\n\nCredits are thin here. ## Credits\n"
-        files["Addon/THIRD_PARTY.md"] = "# Inputs\n\n### Ideas and contributors\n"
+        files["Addon/THIRD_PARTY.md"] = "# Inputs\n\n### Ideas and contributors\n\nNone.\n"
         problems = package.check(self.make(files), POLICY)
         self.assertEqual(
             problems,
             [
-                "Addon/README.md: no `## Credits` section; credit what the addon uses",
-                "Addon/THIRD_PARTY.md: no `## Ideas and contributors` section; credit what the addon uses",
                 "Lib/LICENSE: missing; every packaged folder ships its licence",
+                "Addon/README.md: no `## Credits` section with text; credit what the addon uses",
+                "Addon/THIRD_PARTY.md: no `## Ideas and contributors` section with text; credit what the addon uses",
             ],
         )
         del files["Addon/THIRD_PARTY.md"]
@@ -85,16 +85,43 @@ class PackageTest(unittest.TestCase):
         self.assertIn("Addon/README.md: missing; it must ship", problems)
         self.assertEqual(sum("THIRD_PARTY.md" in problem for problem in problems), 1, problems)
 
-    def test_licence_names_and_heading_whitespace(self):
-        for name in ("LICENSE", "LICENCE.md", "UNLICENSE", "COPYING.txt", "MIT-LICENSE.txt"):
-            self.assertTrue(package.licence_file(name), name)
-        self.assertFalse(package.licence_file("README.md"))
+    def test_the_main_folder_takes_any_licence_name(self):
         files = self.good()
-        del files["Lib/LICENSE.txt"]
-        files["Lib/LICENCE"] = "MIT"
-        files["Addon/README.md"] = "# A\n\n## Credits  \n"
+        del files["Addon/LICENSE"]
+        files["Addon/COPYING.md"] = "GPL"
         self.assertEqual(package.check(self.make(files), POLICY), [])
-        root = self.make(files)
+        del files["Addon/COPYING.md"]
+        self.assertEqual(
+            package.check(self.make(files), POLICY), ["Addon/LICENSE: missing; every packaged folder ships its licence"]
+        )
+
+    def test_licence_names_are_exact(self):
+        for name in ("LICENSE", "license", "LICENCE.md", "UNLICENSE", "COPYING.txt", "License.TXT"):
+            self.assertTrue(package.licence_file(name), name)
+        for name in ("README.md", "LicenseCheck.lua", "Licenses.xml", "license_spec.lua", "MIT-LICENSE.txt"):
+            self.assertFalse(package.licence_file(name), name)
+
+    def test_sections_take_markdown_leeway_and_need_text(self):
+        for text in (
+            "## Credits\n\nThanks.\n",
+            "   ## credits ##\nThanks.\n",
+            "## Credits  \n\n- a\n",
+            "## Credits\n### People\nThanks.\n",
+        ):
+            self.assertTrue(package.has_section(text, "## Credits"), text)
+        for text in (
+            "## Credits\n\n## Licence\nGPL\n",
+            "## Credits\n",
+            "    ## Credits\nThanks.\n",
+            "### Credits\nThanks.\n",
+            "```\n## Credits\nThanks.\n```\n",
+            "## Credits and more\nThanks.\n",
+            "Text ## Credits\nThanks.\n",
+        ):
+            self.assertFalse(package.has_section(text, "## Credits"), text)
+
+    def test_a_non_utf8_credits_file_is_named(self):
+        root = self.make(self.good())
         (root / "Addon/THIRD_PARTY.md").write_bytes(b"## Ideas and contributors\nRen\xe9e\n")
         self.assertEqual(package.check(root, POLICY), ["Addon/THIRD_PARTY.md: not UTF-8"])
 

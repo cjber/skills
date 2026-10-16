@@ -8,9 +8,9 @@ list is never compared with the TOC. Run the packager without uploading (`releas
 - a file a TOC or its XML loads (`Script`, `Include`), or an `Interface\\AddOns\\<packaged folder>\\...` path a TOC
   tag, XML attribute or whole Lua string names, that is not in the package;
 - a development folder that shipped (`tests`, `tools`, `types`, `.agents` and the like), or a required file that
-  did not (`LICENSE` and `THIRD_PARTY.md` in the main addon, a licence file in every other packaged folder);
+  did not (a licence file in every packaged folder, and `THIRD_PARTY.md` in the main addon);
 - credits that do not ship with it (WFA-10, WFA-31): the main addon's `README.md` needs a `## Credits` section and
-  its `THIRD_PARTY.md` an `## Ideas and contributors` section;
+  its `THIRD_PARTY.md` an `## Ideas and contributors` section, each with some text under the heading;
 - a spec that fails when run against the packaged files instead of the checkout: the package is copied to a scratch
   folder, the addon's test support (`tests/`) is laid over it, and each spec runs there under LuaJIT.
 
@@ -18,6 +18,7 @@ list is never compared with the TOC. Run the packager without uploading (`releas
 """
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
@@ -28,7 +29,7 @@ from pathlib import Path, PurePosixPath
 
 from .lua import LuaSyntaxError, tokenize
 
-__all__ = ["Policy", "check", "licence_file", "main", "run_specs"]
+__all__ = ["Policy", "check", "has_section", "licence_file", "main", "run_specs"]
 
 FORBIDDEN = (".agents", ".github", ".sift", "AGENTS.md", "tests", "tools", "types")
 # What the client accepts for a texture, font or sound path given without its extension.
@@ -40,15 +41,15 @@ SPEC_TIMEOUT = 900
 @dataclass(frozen=True)
 class Policy:
     """`addons`: every folder the package holds, the main addon first (`package-as`, then each `move-folders`
-    target). `forbidden`: names that must not appear at any addon folder's top level. `required`: files the main
-    addon folder must ship; every other folder must ship a licence file (`licence_file`).
-    `credits`: (file, heading) pairs the main addon folder must ship, each file holding that heading on a line of
-    its own. `specs`: repository-relative specs to run on the packaged files, with `support` (paths in the checkout,
+    target). `forbidden`: names that must not appear at any addon folder's top level. Every folder must ship a
+    licence file (`licence_file`). `required`: other files the main addon folder must ship. `credits`: (file,
+    heading) pairs the main addon folder must ship, each file holding that heading (`has_section`) with text under
+    it. `specs`: repository-relative specs to run on the packaged files, with `support` (paths in the checkout,
     never shipped) laid over a copy of the package first."""
 
     addons: tuple[str, ...]
     forbidden: tuple[str, ...] = FORBIDDEN
-    required: tuple[str, ...] = ("LICENSE", "THIRD_PARTY.md")
+    required: tuple[str, ...] = ("THIRD_PARTY.md",)
     credits: tuple[tuple[str, str], ...] = (
         ("README.md", "## Credits"),
         ("THIRD_PARTY.md", "## Ideas and contributors"),
@@ -97,10 +98,48 @@ def lua_strings(source: str) -> list[tuple[int, str]]:
     return found
 
 
+LICENCE_NAMES = frozenset({"LICENSE", "LICENCE", "COPYING", "UNLICENSE"})
+HEADING = re.compile(r"^ {0,3}(#{1,6})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$")
+FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+
+
 def licence_file(name: str) -> bool:
-    """A licence by its usual names: LICENSE, LICENCE, UNLICENSE or COPYING, with any prefix case or extension."""
-    upper = name.upper()
-    return "LICENSE" in upper or "LICENCE" in upper or upper.startswith("COPYING")
+    """A licence file by name: LICENSE, LICENCE, COPYING or UNLICENSE in any case, with or without an extension."""
+    return name.split(".", 1)[0].upper() in LICENCE_NAMES
+
+
+def has_section(text: str, heading: str) -> bool:
+    """Whether Markdown `text` has `heading` (such as `## Credits`) with some text under it. The match takes
+    CommonMark's leeway (up to three leading spaces, closing hashes, any case) and skips fenced code blocks; the
+    section runs to the next heading of the same or a higher level."""
+    want = HEADING.match(heading)
+    if want is None:
+        raise ValueError(f"not a Markdown heading: {heading!r}")
+    level, title = len(want.group(1)), (want.group(2) or "").casefold()
+    inside, fence = False, ""
+    for line in text.splitlines():
+        opened = FENCE.match(line)
+        if fence:
+            if opened and opened.group(1)[0] == fence[0] and len(opened.group(1)) >= len(fence):
+                fence = ""
+            elif inside:
+                return True
+            continue
+        if opened:
+            fence = opened.group(1)
+            if inside:
+                return True
+            continue
+        found = HEADING.match(line)
+        if found:
+            if inside and len(found.group(1)) <= level:
+                return False
+            if len(found.group(1)) == level and (found.group(2) or "").casefold() == title:
+                inside = True
+            continue
+        if inside and line.strip():
+            return True
+    return False
 
 
 def check(release: Path, policy: Policy) -> list[str]:
@@ -126,6 +165,10 @@ def check(release: Path, policy: Policy) -> list[str]:
             problems.append(f"{addon}/{addon}.toc: missing")
         for toc in tocs:
             problems += check_loaded(release, folder, toc, policy.addons)
+    for addon in policy.addons:
+        folder = release / addon
+        if folder.is_dir() and not any(child.is_file() and licence_file(child.name) for child in folder.iterdir()):
+            problems.append(f"{addon}/LICENSE: missing; every packaged folder ships its licence")
     if policy.addons and (release / policy.addons[0]).is_dir():
         main, name = release / policy.addons[0], policy.addons[0]
         for file in dict.fromkeys(policy.required + tuple(file for file, _ in policy.credits)):
@@ -135,16 +178,12 @@ def check(release: Path, policy: Policy) -> list[str]:
             if not (main / file).is_file():
                 continue
             try:
-                lines = [line.rstrip() for line in (main / file).read_text(encoding="utf-8-sig").splitlines()]
+                text = (main / file).read_text(encoding="utf-8-sig")
             except UnicodeDecodeError:
                 problems.append(f"{name}/{file}: not UTF-8")
                 continue
-            if heading not in lines:
-                problems.append(f"{name}/{file}: no `{heading}` section; credit what the addon uses")
-    for addon in policy.addons[1:]:
-        folder = release / addon
-        if folder.is_dir() and not any(child.is_file() and licence_file(child.name) for child in folder.iterdir()):
-            problems.append(f"{addon}/LICENSE: missing; every packaged folder ships its licence")
+            if not has_section(text, heading):
+                problems.append(f"{name}/{file}: no `{heading}` section with text; credit what the addon uses")
     return problems
 
 
@@ -251,5 +290,8 @@ def main(root: Path, policy: Policy, argv: list[str] | None = None) -> int:
         print(problem, file=sys.stderr)
     if problems:
         return 1
-    print(f"Package: {', '.join(policy.addons)} ship every loaded file and nothing from development")
+    print(
+        f"Package: {', '.join(policy.addons)} ship every loaded file, a licence and the credits, "
+        "and nothing from development"
+    )
     return 0

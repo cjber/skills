@@ -28,7 +28,7 @@ from pathlib import Path, PurePosixPath
 
 from .lua import LuaSyntaxError, tokenize
 
-__all__ = ["Policy", "check", "main", "run_specs"]
+__all__ = ["Policy", "check", "licence_file", "main", "run_specs"]
 
 FORBIDDEN = (".agents", ".github", ".sift", "AGENTS.md", "tests", "tools", "types")
 # What the client accepts for a texture, font or sound path given without its extension.
@@ -41,7 +41,7 @@ SPEC_TIMEOUT = 900
 class Policy:
     """`addons`: every folder the package holds, the main addon first (`package-as`, then each `move-folders`
     target). `forbidden`: names that must not appear at any addon folder's top level. `required`: files the main
-    addon folder must ship; every other folder must ship a licence file (`LICENSE` or `COPYING`, any extension).
+    addon folder must ship; every other folder must ship a licence file (`licence_file`).
     `credits`: (file, heading) pairs the main addon folder must ship, each file holding that heading on a line of
     its own. `specs`: repository-relative specs to run on the packaged files, with `support` (paths in the checkout,
     never shipped) laid over a copy of the package first."""
@@ -97,6 +97,12 @@ def lua_strings(source: str) -> list[tuple[int, str]]:
     return found
 
 
+def licence_file(name: str) -> bool:
+    """A licence by its usual names: LICENSE, LICENCE, UNLICENSE or COPYING, with any prefix case or extension."""
+    upper = name.upper()
+    return "LICENSE" in upper or "LICENCE" in upper or upper.startswith("COPYING")
+
+
 def check(release: Path, policy: Policy) -> list[str]:
     """Every problem with the packaged folders under `release`, each as one line."""
     problems: list[str] = []
@@ -121,22 +127,23 @@ def check(release: Path, policy: Policy) -> list[str]:
         for toc in tocs:
             problems += check_loaded(release, folder, toc, policy.addons)
     if policy.addons and (release / policy.addons[0]).is_dir():
-        main = release / policy.addons[0]
-        for name in policy.required:
-            if not (main / name).exists():
-                problems.append(f"{policy.addons[0]}/{name}: missing; it must ship")
-        for name, heading in policy.credits:
-            path = main / name
-            if not path.is_file():
-                if name not in policy.required:
-                    problems.append(f"{policy.addons[0]}/{name}: missing; it must ship")
-            elif heading not in path.read_text(encoding="utf-8").splitlines():
-                problems.append(f"{policy.addons[0]}/{name}: no `{heading}` section; credit what the addon uses")
+        main, name = release / policy.addons[0], policy.addons[0]
+        for file in dict.fromkeys(policy.required + tuple(file for file, _ in policy.credits)):
+            if not (main / file).exists():
+                problems.append(f"{name}/{file}: missing; it must ship")
+        for file, heading in policy.credits:
+            if not (main / file).is_file():
+                continue
+            try:
+                lines = [line.rstrip() for line in (main / file).read_text(encoding="utf-8-sig").splitlines()]
+            except UnicodeDecodeError:
+                problems.append(f"{name}/{file}: not UTF-8")
+                continue
+            if heading not in lines:
+                problems.append(f"{name}/{file}: no `{heading}` section; credit what the addon uses")
     for addon in policy.addons[1:]:
         folder = release / addon
-        if folder.is_dir() and not any(
-            child.is_file() and child.name.upper().startswith(("LICENSE", "COPYING")) for child in folder.iterdir()
-        ):
+        if folder.is_dir() and not any(child.is_file() and licence_file(child.name) for child in folder.iterdir()):
             problems.append(f"{addon}/LICENSE: missing; every packaged folder ships its licence")
     return problems
 

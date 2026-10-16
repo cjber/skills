@@ -85,6 +85,19 @@ class PackageTest(unittest.TestCase):
         self.assertIn("Addon/README.md: missing; it must ship", problems)
         self.assertEqual(sum("THIRD_PARTY.md" in problem for problem in problems), 1, problems)
 
+    def test_licence_names_and_heading_whitespace(self):
+        for name in ("LICENSE", "LICENCE.md", "UNLICENSE", "COPYING.txt", "MIT-LICENSE.txt"):
+            self.assertTrue(package.licence_file(name), name)
+        self.assertFalse(package.licence_file("README.md"))
+        files = self.good()
+        del files["Lib/LICENSE.txt"]
+        files["Lib/LICENCE"] = "MIT"
+        files["Addon/README.md"] = "# A\n\n## Credits  \n"
+        self.assertEqual(package.check(self.make(files), POLICY), [])
+        root = self.make(files)
+        (root / "Addon/THIRD_PARTY.md").write_bytes(b"## Ideas and contributors\nRen\xe9e\n")
+        self.assertEqual(package.check(root, POLICY), ["Addon/THIRD_PARTY.md: not UTF-8"])
+
     def test_a_missing_addon_folder_and_a_lua_path_are_named(self):
         files = self.good()
         del files["Addon/media/dot.tga"]

@@ -12,7 +12,10 @@ sync and nothing drifts.
 
 import argparse
 import sys
+from collections.abc import Iterator
 from pathlib import Path
+
+from .fsio import atomic_write
 
 __all__ = ["ADDONS", "BLOCK", "END", "FILES", "START", "check", "fix", "main"]
 
@@ -83,36 +86,41 @@ def _span(text: str) -> tuple[int, int] | str:
     return begin, finish + len(END)
 
 
-def check(root: Path) -> list[str]:
-    problems = []
+def _blocks(root: Path) -> Iterator[tuple[str, Path, str, tuple[int, int] | str | None]]:
+    """(name, path, text, span) per file; span is None for a missing file. Text keeps its line endings."""
     for name in FILES:
         path = root / name
         if not path.is_file():
-            problems.append(f"{name}: missing")
+            yield name, path, "", None
             continue
-        text = path.read_text(encoding="utf-8")
-        span = _span(text)
-        if isinstance(span, str):
+        text = path.read_bytes().decode("utf-8")
+        yield name, path, text, _span(text)
+
+
+def check(root: Path) -> list[str]:
+    problems = []
+    for name, _, text, span in _blocks(root):
+        if span is None:
+            problems.append(f"{name}: missing")
+        elif isinstance(span, str):
             problems.append(f"{name}: {span}")
-        elif text[span[0] : span[1]] != BLOCK:
+        elif text[span[0] : span[1]].replace("\r\n", "\n") != BLOCK:
             line = text.count("\n", 0, span[0]) + 1
             problems.append(f"{name}:{line}: the family block differs from forever_tools.family; run --fix")
     return problems
 
 
 def fix(root: Path) -> list[str]:
-    """Rewrite each well-formed block to `BLOCK`; return the files changed. A file with no block is left alone."""
+    """Rewrite each well-formed block to `BLOCK`, in the file's own line endings; return the files changed.
+    A file with no block is left alone: where the block goes is the page's choice."""
     changed = []
-    for name in FILES:
-        path = root / name
-        if not path.is_file():
+    for name, path, text, span in _blocks(root):
+        if span is None or isinstance(span, str):
             continue
-        text = path.read_text(encoding="utf-8")
-        span = _span(text)
-        if isinstance(span, str) or text[span[0] : span[1]] == BLOCK:
-            continue
-        path.write_text(text[: span[0]] + BLOCK + text[span[1] :], encoding="utf-8")
-        changed.append(name)
+        block = BLOCK.replace("\n", "\r\n") if "\r\n" in text else BLOCK
+        if text[span[0] : span[1]] != block:
+            atomic_write(path, text[: span[0]] + block + text[span[1] :])
+            changed.append(name)
     return changed
 
 

@@ -83,6 +83,15 @@ class FamilyTest(unittest.TestCase):
         self.assertEqual(self.read("docs/curseforge.md"), "No block here.\n")
         self.assertEqual(family.fix(self.root), [])
 
+    def test_fix_keeps_crlf_line_endings(self):
+        stale = f"{family.START}\r\nOld.\r\n{family.END}"
+        (self.root / "README.md").write_bytes(f"# Addon\r\n\r\n{stale}\r\n".encode())
+        self.assertEqual(family.fix(self.root), ["README.md"])
+        expected = f"# Addon\r\n\r\n{family.BLOCK}\r\n".replace("\n", "\r\n").replace("\r\r", "\r")
+        self.assertEqual((self.root / "README.md").read_bytes().decode(), expected)
+        self.assertEqual(family.check(self.root), [])
+        self.assertEqual(family.fix(self.root), [])
+
     def test_main_reports_and_prints(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
@@ -104,8 +113,10 @@ class ProseWordsTest(unittest.TestCase):
         spec.loader.exec_module(self.copy)
 
     def test_the_family_block_and_markup_are_not_prose(self):
-        page = "Plans a [route](https://example.com/a/b).\n\n![Alt words here](x.png)\n\n```sh\nluajit x\n```\n"
+        page = "Plans a [route](https://example.com/a/b) `/x y`.\n\n![Alt words here](x.png)\n\n```sh\nluajit x\n```\n"
         self.assertEqual(self.copy.words(page), 3)
+        badges = "[![CI][badge]][ci] See https://example.com/x.\n\n[ci]: https://example.com/ci.yml\n"
+        self.assertEqual(self.copy.words(badges), 1)
         self.assertEqual(self.copy.words(page + "\n" + family.BLOCK + "\n"), 3)
 
     def test_the_block_passes_the_voice_check(self):

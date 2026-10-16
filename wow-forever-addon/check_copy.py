@@ -4,6 +4,11 @@
 Usage: check_copy.py FILE... ; exits 1 and prints file:line: phrase for each hit, and each image
 stacked under another with no text between (WFA-25).
 Image alt text and code spans are skipped: they quote the game, not our voice.
+
+check_copy.py --words FILE... also prints each file's prose words beside its WFA-10/11 limit (README.md
+under 1,200, curseforge.md under 600), so every repo measures the same way. The count is a guide and never
+fails. The shared forever-family block, code blocks, images, link addresses and HTML tags are not counted:
+the block is the same on every page and is not that page's prose.
 """
 
 import re
@@ -79,8 +84,37 @@ def stacked(path: Path) -> list[str]:
     return found
 
 
+LIMITS = {"README.md": 1200, "curseforge.md": 600}
+NOT_PROSE = [
+    re.compile(r"<!-- forever-family:start -->.*?<!-- forever-family:end -->", re.DOTALL),
+    re.compile(r"^ {0,3}```.*?^ {0,3}```", re.DOTALL | re.MULTILINE),
+    re.compile(r"<!--.*?-->", re.DOTALL),
+    re.compile(r"!\[[^\]]*\]\([^)]*\)"),
+    re.compile(r"<[^>]+>"),
+]
+LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+WORD = re.compile(r"[^\W_]+(?:['’.-][^\W_]+)*")
+
+
+def words(text: str) -> int:
+    """Prose words as WFA-10/11 count them: link text counts; the family block and markup do not."""
+    for pattern in NOT_PROSE:
+        text = pattern.sub(" ", text)
+    return len(WORD.findall(LINK.sub(r"\1", text)))
+
+
+def word_counts(paths: list[Path]) -> None:
+    for path in paths:
+        count, limit = words(path.read_text(encoding="utf-8")), LIMITS.get(path.name)
+        note = "" if limit is None else f", limit {limit}" + (", over" if count >= limit else "")
+        print(f"{path}: {count} prose words{note}", file=sys.stderr)
+
+
 def main() -> int:
-    found = [hit for name in sys.argv[1:] for hit in hits(Path(name)) + stacked(Path(name))]
+    paths = [Path(name) for name in sys.argv[1:] if name != "--words"]
+    found = [hit for path in paths for hit in hits(path) + stacked(path)]
+    if "--words" in sys.argv[1:]:
+        word_counts(paths)
     for hit in found:
         print(hit)
     return 1 if found else 0

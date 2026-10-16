@@ -84,10 +84,12 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 - **WFA-10** README shape: centred 96 px icon, `<h1 align="center">`, one-line pitch, CI and
   release badges; then Features, Install, Usage (slash commands), optional sections for how the
   numbers or data work, Works alongside, Development, Licence. Under 1,200 words: a feature is one
-  bullet led by a bold name, at most ~60 words; depth moves to `docs/`.
+  bullet led by a bold name, at most ~60 words; depth moves to `docs/`. The WFA-32 family block is not
+  counted; `check_copy.py --words` gives the count every repo uses.
 - **WFA-11** `docs/curseforge.md` is the store description: the pitch, the headline screenshots,
   Features, Usage, a source/licence line; under 600 words; no Install or Development sections. It
-  is pasted into CurseForge and Wago by hand after it changes (`wow-addon-publish`).
+  is pasted into CurseForge and Wago by hand after it changes (`wow-addon-publish`). The WFA-32 block is
+  not counted here either.
 - **WFA-23** The addon fits the game's own UI. Show this in the lead image, against the stock UI
   where the change is subtle. Copy leads with what the addon does and how to use it; it does not
   need a slogan about its appearance. See [voice.md](voice.md).
@@ -179,3 +181,8 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 - **WFA-31** `THIRD_PARTY.md` lists every input: what it is, where its pin lives (the constant in `tools/`, never
   a copied value that a data refresh would leave stale), its licence, and whether it ships in the zip or is
   build-only. An embedded library (LibStub and the like) ships with its licence and is credited there.
+- **WFA-32** README.md and docs/curseforge.md each carry the family block, "My other Forever addons", once,
+  between `<!-- forever-family:start -->` and `<!-- forever-family:end -->`, in place of any hand-written list of
+  the other addons. The text is `forever_tools.family` and never edited in a repo: `tools/check_family.py` runs in
+  `typecheck.sh` and fails on any difference (`--fix` rewrites it after a sync, `--print` gives it to place). Prose
+  outside the block says only what a sibling really adds to this addon.

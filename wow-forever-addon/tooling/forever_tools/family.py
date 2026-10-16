@@ -55,6 +55,7 @@ ADDONS = (
 BLOCK = "\n".join(
     [
         START,
+        "",
         "## My other Forever addons",
         "",
         "Each one works on its own, and they work together when you install more than one.",
@@ -62,6 +63,7 @@ BLOCK = "\n".join(
         "| Addon | What it does |",
         "|---|---|",
         *(f"| [{name}](https://www.curseforge.com/wow/addons/{slug}) | {line} |" for name, slug, line in ADDONS),
+        "",  # a blank line ends the table, so no renderer reads the end marker as a row
         END,
     ]
 )

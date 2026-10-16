@@ -185,8 +185,8 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 - **WFA-31** `THIRD_PARTY.md` lists every input: what it is, where its pin lives (the constant in `tools/`, never
   a copied value that a data refresh would leave stale), its licence, and whether it ships in the zip or is
   build-only. An embedded library (LibStub and the like) ships with its licence and is credited there; every
-  `move-folders` folder ships a licence file of its own (public-domain code such as LibStub carries it in its header). Media made for the addon (icons, textures) is named as the
-  addon's own, with the script that draws it. Its `## Ideas and contributors` table names each addon an idea came
+  `move-folders` folder ships a licence file of its own (public-domain code such as LibStub carries it in its
+  header). Media made for the addon (icons, textures) is named as the addon's own, with the script that draws it. Its `## Ideas and contributors` table names each addon an idea came
   from (with the issue numbers), each translator and each reporter. `tools/check_package.py` fails a zip without
   THIRD_PARTY.md, that section or README's `## Credits`.
 - **WFA-32** README.md and docs/curseforge.md each carry the family block, "The Forever addons", once,
@@ -194,3 +194,10 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
   the other addons. The text is `forever_tools.family` and never edited in a repo: `tools/check_family.py` runs in
   `typecheck.sh` and fails on any difference (`--fix` rewrites it after a sync, `--print` gives it to place). Prose
   outside the block says only what a sibling really adds to this addon.
+- **WFA-33** A player who reported a bug we fix, or asked for a feature we build, is credited by name in the same PR,
+  whether they wrote on GitHub or in store comments: the changelog bullet ends "thanks to X for the report" (or "for
+  the idea"), and THIRD_PARTY.md's `## Ideas and contributors` table gains or extends their row with what came of it.
+  Use the handle they posted under; an anonymous store handle (`user_` and random characters) gets the table's
+  generic thanks instead. Praise, and requests that weren't built, are not credited. The org PR template
+  (`cjber/.github`) carries the checklist line `- [ ] A reporter or requester is credited in the changelog bullet and
+  THIRD_PARTY.md (WFA-33)`.

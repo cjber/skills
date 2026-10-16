@@ -38,7 +38,7 @@ class FamilyTest(unittest.TestCase):
             self.assertEqual(slug, name.lower().replace(" ", "-"))
             self.assertNotIn("!", line)
             self.assertNotIn("—", line)
-        self.assertEqual(family.BLOCK.splitlines()[2], "## My other Forever addons")
+        self.assertEqual(family.BLOCK.splitlines()[2], "## The Forever addons")
         self.assertTrue(family.BLOCK.startswith(family.START) and family.BLOCK.endswith(family.END))
 
     def test_an_exact_block_in_both_files_passes(self):

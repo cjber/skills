@@ -35,6 +35,9 @@ class PackageTest(unittest.TestCase):
             "Addon/media/dot.tga": "",
             "Addon/media/Shade.blp": "",
             "Addon/LICENSE": "MIT",
+            "Addon/README.md": "# A\n\n## Credits\n\nThanks.\n",
+            "Addon/THIRD_PARTY.md": "# Inputs\n\n## Ideas and contributors\n\nNone.\n",
+            "Lib/LICENSE.txt": "MIT",
             "Lib/Lib.toc": "## IconTexture: Interface\\AddOns\\Addon\\media\\Icon\nLib.lua\n",
             "Lib/Lib.lua": "",
         }
@@ -59,6 +62,28 @@ class PackageTest(unittest.TestCase):
             "Lib/Lib.toc: missing",
         ):
             self.assertIn(expected, joined)
+
+    def test_credits_and_every_folders_licence_must_ship(self):
+        files = self.good()
+        del files["Lib/LICENSE.txt"]
+        files["Addon/README.md"] = "# A\n\nCredits are thin here. ## Credits\n"
+        files["Addon/THIRD_PARTY.md"] = "# Inputs\n\n### Ideas and contributors\n"
+        problems = package.check(self.make(files), POLICY)
+        self.assertEqual(
+            problems,
+            [
+                "Addon/README.md: no `## Credits` section; credit what the addon uses",
+                "Addon/THIRD_PARTY.md: no `## Ideas and contributors` section; credit what the addon uses",
+                "Lib/LICENSE: missing; every packaged folder ships its licence",
+            ],
+        )
+        del files["Addon/THIRD_PARTY.md"]
+        problems = package.check(self.make(files), POLICY)
+        self.assertIn("Addon/THIRD_PARTY.md: missing; it must ship", problems)
+        del files["Addon/README.md"]
+        problems = package.check(self.make(files), POLICY)
+        self.assertIn("Addon/README.md: missing; it must ship", problems)
+        self.assertEqual(sum("THIRD_PARTY.md" in problem for problem in problems), 1, problems)
 
     def test_a_missing_addon_folder_and_a_lua_path_are_named(self):
         files = self.good()

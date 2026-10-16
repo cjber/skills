@@ -8,7 +8,9 @@ list is never compared with the TOC. Run the packager without uploading (`releas
 - a file a TOC or its XML loads (`Script`, `Include`), or an `Interface\\AddOns\\<packaged folder>\\...` path a TOC
   tag, XML attribute or whole Lua string names, that is not in the package;
 - a development folder that shipped (`tests`, `tools`, `types`, `.agents` and the like), or a required file that
-  did not (`LICENSE`);
+  did not (`LICENSE` and `THIRD_PARTY.md` in the main addon, a licence file in every other packaged folder);
+- credits that do not ship with it (WFA-10, WFA-31): the main addon's `README.md` needs a `## Credits` section and
+  its `THIRD_PARTY.md` an `## Ideas and contributors` section;
 - a spec that fails when run against the packaged files instead of the checkout: the package is copied to a scratch
   folder, the addon's test support (`tests/`) is laid over it, and each spec runs there under LuaJIT.
 
@@ -39,12 +41,18 @@ SPEC_TIMEOUT = 900
 class Policy:
     """`addons`: every folder the package holds, the main addon first (`package-as`, then each `move-folders`
     target). `forbidden`: names that must not appear at any addon folder's top level. `required`: files the main
-    addon folder must ship. `specs`: repository-relative specs to run on the packaged files, with `support` (paths in
-    the checkout, never shipped) laid over a copy of the package first."""
+    addon folder must ship; every other folder must ship a licence file (`LICENSE` or `COPYING`, any extension).
+    `credits`: (file, heading) pairs the main addon folder must ship, each file holding that heading on a line of
+    its own. `specs`: repository-relative specs to run on the packaged files, with `support` (paths in the checkout,
+    never shipped) laid over a copy of the package first."""
 
     addons: tuple[str, ...]
     forbidden: tuple[str, ...] = FORBIDDEN
-    required: tuple[str, ...] = ("LICENSE",)
+    required: tuple[str, ...] = ("LICENSE", "THIRD_PARTY.md")
+    credits: tuple[tuple[str, str], ...] = (
+        ("README.md", "## Credits"),
+        ("THIRD_PARTY.md", "## Ideas and contributors"),
+    )
     specs: tuple[str, ...] = ()
     support: tuple[str, ...] = ("tests",)
 
@@ -113,9 +121,23 @@ def check(release: Path, policy: Policy) -> list[str]:
         for toc in tocs:
             problems += check_loaded(release, folder, toc, policy.addons)
     if policy.addons and (release / policy.addons[0]).is_dir():
+        main = release / policy.addons[0]
         for name in policy.required:
-            if not (release / policy.addons[0] / name).exists():
+            if not (main / name).exists():
                 problems.append(f"{policy.addons[0]}/{name}: missing; it must ship")
+        for name, heading in policy.credits:
+            path = main / name
+            if not path.is_file():
+                if name not in policy.required:
+                    problems.append(f"{policy.addons[0]}/{name}: missing; it must ship")
+            elif heading not in path.read_text(encoding="utf-8").splitlines():
+                problems.append(f"{policy.addons[0]}/{name}: no `{heading}` section; credit what the addon uses")
+    for addon in policy.addons[1:]:
+        folder = release / addon
+        if folder.is_dir() and not any(
+            child.is_file() and child.name.upper().startswith(("LICENSE", "COPYING")) for child in folder.iterdir()
+        ):
+            problems.append(f"{addon}/LICENSE: missing; every packaged folder ships its licence")
     return problems
 
 

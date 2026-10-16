@@ -14,7 +14,7 @@ the producer commit the copy came from.
 | `taint` | Taint lint; `Policy` carries the map openers, frames and getters (`C_Map.OpenWorldMap` is the safe call) |
 | `art` | Art lint (WFA-27): raw texture, atlas and markup calls outside the addon's art helper files need an `art-ok` reason |
 | `readable` | Secret-value lint (WFA-30): `UnitGUID`, `UnitName` and tooltip data reads go through the `Readable` guard, tooltip hooks check `IsForbidden`; `Policy` names the guard and safe units |
-| `package` | The packaged-zip check: TOC/XML-loaded files and addon paths present, no development folders, LICENSE and THIRD_PARTY.md ship (and a licence in every other folder), README's `## Credits` and THIRD_PARTY's `## Ideas and contributors` ship, specs pass on the packaged files |
+| `package` | The packaged-zip check: TOC/XML-loaded files and addon paths present, no development folders, a licence file (LICENSE, LICENCE, COPYING or UNLICENSE) in every folder and THIRD_PARTY.md ship, README's `## Credits` and THIRD_PARTY's `## Ideas and contributors` ship with text under them, specs pass on the packaged files |
 | `doctor` | Every tool pin in `ci.yml` and `typecheck.sh` checked on this machine, each problem with its fix |
 | `screens` | `docs/screenshots/scenes.sha256`: each image's hash beside its scene dump's, and the CI check for a stale image |
 | `editorconfig` | The family `.editorconfig` template and its check against `stylua.toml` and `ruff.toml` |

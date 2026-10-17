@@ -12,7 +12,7 @@ local here = debug.getinfo(1, "S").source:match("^@(.*[/\\])") or "./"
 package.path = here .. "?.lua;" .. package.path
 
 local Taint = require("taint")
-local Secret = require("secret")
+local Secret = require("veil")
 local Docs = require("docs")
 
 local Sim = {}
@@ -43,12 +43,19 @@ Sim.CORE = {
 	"Blizzard_POIButton",
 	"Blizzard_ObjectAPI",
 	"Blizzard_Settings_Shared",
+	"Blizzard_GamepadSoftCursor",
 	-- Single files from addons too large to boot whole: the templates other UI inherits from them.
 	"Blizzard_FrameXML/SecureTemplatesBase.xml",
+	"Blizzard_FrameXML/Mainline/NavigationBar.lua",
+	"Blizzard_FrameXML/Mainline/NavigationBar.xml",
 	"Blizzard_ActionBar/Shared/ActionButtonUtil.lua",
-	"Blizzard_UIPanels_Game/Mainline/ScrollingFlatPanel.lua",
-	"Blizzard_UIPanels_Game/Mainline/ScrollingFlatPanel.xml",
 	"Blizzard_ChatFrameBase/Shared/SlashCommands.lua",
+	-- The map, quest log and fog-of-war pieces of Blizzard_UIPanels_Game, in its TOC order.
+	"Blizzard_UIPanels_Game:PlayerInteractionFrameManager|ScrollingFlatPanel|WarCampaignTemplates|WorldMap"
+		.. "|MapLegend|QuestMap|FogOfWar|UnitPosition",
+	-- Loaded at startup by the client, and what most Forever addons draw on.
+	"Blizzard_WorldMap",
+	"Blizzard_ObjectiveTracker",
 }
 
 local docsCache = {}
@@ -89,7 +96,7 @@ function Sim.new(opts)
 	sim.started = os.clock()
 	require("client").build(sim)
 	require("natives").build(sim)
-	require("apigen").build(sim)
+	require("stubgen").build(sim)
 	sim.locale = opts.locale or "enUS"
 	require("clientdata").build(sim)
 	require("widgets").build(sim)
@@ -139,6 +146,15 @@ end
 -- Registers an addon under test (a folder holding its TOC). `name` defaults to the TOC's name.
 function Sim:addon(dir, name)
 	return self.loader.addon(dir, name)
+end
+
+-- Adds a third-party stand-in from stubs/ (Questie, TomTom, Auctionator, Polestar), with its options; it loads
+-- with the addons at login and runs tainted by its own name, as the real addon would.
+function Sim:stub(name, options)
+	self.G.FOREVER_SIM_STUBS = self.G.FOREVER_SIM_STUBS or {}
+	self.G.FOREVER_SIM_STUBS[name] = options or {}
+	self.taint.globalTaint.FOREVER_SIM_STUBS = nil
+	return self.loader.addon(Sim.dir .. "stubs/" .. name, name)
 end
 
 -- Runs Lua as the given addon would (its chunk name), for test stubs of third-party addons.

@@ -8,8 +8,8 @@ local Instrument = require("instrument")
 
 local M = {}
 
--- Parsed XML and compiled chunks, shared by every sim in the process (a chunk is re-bound to each sim's
--- environment before it runs), so a suite of scenarios parses and compiles the UI source once.
+-- Parsed XML and compiled bytecode, shared by every sim in the process, so a suite of scenarios parses and
+-- compiles the UI source once.
 local xmlCache, chunkCache = {}, {}
 
 -- Inline handler parameter names, as the client declares them.
@@ -162,7 +162,8 @@ end
 function M.build(sim)
 	local G, W, Taint = sim.G, sim.widgets, sim.taint
 	local S = W.state
-	local T = { templates = {}, intrinsics = {}, files = {}, errors = {}, handlers = setmetatable({}, { __mode = "k" }) }
+	local T =
+		{ templates = {}, intrinsics = {}, files = {}, errors = {}, handlers = setmetatable({}, { __mode = "k" }) }
 	sim.templates = T
 
 	local function warn(msg)
@@ -187,8 +188,11 @@ function M.build(sim)
 		local folder = chunkName:match("^([^/\\]+)[/\\]")
 		local addon = folder and Taint.addonFolders[folder]
 		local key = (addon and "+" or "-") .. chunkName .. "\0" .. code
-		local chunk = chunkCache[key]
-		if not chunk then
+		local chunk
+		local bytecode = chunkCache[key]
+		if bytecode then
+			chunk = loadstring(bytecode, "@" .. chunkName)
+		else
 			if addon then
 				code = Instrument.rewrite(code, addon)
 			end
@@ -197,7 +201,8 @@ function M.build(sim)
 			if not chunk then
 				return nil, err
 			end
-			chunkCache[key] = chunk
+			-- Bytecode, not the function: a cached function would keep the first sim's environment alive.
+			chunkCache[key] = string.dump(chunk)
 		end
 		setfenv(chunk, sim.env)
 		return chunk
@@ -211,7 +216,7 @@ function M.build(sim)
 		if fname then
 			local f = G[fname]
 			if type(f) ~= "function" then
-				warn(string.format("%s: %s function=\"%s\" is not defined", ctx.file, node.tag, fname))
+				warn(string.format('%s: %s function="%s" is not defined', ctx.file, node.tag, fname))
 				return nil
 			end
 			return f
@@ -229,11 +234,8 @@ function M.build(sim)
 			local f = T.handlers[node]
 			if not f then
 				local args = SCRIPT_ARGS[node.tag] or "self, ..."
-				local chunk, err = T.compile(
-					"return function(" .. args .. ") " .. node.text .. "\nend",
-					ctx.chunk,
-					node.textLine
-				)
+				local chunk, err =
+					T.compile("return function(" .. args .. ") " .. node.text .. "\nend", ctx.chunk, node.textLine)
 				if not chunk then
 					warn(err)
 					return nil
@@ -285,7 +287,7 @@ function M.build(sim)
 				chain(t.node, out, seen)
 				out[#out + 1] = t
 			elseif not t and not (G[name] and S[G[name]] and S[G[name]].kind == "Font") then
-				warn(string.format("Couldn't find inherited node \"%s\"", name))
+				warn(string.format('Couldn\'t find inherited node "%s"', name))
 			end
 		end
 		return out
@@ -349,15 +351,8 @@ function M.build(sim)
 				local ox, oy = dimensions(offset)
 				x, y = ox or x, oy or y
 			end
-			local ok, err = pcall(
-				W.setPoint,
-				item.obj,
-				point,
-				relative or S[item.obj].parent,
-				a.attr.relativePoint or point,
-				x,
-				y
-			)
+			local ok, err =
+				pcall(W.setPoint, item.obj, point, relative or S[item.obj].parent, a.attr.relativePoint or point, x, y)
 			if not ok then
 				warn(string.format("%s: anchor %s: %s", item.file, tostring(point), tostring(err)))
 			end
@@ -421,7 +416,8 @@ function M.build(sim)
 		end
 		local color = firstChild(node, "Color")
 		if color then
-			s.textColor = { num(color.attr.r) or 1, num(color.attr.g) or 1, num(color.attr.b) or 1, num(color.attr.a) or 1 }
+			s.textColor =
+				{ num(color.attr.r) or 1, num(color.attr.g) or 1, num(color.attr.b) or 1, num(color.attr.a) or 1 }
 		end
 	end
 
@@ -529,7 +525,8 @@ function M.build(sim)
 			end
 			local color = firstChild(node, "Color")
 			if color then
-				s.color = { num(color.attr.r) or 1, num(color.attr.g) or 1, num(color.attr.b) or 1, num(color.attr.a) or 1 }
+				s.color =
+					{ num(color.attr.r) or 1, num(color.attr.g) or 1, num(color.attr.b) or 1, num(color.attr.a) or 1 }
 			end
 			local tc = firstChild(node, "TexCoords")
 			if tc then
@@ -741,10 +738,12 @@ function M.build(sim)
 			end
 		end
 		for _, t in ipairs(templates) do
-			local tctx = setmetatable(
-				{ file = t.file, chunk = t.chunk, taint = t.taint, intrinsic = T.intrinsics[t.node.attr.name or ""] == t },
-				{ __index = ctx }
-			)
+			local tctx = setmetatable({
+				file = t.file,
+				chunk = t.chunk,
+				taint = t.taint,
+				intrinsic = T.intrinsics[t.node.attr.name or ""] == t,
+			}, { __index = ctx })
 			applyNode(obj, t.node, tctx, parent)
 		end
 		applyNode(obj, node, ctx, parent)
@@ -793,7 +792,7 @@ function M.build(sim)
 		for _, name in ipairs(split(templateList)) do
 			local t = templateNode(name)
 			if not t then
-				error(string.format("CreateFrame(): Couldn't find inherited node \"%s\"", name), 3)
+				error(string.format('CreateFrame(): Couldn\'t find inherited node "%s"', name), 3)
 			end
 			local list = chain(t.node)
 			list[#list + 1] = t
@@ -825,18 +824,25 @@ function M.build(sim)
 		local resolved = Widgets.ALIASES[kind] or kind
 		if not Widgets.TYPES[resolved] then
 			-- The client accepts any capitalisation ("FRAME", "button").
-			for name in pairs(Widgets.TYPES) do
-				if name:lower() == kind:lower() then
-					resolved = name
+			for typeName in pairs(Widgets.TYPES) do
+				if typeName:lower() == kind:lower() then
+					resolved = typeName
 				end
 			end
-			for name, alias in pairs(Widgets.ALIASES) do
-				if name:lower() == kind:lower() then
+			for aliasName, alias in pairs(Widgets.ALIASES) do
+				if aliasName:lower() == kind:lower() then
 					resolved = alias
 				end
 			end
 		end
 		local intrinsic = T.intrinsics[kind]
+		if not intrinsic then
+			for iname, entry in pairs(T.intrinsics) do
+				if iname:lower() == kind:lower() then
+					intrinsic = entry
+				end
+			end
+		end
 		if intrinsic then
 			resolved = intrinsic.kind
 		end
@@ -870,7 +876,7 @@ function M.build(sim)
 				elseif templateNode(tname) then
 					inheritFrom(obj, tname, parent)
 				else
-					error(string.format("Create%s(): Couldn't find inherited node \"%s\"", kind, tname), 3)
+					error(string.format('Create%s(): Couldn\'t find inherited node "%s"', kind, tname), 3)
 				end
 			end
 		end
@@ -1024,8 +1030,9 @@ function M.build(sim)
 			warn("missing file " .. path)
 			return false
 		end
-		local ok, root = true, xmlCache[text]
+		local root = xmlCache[text]
 		if not root then
+			local ok
 			ok, root = pcall(XML.parse, text, path)
 			if not ok then
 				warn(root)

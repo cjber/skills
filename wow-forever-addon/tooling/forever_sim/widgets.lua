@@ -4,7 +4,7 @@
 -- type's zero value. Each method carries the client's secret and protection rules from the same documentation:
 -- secret arguments add aspects, secret aspects and secret anchoring make getters return secrets, and protected
 -- methods on protected frames are blocked for tainted code in combat.
-local Secret = require("secret")
+local Secret = require("veil")
 
 local M = {}
 
@@ -104,7 +104,6 @@ local POINTS = {
 }
 M.POINTS = POINTS
 
-local LAYERS = { BACKGROUND = 1, BORDER = 2, ARTWORK = 3, OVERLAY = 4, HIGHLIGHT = 5 }
 local STRATA = {
 	"WORLD",
 	"BACKGROUND",
@@ -277,99 +276,143 @@ function M.build(sim)
 	W.textSize = textSize
 
 	local rectCache = setmetatable({}, { __mode = "k" })
-	local resolving = {}
 
 	-- Screen rect { left, bottom, width, height } in screen units, or nil when the region is not placed.
-	local function rect(obj)
-		local cached = rectCache[obj]
-		if cached and cached.gen == layoutGen then
-			return cached.rect
+	-- Anchor chains can be thousands long (pools of rows), so dependencies are resolved with an explicit stack,
+	-- deepest first; a region in an anchoring loop has no rect.
+	local function cachedRect(obj)
+		local c = rectCache[obj]
+		if c and c.gen == layoutGen then
+			return true, c.rect
 		end
+		return false
+	end
+
+	local function targetsOf(obj)
 		local s = S[obj]
-		if not s then
+		local out = {}
+		for i, p in ipairs(s.points) do
+			local target = p.relativeTo
+			if target == nil then
+				target = s.parent or root
+			end
+			out[i] = target
+		end
+		return out
+	end
+
+	local function computeOne(obj)
+		local s = S[obj]
+		if obj == root then
+			return { 0, 0, sim.screenWidth, sim.screenHeight }
+		end
+		local es = effectiveScale(obj)
+		local L, R, CX, T, B, CY
+		for i, p in ipairs(s.points) do
+			local target = p.relativeTo
+			if target == nil then
+				target = s.parent or root
+			end
+			local _, tr = cachedRect(target)
+			if tr then
+				local hx, vy = POINTS[p.relativePoint][1], POINTS[p.relativePoint][2]
+				local tx = hx == "LEFT" and tr[1] or (hx == "RIGHT" and tr[1] + tr[3] or tr[1] + tr[3] / 2)
+				local ty = vy == "BOTTOM" and tr[2] or (vy == "TOP" and tr[2] + tr[4] or tr[2] + tr[4] / 2)
+				local x = tx + (Secret.unwrap(p.x) or 0) * es
+				local y = ty + (Secret.unwrap(p.y) or 0) * es
+				local ph, pv = POINTS[p.point][1], POINTS[p.point][2]
+				if ph == "LEFT" then
+					L = x
+				elseif ph == "RIGHT" then
+					R = x
+				else
+					CX = x
+				end
+				if pv == "TOP" then
+					T = y
+				elseif pv == "BOTTOM" then
+					B = y
+				else
+					CY = y
+				end
+			end
+			local _ = i
+		end
+		local w, h = Secret.unwrap(s.width), Secret.unwrap(s.height)
+		if s.kind == "FontString" and (not w or w == 0 or not h or h == 0) then
+			local tw, th = textSize(s)
+			if not w or w == 0 then
+				w = tw
+			end
+			if not h or h == 0 then
+				h = th
+			end
+		end
+		w, h = (w or 0) * es, (h or 0) * es
+		local left, width, bottom, height
+		if L and R then
+			left, width = L, R - L
+		elseif L and CX then
+			left, width = L, (CX - L) * 2
+		elseif R and CX then
+			left, width = CX - (R - CX), (R - CX) * 2
+		elseif L then
+			left, width = L, w
+		elseif R then
+			left, width = R - w, w
+		elseif CX then
+			left, width = CX - w / 2, w
+		end
+		if B and T then
+			bottom, height = B, T - B
+		elseif B and CY then
+			bottom, height = B, (CY - B) * 2
+		elseif T and CY then
+			bottom, height = CY - (T - CY), (T - CY) * 2
+		elseif B then
+			bottom, height = B, h
+		elseif T then
+			bottom, height = T - h, h
+		elseif CY then
+			bottom, height = CY - h / 2, h
+		end
+		if left and bottom then
+			return { left, bottom, width, height }
+		end
+		return nil
+	end
+
+	local function rect(obj)
+		local ok, cached = cachedRect(obj)
+		if ok then
+			return cached
+		end
+		if not S[obj] then
 			return nil
 		end
-		local result
-		if obj == root then
-			result = { 0, 0, sim.screenWidth, sim.screenHeight }
-		elseif not resolving[obj] then
-			resolving[obj] = true
-			local es = effectiveScale(obj)
-			local L, R, CX, T, B, CY
-			for _, p in ipairs(s.points) do
-				local target = p.relativeTo
-				if target == nil then
-					target = s.parent or root
-				end
-				local tr = target and rect(target)
-				if tr then
-					local hx, vy = POINTS[p.relativePoint][1], POINTS[p.relativePoint][2]
-					local tx = hx == "LEFT" and tr[1] or (hx == "RIGHT" and tr[1] + tr[3] or tr[1] + tr[3] / 2)
-					local ty = vy == "BOTTOM" and tr[2] or (vy == "TOP" and tr[2] + tr[4] or tr[2] + tr[4] / 2)
-					local x = tx + (Secret.unwrap(p.x) or 0) * es
-					local y = ty + (Secret.unwrap(p.y) or 0) * es
-					local ph, pv = POINTS[p.point][1], POINTS[p.point][2]
-					if ph == "LEFT" then
-						L = x
-					elseif ph == "RIGHT" then
-						R = x
-					else
-						CX = x
-					end
-					if pv == "TOP" then
-						T = y
-					elseif pv == "BOTTOM" then
-						B = y
-					else
-						CY = y
+		local stack, onStack = { obj }, { [obj] = true }
+		while #stack > 0 do
+			local top = stack[#stack]
+			local pending
+			if top ~= root then
+				for _, target in ipairs(targetsOf(top)) do
+					if S[target] and not cachedRect(target) and not onStack[target] then
+						pending = target
+						break
 					end
 				end
 			end
-			local w, h = Secret.unwrap(s.width), Secret.unwrap(s.height)
-			if s.kind == "FontString" and (not w or w == 0 or not h or h == 0) then
-				local tw, th = textSize(s)
-				if not w or w == 0 then
-					w = tw
-				end
-				if not h or h == 0 then
-					h = th
-				end
+			if pending then
+				stack[#stack + 1] = pending
+				onStack[pending] = true
+			else
+				rectCache[top] = { gen = layoutGen, rect = computeOne(top) }
+				stack[#stack] = nil
+				onStack[top] = nil
 			end
-			w, h = (w or 0) * es, (h or 0) * es
-			local left, width, bottom, height
-			if L and R then
-				left, width = L, R - L
-			elseif L and CX then
-				left, width = L, (CX - L) * 2
-			elseif R and CX then
-				left, width = CX - (R - CX), (R - CX) * 2
-			elseif L then
-				left, width = L, w
-			elseif R then
-				left, width = R - w, w
-			elseif CX then
-				left, width = CX - w / 2, w
-			end
-			if B and T then
-				bottom, height = B, T - B
-			elseif B and CY then
-				bottom, height = B, (CY - B) * 2
-			elseif T and CY then
-				bottom, height = CY - (T - CY), (T - CY) * 2
-			elseif B then
-				bottom, height = B, h
-			elseif T then
-				bottom, height = T - h, h
-			elseif CY then
-				bottom, height = CY - h / 2, h
-			end
-			if left and bottom then
-				result = { left, bottom, width, height }
-			end
-			resolving[obj] = nil
 		end
-		rectCache[obj] = { gen = layoutGen, rect = result }
-		return result
+		local _, r = cachedRect(obj)
+		return r
 	end
 	W.rect = rect
 
@@ -477,6 +520,9 @@ function M.build(sim)
 			return
 		end
 		local s = S[obj]
+		if not s.isRegion and not s.isFrame then
+			return -- animation groups, animations and actors are not children
+		end
 		local list = s.isRegion and "regions" or "children"
 		ps[list] = ps[list] or {}
 		table.insert(ps[list], obj)
@@ -650,7 +696,7 @@ function M.build(sim)
 		local s = st(self)
 		return s.scripts and s.scripts[name]
 	end
-	impl.ScriptRegion.HasScript = function(self, name)
+	impl.ScriptRegion.HasScript = function()
 		return true
 	end
 	impl.ScriptRegion.HookScript = function(self, name, hook)
@@ -796,7 +842,7 @@ function M.build(sim)
 		if r then
 			return r[3] / effectiveScale(self)
 		end
-		if s.kind == "FontString" and not ((Secret.unwrap(s.width) or 0) > 0) then
+		if s.kind == "FontString" and (Secret.unwrap(s.width) or 0) <= 0 then
 			return (textSize(s))
 		end
 		return Secret.unwrap(s.width) or 0
@@ -807,7 +853,7 @@ function M.build(sim)
 		if r then
 			return r[4] / effectiveScale(self)
 		end
-		if s.kind == "FontString" and not ((Secret.unwrap(s.height) or 0) > 0) then
+		if s.kind == "FontString" and (Secret.unwrap(s.height) or 0) <= 0 then
 			local _, h = textSize(s)
 			return h
 		end
@@ -1108,7 +1154,7 @@ function M.build(sim)
 	impl.Frame.RegisterEvent = function(self, event)
 		local s = st(self)
 		if not sim.knownEvent(event) then
-			error(string.format("Attempt to register unknown event \"%s\"", tostring(event)), 2)
+			error(string.format('Attempt to register unknown event "%s"', tostring(event)), 2)
 		end
 		if not s.events[event] then
 			s.events[event] = true
@@ -2146,7 +2192,7 @@ function M.build(sim)
 		end
 	end
 
-	local function genericMethod(kind, name, fdoc, systemDocs)
+	local function genericMethod(name, fdoc)
 		-- A documented method nothing here implements: a setter stores its arguments for the matching getter.
 		local rest = name:match("^Set(.+)$")
 		if rest then
@@ -2162,11 +2208,15 @@ function M.build(sim)
 			if stored then
 				return unpack(stored, 1, stored.n)
 			end
-			local out = {}
+			local out, n = {}, 0
 			for i, r in ipairs(returns) do
+				if r.StrideIndex then
+					break
+				end
 				out[i] = zeroOf(r)
+				n = i
 			end
-			return unpack(out, 1, #returns)
+			return unpack(out, 1, n)
 		end
 	end
 
@@ -2203,11 +2253,28 @@ function M.build(sim)
 		local methods = {}
 		for name, t2 in pairs(owner) do
 			local fdoc = fdocs[name]
-			methods[name] = wrapMethod(t2, name, fdoc, bodies[name] or genericMethod(t2, name, fdoc))
+			methods[name] = wrapMethod(t2, name, fdoc, bodies[name] or genericMethod(name, fdoc))
 		end
 		return methods
 	end
 	W.flatten = flatten
+
+	local lastSize = setmetatable({}, { __mode = "k" })
+	function W.sizePass()
+		for _, obj in ipairs(W.all) do
+			local s = S[obj]
+			if s.scripts and (s.scripts.OnSizeChanged or (s.hooks and s.hooks.OnSizeChanged)) then
+				local w, h = getWidth(obj), getHeight(obj)
+				local last = lastSize[obj]
+				if not last then
+					lastSize[obj] = { w, h }
+				elseif math.abs(last[1] - w) > 0.01 or math.abs(last[2] - h) > 0.01 then
+					last[1], last[2] = w, h
+					W.dispatch(obj, "OnSizeChanged", w, h)
+				end
+			end
+		end
+	end
 
 	function W.finalize()
 		for kind in pairs(TYPES) do

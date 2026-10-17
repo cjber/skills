@@ -145,7 +145,8 @@ def build_data(root: Path, locales: list[str], offline: bool) -> None:
         for row in db2(root, "GlobalColor", offline):
             argb = int(row["Color"]) & 0xFFFFFFFF
             a, r, g, b = (argb >> 24) & 255, (argb >> 16) & 255, (argb >> 8) & 255, argb & 255
-            lines.append(f"{{{lua_string(row['LuaConstantName'])},{r / 255:.4f},{g / 255:.4f},{b / 255:.4f},{a / 255:.4f}}},")
+            channels = ",".join(f"{c / 255:.4f}" for c in (r, g, b, a))
+            lines.append(f"{{{lua_string(row['LuaConstantName'])},{channels}}},")
         lines.append("}")
         write(target, "\n".join(lines) + "\n")
     target = out / "atlas.lua"

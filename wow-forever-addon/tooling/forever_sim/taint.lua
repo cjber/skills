@@ -16,6 +16,8 @@ M.globalTaint = {} -- global name -> addon that last wrote it
 M.listeners = { taint = {}, untaint = {} }
 
 local classified = {}
+-- Function -> addon (or false), so the hook reads a function's source once.
+local byFunction = setmetatable({}, { __mode = "k" })
 
 local function classify(source)
 	local cached = classified[source]
@@ -55,9 +57,6 @@ function M.set(addon)
 		notify("taint", addon)
 	end
 end
-
--- Function -> addon (or false), so the hook reads a function's source once.
-local byFunction = setmetatable({}, { __mode = "k" })
 
 local function hook()
 	local info = getinfo(2, "f")
@@ -240,9 +239,9 @@ function M.install(G, env)
 		local by = M.fieldTaint and M.fieldTaint(t, k)
 		return by == nil, by
 	end
-	G.hooksecurefunc = function(t, name, hook)
+	G.hooksecurefunc = function(t, name, post)
 		if type(t) == "string" then
-			t, name, hook = env, t, name
+			t, name, post = env, t, name
 		end
 		local original = t == env and G[name] or t[name]
 		if type(original) ~= "function" then
@@ -251,7 +250,7 @@ function M.install(G, env)
 		local hooked = function(...)
 			local result = { original(...) }
 			local after = M.current
-			M.securecall(hook, ...)
+			M.securecall(post, ...)
 			M.set(after)
 			return unpack(result, 1, table.maxn(result))
 		end

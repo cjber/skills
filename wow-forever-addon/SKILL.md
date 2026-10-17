@@ -118,6 +118,11 @@ When this pack and a reference repo disagree, fix whichever is wrong in the same
 - **WFA-14** Saved variables never assume a key: every default is declared in one place (a
   `DEFAULTS` table, or the feature registry's `default =`), and a missing key reads as its default,
   so a new option and an old save file always agree.
+- **WFA-35** New UI work adds a scenario to `tests/sim/`, the [forever_sim](tooling/forever_sim/README.md) suite (real
+  Blizzard UI under LuaJIT, vendored as `tools/forever_sim/` the same way as `forever_tools`). The scenario walks
+  the player's way to the feature and adds the states that have broken before: combat, a secret tooltip, the
+  gamepad interface, Questie's tracker, an old saved file. A fix for a reported error comes with a scenario that
+  fails on the release the error was reported against.
 
 ### Build, CI and release
 

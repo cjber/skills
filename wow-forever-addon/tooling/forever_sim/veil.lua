@@ -189,6 +189,33 @@ function M.install(G)
 		return tostring(v)
 	end
 	G.tonumber = lift(tonumber)
+	-- The client's string.format takes positional arguments ("%2$s %1$s"), which Lua 5.1's does not.
+	local rawFormat = string.format
+	local function format(fmt, ...)
+		if type(fmt) == "string" and fmt:find("%%%d+%$") then
+			local args = { ... }
+			local ordered = {}
+			local nextIndex = 0
+			fmt = fmt:gsub("%%(%%?)(%d*)(%$?)([%-%+ #0]*%d*%.?%d*[cdiouxXeEfgGqs])", function(pct, num, dollar, spec)
+				if pct == "%" then
+					return "%%" .. num .. dollar .. spec
+				end
+				local index
+				if dollar == "$" then
+					index = tonumber(num)
+				else
+					nextIndex = nextIndex + 1
+					index = nextIndex
+					spec = num .. spec
+				end
+				ordered[#ordered + 1] = args[index]
+				return "%" .. spec
+			end)
+			return rawFormat(fmt, unpack(ordered, 1, table.maxn(ordered)))
+		end
+		return rawFormat(fmt, ...)
+	end
+	G.__format = format
 	for _, lib in ipairs({ "string", "math" }) do
 		local copy = {}
 		for k, f in pairs(G[lib]) do
@@ -196,6 +223,8 @@ function M.install(G)
 		end
 		G[lib] = copy
 	end
+	G.string.format = lift(G.__format)
+	G.__format = nil
 	G.issecretvalue = function(v)
 		return M.is(v)
 	end

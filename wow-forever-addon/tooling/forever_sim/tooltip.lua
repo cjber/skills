@@ -2,7 +2,7 @@
 -- anchors under each other), size on Show, and OnTooltipCleared. Blizzard's own TooltipDataHandler (loaded from
 -- the UI source) fills tooltips from C_TooltipInfo; the sim answers C_TooltipInfo from scenario data, with unit
 -- names secret while unit identity is restricted, as the client does.
-local Secret = require("secret")
+local Secret = require("veil")
 
 local M = {}
 

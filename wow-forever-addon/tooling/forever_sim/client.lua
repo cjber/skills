@@ -1,6 +1,6 @@
 -- The client's native side: the global table and Lua builtins the game provides, the root frames, events,
 -- timers and OnUpdate, CVars, the error handler, and ADDON_ACTION_BLOCKED / ADDON_ACTION_FORBIDDEN.
-local Secret = require("secret")
+local Secret = require("veil")
 
 local M = {}
 
@@ -85,7 +85,8 @@ function M.build(sim)
 		end
 		return out
 	end
-	G.string, G.table, G.math, G.coroutine, G.bit = copy(string), copy(table), copy(math), copy(coroutine), copy(bit)
+	G.string, G.table, G.math, G.coroutine = copy(string), copy(table), copy(math), copy(coroutine)
+	G.bit = copy(require("bit"))
 	G.os = { time = os.time, date = os.date, clock = os.clock, difftime = os.difftime }
 	G.debug = { traceback = debug.traceback, getinfo = debug.getinfo }
 	G.print = function(...)
@@ -289,11 +290,14 @@ function M.build(sim)
 		local name = frame and frame.GetDebugName and frame:GetDebugName() or "UNKNOWN"
 		actionEvent("ADDON_ACTION_BLOCKED", string.format("%s:%s()", name, method))
 	end
+	-- A protected function called by tainted code. The client reports ADDON_ACTION_BLOCKED for these (the
+	-- message players see: "AddOn 'X' tried to call the protected function 'F()'").
 	function sim.forbidden(func)
-		actionEvent("ADDON_ACTION_FORBIDDEN", func .. "()")
+		actionEvent("ADDON_ACTION_BLOCKED", func .. "()")
 	end
 	-- Global protected functions the documentation does not mark (FrameXML-era API).
 	sim.protectedGlobals = {
+		"SetPreferredGamepadInteractTarget",
 		"CastSpellByName",
 		"CastSpellByID",
 		"CastSpell",
@@ -314,8 +318,6 @@ function M.build(sim)
 		"ToggleRun",
 		"Logout",
 		"Quit",
-		"ShowUIPanel",
-		"HideUIPanel",
 	}
 
 	---------------------------------------------------------------------------
@@ -499,6 +501,8 @@ function M.build(sim)
 				end
 			end
 			sim.widgets.tickAnimations(d)
+			-- The client fires OnSizeChanged when a frame's laid-out size changes, anchors included.
+			sim.widgets.sizePass()
 			-- OnUpdate for every visible frame that has one.
 			local S = sim.widgets.state
 			for _, frame in ipairs(sim.widgets.all) do
@@ -545,7 +549,12 @@ function M.build(sim)
 		G.NUM_CHAT_WINDOWS = 1
 		Taint.globalTaint.ChatFrame1 = nil
 		-- Micro menu buttons other UI pulses (Blizzard_MicroMenu is not booted).
-		for _, name in ipairs({ "ProfessionMicroButton", "CharacterMicroButton", "SpellbookMicroButton", "MainMenuMicroButton" }) do
+		for _, name in ipairs({
+			"ProfessionMicroButton",
+			"CharacterMicroButton",
+			"SpellbookMicroButton",
+			"MainMenuMicroButton",
+		}) do
 			if G[name] == nil then
 				sim.templates.createFrame("Button", name, sim.widgets.root())
 				Taint.globalTaint[name] = nil

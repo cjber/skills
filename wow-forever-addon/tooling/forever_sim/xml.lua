@@ -126,11 +126,11 @@ function M.parse(text, name)
 	if #stack ~= 1 then
 		error(string.format("%s: unclosed <%s>", name or "xml", stack[#stack].tag))
 	end
-	for _, child in ipairs(root.children) do
+	local child = root.children[1]
+	if child then
 		child.parent = nil
-		return child
 	end
-	return nil
+	return child
 end
 
 return M

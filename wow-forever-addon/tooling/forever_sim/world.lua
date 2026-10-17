@@ -1,7 +1,7 @@
 -- The game world the client reports: the player, other units and the group, professions and recipes, items,
 -- maps and the addon list. Scenarios set sim.world (see README.md); every answer goes through the generated,
 -- documented stubs, so secrecy and argument rules still apply.
-local Secret = require("secret")
+local Secret = require("veil")
 
 local M = {}
 
@@ -110,11 +110,11 @@ function M.build(sim)
 		local x, y = unit(a), unit(b)
 		return x ~= nil and y ~= nil and x.guid == y.guid
 	end
-	impl.UnitIsFriend = function(a, b)
+	impl.UnitIsFriend = function(_, b)
 		local x = unit(b)
 		return x and x.friendly or false
 	end
-	impl.UnitCanAttack = function(a, b)
+	impl.UnitCanAttack = function(_, b)
 		local x = unit(b)
 		return x and not x.friendly or false
 	end
@@ -398,7 +398,17 @@ function M.build(sim)
 	impl["C_Item.GetItemInfo"] = function(id)
 		local item = W.items[tonumber(id) or 0]
 		if item then
-			return item.name, item.link, item.quality or 1, item.level or 1, 0, "", "", 20, "", item.icon or 134400, item.sell or 0
+			return item.name,
+				item.link,
+				item.quality or 1,
+				item.level or 1,
+				0,
+				"",
+				"",
+				20,
+				"",
+				item.icon or 134400,
+				item.sell or 0
 		end
 	end
 	G.GetItemInfo = G.C_Item.GetItemInfo
@@ -471,7 +481,15 @@ function M.build(sim)
 	impl["C_Spell.GetSpellInfo"] = function(id)
 		local x = spell(id)
 		if x then
-			return { name = x.name, iconID = x.icon, originalIconID = x.icon, spellID = tonumber(id), castTime = 0, minRange = 0, maxRange = 0 }
+			return {
+				name = x.name,
+				iconID = x.icon,
+				originalIconID = x.icon,
+				spellID = tonumber(id),
+				castTime = 0,
+				minRange = 0,
+				maxRange = 0,
+			}
 		end
 	end
 	impl["C_Spell.GetSpellLink"] = function(id)
@@ -542,6 +560,15 @@ function M.build(sim)
 	end
 	impl["C_Map.GetWorldPosFromMapPos"] = function(_, pos)
 		return 0, pos
+	end
+	impl["C_Map.GetUserWaypointPositionForMap"] = function(mapID)
+		local wp = W.waypoint
+		if wp and wp.map == mapID then
+			return G.CreateVector2D(wp.x, wp.y)
+		end
+	end
+	impl["C_Map.HasUserWaypoint"] = function()
+		return W.waypoint ~= nil
 	end
 	impl["C_Map.CanSetUserWaypointOnMap"] = function()
 		return true

@@ -1,6 +1,6 @@
 -- Functions the client implements natively that Blizzard's Lua relies on from the first file it loads: mixins,
 -- secure call helpers, secret helpers, curves, and the generic script objects documented APIs hand back.
-local Secret = require("secret")
+local Secret = require("veil")
 
 local M = {}
 
@@ -111,7 +111,7 @@ function M.build(sim)
 		f:RegisterEvent(event)
 		return true
 	end
-	sim.impl.RegisterUnitEventCallback = function(event, callback, ...)
+	sim.impl.RegisterUnitEventCallback = function(event, callback)
 		sim.impl.RegisterEventCallback(event, callback)
 		return true
 	end
@@ -171,6 +171,31 @@ function M.build(sim)
 	end
 	G.SetGamePadFreeLook = function() end
 	G.GetChannelList = function() end
+	-- Kiosk (event demo) mode: off. A native table the UI checks everywhere.
+	G.Kiosk = G.Kiosk
+		or setmetatable({}, {
+			__index = function()
+				return function()
+					return false
+				end
+			end,
+		})
+	G.addframetext = function() end
+	G.SpellCanTargetQuest = function()
+		return false
+	end
+	G.SpellIsTargeting = function()
+		return false
+	end
+	G.debuglocals = function()
+		return ""
+	end
+	G.GetNumBattlefieldFlagPositions = function()
+		return 0
+	end
+	G.GetNumBattlefieldVehicles = function()
+		return 0
+	end
 	G.GetNumDisplayChannels = function()
 		return 0
 	end

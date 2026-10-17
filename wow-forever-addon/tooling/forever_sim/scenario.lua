@@ -1,6 +1,6 @@
 -- Scenario steps: what a player does, driven the way the client drives the UI (events, ShowUIPanel, script
 -- dispatch with fresh taint), so the real Blizzard code and the addons under test react as they do in game.
-local Secret = require("secret")
+local Secret = require("veil")
 
 local M = {}
 

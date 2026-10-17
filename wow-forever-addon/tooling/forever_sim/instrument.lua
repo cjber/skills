@@ -58,7 +58,9 @@ function M.rewrite(src, addon)
 			end
 			i = i + #word
 		elseif c:match("%d") then
-			local num = src:match("^0[xX]%x+", i) or src:match("^%d+%.?%d*[eE][%+%-]?%d+", i) or src:match("^%d+%.?%d*", i)
+			local num = src:match("^0[xX]%x+", i)
+				or src:match("^%d+%.?%d*[eE][%+%-]?%d+", i)
+				or src:match("^%d+%.?%d*", i)
 			i = i + #num
 		elseif pendingFunction and c == "(" then
 			depth = depth + 1

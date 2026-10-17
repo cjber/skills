@@ -7,7 +7,7 @@
 --   * SecretReturns, and the SecretWhen* predicates while their restriction is active, return secrets;
 --   * protected functions called from tainted code are forbidden (ADDON_ACTION_FORBIDDEN);
 --   * from tainted code, a missing non-nilable argument raises the client's usage error.
-local Secret = require("secret")
+local Secret = require("veil")
 
 local M = {}
 
@@ -204,7 +204,12 @@ function M.build(sim)
 
 	local function unitArg(fdoc, args)
 		for i, a in ipairs(fdoc.Arguments or {}) do
-			if a.Name == "unit" or a.Name == "unitToken" or a.Name == "unitGUID" or (a.Type or ""):find("^UnitToken") then
+			if
+				a.Name == "unit"
+				or a.Name == "unitToken"
+				or a.Name == "unitGUID"
+				or (a.Type or ""):find("^UnitToken")
+			then
 				return args[i]
 			end
 		end
@@ -244,9 +249,14 @@ function M.build(sim)
 		return string.format("Usage: %s(%s)", qualified, table.concat(names, ", "))
 	end
 
+	local protectedNames = {}
+	for _, name in ipairs(sim.protectedGlobals or {}) do
+		protectedNames[name] = true
+	end
+
 	local function stub(qualified, fdoc)
 		local nargs = #(fdoc.Arguments or {})
-		local protected = fdoc.IsProtectedFunction
+		local protected = fdoc.IsProtectedFunction or protectedNames[qualified]
 		local secretArgs = fdoc.SecretArguments
 		local returns = fdoc.Returns or {}
 		local f = function(...)
@@ -295,9 +305,13 @@ function M.build(sim)
 					out[i] = r[i]
 				end
 			else
-				out = { n = #returns }
+				out = { n = 0 }
 				for i, r in ipairs(returns) do
+					if r.StrideIndex then
+						break
+					end
 					out[i] = zero(r)
+					out.n = i
 				end
 			end
 			if secretNow(fdoc, args) then
@@ -330,6 +344,13 @@ function M.build(sim)
 			end
 			target[fdoc.Name] = stub(qualified, fdoc)
 			A.byName[qualified] = fdoc
+		end
+	end
+
+	-- Protected globals the documentation does not list still block tainted callers.
+	for name in pairs(protectedNames) do
+		if not A.byName[name] then
+			G[name] = stub(name, { Name = name, Arguments = {}, Returns = {} })
 		end
 	end
 

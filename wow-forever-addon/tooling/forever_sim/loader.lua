@@ -97,7 +97,7 @@ end
 
 -- Parses a TOC: { metadata = {key = value}, files = { relative paths }, deps = {...} }.
 function M.parseToc(text)
-	local toc = { metadata = {}, files = {}, deps = {} }
+	local toc = { metadata = {}, files = {}, deps = {}, optional = {} }
 	for raw in text:gmatch("[^\r\n]+") do
 		local line = raw:gsub("^%s+", ""):gsub("%s+$", "")
 		local key, value = line:match("^##%s*([^:]+):%s*(.-)%s*$")
@@ -107,9 +107,19 @@ function M.parseToc(text)
 			if M.allowed(conditions) then
 				toc.metadata[key] = toc.metadata[key] and (toc.metadata[key] .. ", " .. plainValue) or plainValue
 				local k = key:lower()
-				if k == "dependencies" or k == "requireddeps" or k == "requireddep" or k == "dep" or k:match("^dep") then
+				if
+					k == "dependencies"
+					or k == "requireddeps"
+					or k == "requireddep"
+					or k == "dep"
+					or k:match("^dep")
+				then
 					for d in plainValue:gmatch("[^,%s]+") do
 						toc.deps[#toc.deps + 1] = d
+					end
+				elseif k == "optionaldeps" or k == "optionaldependencies" then
+					for d in plainValue:gmatch("[^,%s]+") do
+						toc.optional[#toc.optional + 1] = d
 					end
 				end
 			end
@@ -167,6 +177,24 @@ function M.build(sim)
 	-- or is not for this client.
 	function L.blizzard(name)
 		if L.loaded[name] or L.loading[name] then
+			return true
+		end
+		local subset, patterns = name:match("^([^:/]+):(.+)$")
+		if subset then
+			-- Only the TOC entries of a Blizzard addon whose path matches one of the |-separated words.
+			local dir = blizzardDir(subset)
+			local toc = M.parseToc(readFile(findToc(dir, subset)))
+			local files = {}
+			for _, rel in ipairs(toc.files) do
+				for word in patterns:gmatch("[^|]+") do
+					if rel:find(word, 1, true) then
+						files[#files + 1] = rel
+						break
+					end
+				end
+			end
+			loadFiles(dir, subset, { files = files }, {})
+			L.loaded[name] = { blizzard = true, seconds = 0, partial = true }
 			return true
 		end
 		local addon, rel = name:match("^([^/]+)/(.+)$")
@@ -301,11 +329,15 @@ function M.build(sim)
 		if not entry or entry.loaded then
 			return entry ~= nil
 		end
-		for _, dep in ipairs(entry.toc.deps) do
-			if L.addons[dep] then
-				L.load(dep)
+		entry.loading = true
+		for _, list in ipairs({ entry.toc.deps, entry.toc.optional }) do
+			for _, dep in ipairs(list) do
+				if L.addons[dep] and not L.addons[dep].loading then
+					L.load(dep)
+				end
 			end
 		end
+		entry.loading = nil
 		local started = os.clock()
 		loadFiles(entry.dir, name, entry.toc, entry.ns)
 		entry.loaded = true

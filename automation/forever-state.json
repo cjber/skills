@@ -1,6 +1,6 @@
 {
-  "last_run": "2026-10-17T16:30:00Z",
-  "window_start": "2026-10-17T08:20:19Z",
+  "last_run": "2026-10-17T19:10:00Z",
+  "window_start": "2026-10-17T16:30:00Z",
   "releases": {
     "shortest-path-forever": "1.19.2",
     "adventure-guide-forever": "0.17.1",
@@ -9,8 +9,8 @@
     "tweaks-forever": "0.14.1"
   },
   "notes": [
-    "Wago comments not read and no CurseForge replies posted on the 2026-10-17 afternoon run: no logged-in browser session. Every report with draft_reply still needs its reply, once only, after checking cjber has not replied already.",
-    "Release tags: git push of a tag is a no-op through the Nebula push wrapper; create tags with gh api repos/cjber/<repo>/git/refs on the verified main commit. Always git push from inside the repo directory (git -C from elsewhere skips signing and pushes unsigned)."
+    "Release tags: git push of a tag is a no-op through the Nebula push wrapper; create tags with gh api repos/cjber/<repo>/git/refs on the verified main commit. Always git push from inside the repo directory (git -C from elsewhere skips signing and pushes unsigned).",
+    "2026-10-17 evening run: no new CurseForge comments, no new build (1.60.1.70450 newest), all mains green. Another session (ccr-cc333990 branches) has SPF #218/#219 open and merged SPF #217 and SkillUp #170 (credit only) after the last releases; left for that session to release. Wago not read and no store replies posted (no login): every draft_reply is still pending."
   ],
   "reports": [
     {

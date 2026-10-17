@@ -1,0 +1,134 @@
+{
+  "last_run": "2026-10-17T08:20:19Z",
+  "window_start": "2026-10-13T11:30:00Z",
+  "releases": {
+    "shortest-path-forever": "1.19.1",
+    "adventure-guide-forever": "0.16.1",
+    "skillup-forever": "0.15.1",
+    "legacy-forever": "0.9.1",
+    "tweaks-forever": "0.14.1"
+  },
+  "notes": [
+    "Wago comments not read and no store replies posted on the 2026-10-17 run: no browser session was available. Every report with draft_reply still needs its reply, once only, after checking cjber has not replied already."
+  ],
+  "reports": [
+    {
+      "store": "curseforge",
+      "addon": "shortest-path-forever",
+      "id": 8549001,
+      "author": "deathmvp1",
+      "date": "2026-10-15",
+      "kind": "question",
+      "status": "replied",
+      "note": "Journal tracker behind quest list with Questie; cjber (barryguns) replied 2026-10-16."
+    },
+    {
+      "store": "curseforge",
+      "addon": "shortest-path-forever",
+      "id": 8548125,
+      "author": "alex21xx",
+      "date": "2026-10-15",
+      "kind": "bug",
+      "status": "replied",
+      "note": "Druid routed via Moonglade with no connected flight points; cjber (barryguns) replied 2026-10-17."
+    },
+    {
+      "store": "curseforge",
+      "addon": "shortest-path-forever",
+      "id": 8546759,
+      "author": "user_pj9n21rfhmdx3f9s",
+      "date": "2026-10-15",
+      "kind": "bug",
+      "status": "fixed-in-1.17.0",
+      "note": "Gamepad SetPreferredGamepadInteractTarget() blocked; 1.17.0 leaves the world map to the game with the gamepad interface on. GitHub #158 stays open for an in-game check. Reply pending: no browser session this run.",
+      "draft_reply": "Thanks for the report! From 1.17.0, which is live now, Shortest Path leaves the world map to the game while the gamepad interface is on, which should stop that error. Let me know if you still see it after updating."
+    },
+    {
+      "store": "curseforge",
+      "addon": "shortest-path-forever",
+      "id": 8543566,
+      "author": "user_geseqn24hx6b3d9b",
+      "date": "2026-10-14",
+      "kind": "feature",
+      "status": "fixed-in-1.17.0",
+      "note": "Movable tracker. Reply pending: no browser session this run.",
+      "draft_reply": "Added in 1.17.0, thanks for the idea. Right-click the tracker's Journey line and untick Attach to quest tracker, then drag it anywhere."
+    },
+    {
+      "store": "curseforge",
+      "addon": "shortest-path-forever",
+      "id": 8540825,
+      "author": "maggew",
+      "date": "2026-10-13",
+      "kind": "feature",
+      "status": "fixed-in-1.15.0",
+      "note": "Compass background opacity. Reply pending: no browser session this run.",
+      "draft_reply": "Added in 1.15.0, thanks for the idea. Compass background in the Interface settings darkens the ground behind the compass, up to 80%."
+    },
+    {
+      "store": "curseforge",
+      "addon": "shortest-path-forever",
+      "id": 8538978,
+      "author": "rydoc",
+      "date": "2026-10-13",
+      "kind": "bug",
+      "status": "fixed-in-1.15.0",
+      "note": "Journey collapses from the quest tracker with EllesmereUI after 1.13.0; 1.15.0 makes the column follow the quest tracker again, as 1.13 did. Reply pending: no browser session this run.",
+      "draft_reply": "Thanks for the report! 1.15.0 and later keep the Journey with the quest tracker under EllesmereUI again, as 1.13.0 did. Let me know if you still see it after updating."
+    },
+    {
+      "store": "curseforge",
+      "addon": "adventure-guide-forever",
+      "id": 8554479,
+      "author": "user_hvbje20ejnotjj1f",
+      "date": "2026-10-16",
+      "kind": "feature",
+      "status": "declined-for-now",
+      "note": "Tracker background option (GitHub #203). Needs a change to the shared TrackerHost in four addons plus settings and translations in each, so more than one focused PR. Reply pending: no browser session this run.",
+      "draft_reply": "Thanks, noted. It needs a change shared by four of my addons, so it is bigger than I can fit in right now, but I am keeping it on the list."
+    },
+    {
+      "store": "curseforge",
+      "addon": "skillup-forever",
+      "id": 8552285,
+      "author": "user_yzweof6n5oc0jlet",
+      "date": "2026-10-16",
+      "kind": "feature",
+      "status": "fixed-in-0.13.0",
+      "note": "Search AH reagents for N crafts; cjber promised it, shipped in 0.13.0. Reply pending: no browser session this run.",
+      "draft_reply": "Added in 0.13.0, thanks for the idea. With the auction house open, set Reagents for [ ] crafts beside Create All and press Search."
+    },
+    {
+      "store": "curseforge",
+      "addon": "skillup-forever",
+      "id": 8543481,
+      "author": "user_to4x644s8jthp4pw42386",
+      "date": "2026-10-14",
+      "kind": "noise",
+      "status": "declined",
+      "note": "Empty comment, resolved by the player themselves."
+    },
+    {
+      "store": "curseforge",
+      "addon": "shortest-path-forever",
+      "id": 8536288,
+      "author": "neil_team_brigade",
+      "date": "2026-10-12",
+      "kind": "feature",
+      "status": "fixed-in-1.15.0",
+      "note": "Hide the detached 'Forever tracker' title with nothing tracked (test1point6 asked the same in reply 8538000). Older than the 2-day window, found on the first run with a state file. Reply pending: no browser session this run.",
+      "draft_reply": "Thanks for the idea! Since 1.15.0 a detached tracker with nothing to show hides its Forever tracker title too, and it comes back where you left it once there is something to track."
+    },
+    {
+      "store": "curseforge",
+      "addon": "skillup-forever",
+      "id": 8536030,
+      "author": "berserkerlxl",
+      "date": "2026-10-13",
+      "kind": "feature",
+      "status": "fixed-in-0.10.0",
+      "note": "Value gathered materials at AH price with a vendor floor; shipped in 0.10.0 and credited in the CHANGELOG. Older than the 2-day window. Reply pending: no browser session this run.",
+      "draft_reply": "Added in 0.10.0, thanks for the idea. Turn it on in the Prices settings and gathered materials are priced at their auction price after the cut, or their vendor price if that is more."
+    }
+  ]
+}

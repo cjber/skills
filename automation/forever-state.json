@@ -1,17 +1,62 @@
 {
-  "last_run": "2026-10-17T08:20:19Z",
-  "window_start": "2026-10-13T11:30:00Z",
+  "last_run": "2026-10-17T16:30:00Z",
+  "window_start": "2026-10-17T08:20:19Z",
   "releases": {
-    "shortest-path-forever": "1.19.1",
-    "adventure-guide-forever": "0.16.1",
-    "skillup-forever": "0.15.1",
-    "legacy-forever": "0.9.1",
+    "shortest-path-forever": "1.19.2",
+    "adventure-guide-forever": "0.17.1",
+    "skillup-forever": "0.16.1",
+    "legacy-forever": "0.10.1",
     "tweaks-forever": "0.14.1"
   },
   "notes": [
-    "Wago comments not read and no store replies posted on the 2026-10-17 run: no browser session was available. Every report with draft_reply still needs its reply, once only, after checking cjber has not replied already."
+    "Wago comments not read and no CurseForge replies posted on the 2026-10-17 afternoon run: no logged-in browser session. Every report with draft_reply still needs its reply, once only, after checking cjber has not replied already.",
+    "Release tags: git push of a tag is a no-op through the Nebula push wrapper; create tags with gh api repos/cjber/<repo>/git/refs on the verified main commit. Always git push from inside the repo directory (git -C from elsewhere skips signing and pushes unsigned)."
   ],
   "reports": [
+    {
+      "store": "curseforge",
+      "addon": "skillup-forever",
+      "id": 8557995,
+      "author": "syrberus",
+      "date": "2026-10-17",
+      "kind": "bug",
+      "status": "fixed-in-0.16.0",
+      "note": "Secret-number taint in GameTooltip_InsertFrame (#161); cjber replied 'fixing asap' 2026-10-17.",
+      "draft_reply": "Thanks for the full error, it pinned this down. 0.16.0 fixes the secret number error on recipe tooltips."
+    },
+    {
+      "store": "curseforge",
+      "addon": "skillup-forever",
+      "id": 8558087,
+      "author": "kurila11478",
+      "date": "2026-10-17",
+      "kind": "bug",
+      "status": "fixed-in-0.16.0",
+      "note": "Buy reagents stuck on, empty route (#162); cjber replied 'let me dig in' 2026-10-17.",
+      "draft_reply": "Thanks for the report. In 0.16.0 Buy reagents can always be unticked, and turning it on no longer empties the route."
+    },
+    {
+      "store": "curseforge",
+      "addon": "skillup-forever",
+      "id": 8557760,
+      "author": "ballara",
+      "date": "2026-10-17",
+      "kind": "feature",
+      "status": "fixed-in-0.16.0",
+      "note": "Recipe tooltip covers reagents (#163); cjber replied 'lemme fix that'.",
+      "draft_reply": "Good idea, thanks. In 0.16.0 the recipe tooltip opens beside the Professions window, clear of the reagents, and a setting can put it at the cursor or back by the recipe."
+    },
+    {
+      "store": "curseforge",
+      "addon": "legacy-forever",
+      "id": 8558341,
+      "author": "overspark",
+      "date": "2026-10-17",
+      "kind": "feature",
+      "status": "fixed-in-0.10.0",
+      "note": "Posted on the Tweaks Forever page (project 1705879) but about Legacy's map entrance pins (legacy #139).",
+      "draft_reply": "Thanks for the idea. The entrance pins are from Legacy Forever: from 0.10.0 you can turn off Show dungeon and raid entrances in its map menu or under Options > AddOns > Legacy Forever."
+    },
     {
       "store": "curseforge",
       "addon": "shortest-path-forever",
@@ -19,8 +64,9 @@
       "author": "deathmvp1",
       "date": "2026-10-15",
       "kind": "question",
-      "status": "replied",
-      "note": "Journal tracker behind quest list with Questie; cjber (barryguns) replied 2026-10-16."
+      "status": "fixed-in-1.19.2",
+      "note": "Journey behind Questie's quest list (#214, berserkerlxl diagnosed Questie). Fixed in SPF 1.19.2 and the shared TrackerHost in AGF 0.17.1, SkillUp 0.16.1, Legacy 0.10.1.",
+      "draft_reply": "Thanks for the report, and thanks to berserkerlxl for spotting Questie. From 1.19.2 the Journey moves clear of Questie's quest list, below it or beside it when there isn't room."
     },
     {
       "store": "curseforge",

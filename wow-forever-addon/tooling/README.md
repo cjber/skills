@@ -1,5 +1,8 @@
 # forever_tools
 
+(Beside it, [forever_sim/](forever_sim/README.md) is the shared headless client for scenario tests, vendored as
+`tools/forever_sim/` with its own `sync.py`.)
+
 Offline, stdlib-only Python (3.10+) shared by the WoW: Forever addon repos. Each repo vendors
 `forever_tools/` byte for byte as `tools/forever_tools/`; `MANIFEST.json` holds a sha256 per file and
 the producer commit the copy came from.

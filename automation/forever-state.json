@@ -1,18 +1,29 @@
 {
-  "last_run": "2026-10-17T19:10:00Z",
-  "window_start": "2026-10-17T16:30:00Z",
+  "last_run": "2026-10-18T07:45:00Z",
+  "window_start": "2026-10-17T19:10:00Z",
   "releases": {
     "shortest-path-forever": "1.19.2",
     "adventure-guide-forever": "0.17.1",
-    "skillup-forever": "0.16.1",
+    "skillup-forever": "0.17.0",
     "legacy-forever": "0.10.1",
     "tweaks-forever": "0.14.1"
   },
   "notes": [
     "Release tags: git push of a tag is a no-op through the Nebula push wrapper; create tags with gh api repos/cjber/<repo>/git/refs on the verified main commit. Always git push from inside the repo directory (git -C from elsewhere skips signing and pushes unsigned).",
-    "2026-10-17 evening run: no new CurseForge comments, no new build (1.60.1.70450 newest), all mains green. Another session (ccr-cc333990 branches) has SPF #218/#219 open and merged SPF #217 and SkillUp #170 (credit only) after the last releases; left for that session to release. Wago not read and no store replies posted (no login): every draft_reply is still pending."
+    "2026-10-18 morning run: Codex holds the handover PRs (SPF #220, AGF #210/#212/#213/#214, skills #41) and their releases; left alone. SkillUp 0.17.0 shipped trias6657's row-money suggestions. Wago not read; no store replies posted (no login)."
   ],
   "reports": [
+    {
+      "store": "curseforge",
+      "addon": "skillup-forever",
+      "id": 8561184,
+      "author": "trias6657",
+      "date": "2026-10-17",
+      "kind": "feature",
+      "status": "fixed-in-0.17.0",
+      "note": "Four suggestions. 2-4 (net per craft on rows, also on 0% rows; red minus on costs) shipped in 0.17.0 (#171). 1 (skill bar on the selected recipe's details) is GitHub #172.",
+      "draft_reply": "Thanks for the ideas! 0.17.0 adds Money on recipe rows (Settings, Recipe rows): Per craft shows what one craft costs or earns, on 0% recipes too, and costs now lead with a red minus. The skill bar on the recipe details is on the list."
+    },
     {
       "store": "curseforge",
       "addon": "skillup-forever",
@@ -53,9 +64,8 @@
       "author": "overspark",
       "date": "2026-10-17",
       "kind": "feature",
-      "status": "fixed-in-0.10.0",
-      "note": "Posted on the Tweaks Forever page (project 1705879) but about Legacy's map entrance pins (legacy #139).",
-      "draft_reply": "Thanks for the idea. The entrance pins are from Legacy Forever: from 0.10.0 you can turn off Show dungeon and raid entrances in its map menu or under Options > AddOns > Legacy Forever."
+      "status": "replied",
+      "note": "Posted on the Tweaks Forever page (project 1705879) but about Legacy's map entrance pins (legacy #139). cjber (barryguns) replied 2026-10-18 06:46."
     },
     {
       "store": "curseforge",

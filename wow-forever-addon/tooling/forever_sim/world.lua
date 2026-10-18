@@ -499,6 +499,19 @@ function M.build(sim)
 	impl["C_Spell.GetSpellDescription"] = function()
 		return ""
 	end
+	-- A learned recipe, or sim.world.spells[id].known, is in the spellbook.
+	local function known(id)
+		id = tonumber(Secret.unwrap(id))
+		local r = id and recipe(id)
+		if r then
+			return r.learned ~= false
+		end
+		return id ~= nil and W.spells[id] ~= nil and W.spells[id].known == true
+	end
+	impl["C_SpellBook.IsSpellKnown"] = known
+	impl["C_SpellBook.IsSpellInSpellBook"] = known
+	impl.IsPlayerSpell = known
+	impl.IsSpellKnown = known
 	impl["C_Item.RequestLoadItemDataByID"] = function(id)
 		sim.events.queue("ITEM_DATA_LOAD_RESULT", id, W.items[tonumber(id) or 0] ~= nil)
 	end

@@ -1,0 +1,7 @@
+.claude/
+.release/
+.release-notes.md
+reference/
+tools/.cache/
+Data/*.lua
+.types/

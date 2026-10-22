@@ -1,0 +1,24 @@
+## Interface: 16001
+## Title: Atlas Forever
+## Notes: The instance map viewer and index for WoW: Forever: every dungeon and raid map, its wings and floors, its contents, and the way in.
+## Author: cjber
+## Version: @project-version@
+## Category: Map, Coords, Compasses
+## X-License: GPL-3.0-or-later
+## X-Website: https://github.com/cjber/atlas-forever
+## SavedVariables: AtlasForeverDB
+## OptionalDeps: ForeverCore, ShortestPathForever, QuestieDB, Questie, FieldGuideForever
+## AddonCompartmentFunc: AtlasForever_OnAddonCompartmentClick
+## IconTexture: Interface\AddOns\AtlasForever\media\Icon
+
+Locales\enUS.lua
+Core\SafeCall.lua
+Data\Instances.lua
+Core\Model.lua
+Core\Core.lua
+Core\API.lua
+Core\Navigate.lua
+Core\Settings.lua
+UI\Window.lua
+UI\List.lua
+UI\Map.lua

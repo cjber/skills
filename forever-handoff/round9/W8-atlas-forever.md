@@ -1,13 +1,14 @@
 # W8: Atlas Forever - the instance browser
 
 New addon. Repo `cjber/atlas-forever` does **not** exist, and `gh repo create` returns 403 for the workspace GitHub
-App (that is why `forever-core` is still unpublished). **A partial tree already exists, uncommitted, at
-`forever-handoff/atlas-forever/` in the cjber/skills clone** (26 files: a TOC, `Core/{Core,API,Model,SafeCall}.lua`,
+App (that is why `forever-core` is still unpublished). **A scaffold is committed at `forever-handoff/atlas-forever/`** on this branch (20 files: the TOC, `Core/{Core,API,Model,SafeCall}.lua`,
 `Locales/enUS.lua`, `tests/{core,model}_spec.lua` + `wow_mock.lua`, `tools/{changelog,check_package,release_check}.py`,
-shared config and workflows; `UI/` is empty and there is no `Data/`). Read it first and continue from it rather than
-scaffolding again - keep what is sound, fix what is not, and say in the PR body what you changed. Its TOC currently
-describes a different addon ("every map in one place, live coordinates, bookmarks and waypoints"); replace that scope
-with this brief's. Stage the finished tree at `staging/atlas-forever/` on
+the shared config and the workflows; `UI/` is empty and there is no `Data/`). Read it first and continue from it rather
+than scaffolding again - keep what is sound, fix what is not, and say in the PR body what you changed. Its scope, API
+surface and settings already follow this brief; `luacheck .`, `stylua --check .` and both specs are green on it, so any
+red you meet is yours. `Core/Model.lua` holds the pure filter, sort, find and recent-instance arithmetic the window
+should draw from, `Core/API.lua` the versioned contract above, and `Core/Core.lua` the saved variables and settings
+defaults (window scale, remember last instance, show contents, travel button) - extend them, do not re-invent them. Stage the finished tree at `staging/atlas-forever/` on
 `cjber/skills`, branch `atlas-forever-staging`, per `../new-forever-addon.md` (Nebula skill of the same name: read
 it). Do not create or push anything at `cjber/atlas-forever`; report the staging path plus the exact publish
 commands.

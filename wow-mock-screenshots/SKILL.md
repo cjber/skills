@@ -57,6 +57,20 @@ Requirements: Python 3 with Pillow 12+. Everything else is fetched from wago.too
 8. **Ship**: images, the script and the README/store references in the addon repo's PR; library and notes
    changes in a `cjber/skills` commit.
 
+## 3D model viewports
+
+Some addons show a real client-rendered 3D model: a `PlayerModel`/`DressUpModel` frame set with `SetCreature` or
+`SetDisplayInfo`. A renderer built on Pillow cannot draw those models, and the addon must not be simplified to a flat
+icon to suit the mock. Keep the model frame in game and make the mock honest:
+
+- Paste a real in-game capture of the same viewport when one exists, whole and at the size the addon draws it.
+  Keep captures in the repo (`docs/captures/<id>.png` in the Field Guide) so a re-render stays reproducible.
+- Without a capture, draw the viewport's real geometry (backdrop, bezel, size, anchor) over the best available
+  fallback art, and record the substitution in a manifest the release can read
+  (`docs/screenshots/model-captures.json`), listing every subject still owed a capture.
+- Never present a rendered icon as if it were the client's model in a README or store listing. A capture taken in
+  game is the only truthful pixel source for a 3D area.
+
 ## Rules
 
 - Always pass the build to wago.tools file downloads (`&build=`); without it you get retail art.

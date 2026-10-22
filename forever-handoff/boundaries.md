@@ -19,6 +19,8 @@ AGENTS.md says how to write code for that addon, this says which addon should ow
 | SkillUp | skillup-forever | Profession numbers: recipes, required skill, colour thresholds, skill-up chance, cheapest level path, shopping lists, trainer annotations, crafted gear | Journey selection, travel planning, other addons' UI |
 | Tweaks | tweaks-forever | Small fixes to the stock client and chores done for you: quest accept and turn-in, vendors, bags, tooltips, nameplates, camp names, entrance pins | Anything specific to levelling, professions, tracking or challenges |
 | Bestiary | bestiary-forever | Horizontal progression: creature cataloguing per zone, sightings, rare and variant records, zone bestiary completion, cosmetic-only rewards | Killing, looting, spawn prediction, anything the client API does not permit |
+| Hoard | hoard-forever | The cross-container item index: where an item is across bags, bank, warband bank, guild bank, mail and other characters, with search over it and the public API for that question | Reagent planning or profession maths (SkillUp), bag UI fixes and vendor selling (Tweaks), lines added to Blizzard tooltips |
+| Atlas | atlas-forever | The instance map viewer and index: an instance's own maps, wings and floors, entrance coordinates, and its contents as far as the client and QuestieDB place them | Completion state (Legacy), entrance pins on the world map (Tweaks), quest readiness (Adventure Guide), creature cataloguing (Bestiary), travel itself (Shortest Path) |
 
 ## 2. The boundary rules
 
@@ -67,6 +69,12 @@ AGENTS.md says how to write code for that addon, this says which addon should ow
 | Tracker column, grip, Lock, combat hiding, section order | Forever Core | one implementation, vendored (§5) |
 | Shared visual primitives (backdrop, typography, section chrome) | Forever Core | moved here from the four addons that each had a copy |
 | Map marker visibility contract (one owner per place type) | Forever Core | round 6 shared tooling; each addon registers what it draws |
+| Creature spawn points on a route ("hunt these on the way") | Bestiary proposes, Shortest Path routes | new (round 9). Bestiary picks the targets and prices the detour, Shortest Path orders and executes the travel; no passive overlay until the marker contract lands |
+| One `Nearest` ranking by travel | Shortest Path | new (round 9). SkillUp and Adventure Guide call it; see open question 4 |
+| Shopping list export and one buy trip | SkillUp | new (round 9). Export as text and through the API; Shortest Path executes the trip; work-orders-forever consumes the plain `itemID:count` format |
+| Detour cost on a suggestion | Adventure Guide, quoting Shortest Path | new (round 9). Travel price only, the choice stays Adventure Guide's |
+| Cross-container item search ("where is it?") | Hoard Forever | new (round 9) |
+| Instance map viewer, wings and entrance coordinates | Atlas Forever | new (round 9). It asks Shortest Path to travel |
 
 ## 4. Duplicates, and the one owner each got
 
@@ -152,3 +160,5 @@ Rules that keep this file honest:
 |---|---|---|
 | 2026-10-21 | File created: one job per addon, twelve boundary rules, feature to owner table, duplicates resolved, Forever Core ownership and the vendoring rule, integration contracts, naming, the change process | owner approved, maintainer wrote |
 | 2026-10-21 | Forever Core added as the seventh addon and the owner of the shared tracker column, grip, Lock, section order and visual primitives | maintainer, from the owner's 2026-10-21 approval |
+| 2026-10-22 | Round 9: Bestiary proposes route spawns and Shortest Path routes them; `Nearest` belongs to Shortest Path; SkillUp gains the shopping export and one buy trip; Adventure Guide may quote a detour cost. All four are marked new and become fact when their round-9 PR lands | maintainer, from the owner's 2026-10-22 ask ("one task per existing enhancement") |
+| 2026-10-22 | Hoard and Atlas added as the eighth and ninth addons, with their ownership rows and non-goals | maintainer, from the owner's 2026-10-22 ask ("one task for hoard forever and one for atlas forever") |

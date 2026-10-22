@@ -127,3 +127,12 @@ backwards-compatible for type/family callers.
 - Do not rename the project or its tabs; do not rewrite `AGENTS.md` beyond what this needs.
 - Do not hand-edit a PNG. Fix the generator and re-render.
 - Do not add a network dependency to CI: generation is cached/offline, exactly like `gen_zones.py`.
+
+## Out of scope here — propose, do not build
+
+The genuinely literal "actual image per NPC" in-game is a `PlayerModel` widget driven by
+`PlayerModel:SetCreature(creatureDisplayID)` in the detail pane: it renders the real 3D model, and we
+can resolve a displayID for 10,118 of 13,391 NPCs. That is the truest answer to Cillian's ask, but it
+needs a live client to verify and the Python mock cannot render 3D, so shipping it now would put the
+addon and the README out of step again — the exact fault we are fixing. Note it at the end of the PR
+description as a follow-up; build the 2D icon work above.

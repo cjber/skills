@@ -146,3 +146,37 @@ not move) while turning the 2 stability failures green.
 `Data/`, `tools/gen_corpus.py` pin v1.0.7 and `tests/.corpus`, with the relaxed-`Handable`
 experiment in `Planning/Laps.lua` (revert with `git checkout -- Planning/Laps.lua`). Remove
 with `git -C /home/nebula/wow/adventure-guide-forever worktree remove --force /tmp/agf-fix2`.
+
+## CONFIRMED MECHANISM (run 90, sandbox, QuestieDB v1.0.7, seed 4 char 56)
+
+The root cause in "What to fix" above (Verify over-reserving capacity) is NOT the seed-4 cause. Instrumented
+`Planning/Laps.lua` (Verify / WalkLap / Consider / Handable) with the v1.0.7 data. The cycle is:
+
+- **Build A** (`last=nil`): walk `W_A` places `area:384:4` and `area:412:4` as stops for quests 384/412 near
+  `town:1426:136`. `Verify(A)` **rejects the pickups 384 and 412** at that town because the log cap is 4 and the
+  four earlier pickups (96608, 98321, 98322, 99158) already fill it (`left=4 cap=4`, `owed=0`). Their areas are
+  then orphaned (objectives neither in `log` nor picked up) and dropped: `VERIFYDROP area:384:4` / `area:412:4`.
+  So A's route `R_A` (26 steps) lacks them, and the committed order `O_A = Idents(R_A)` lacks them too.
+- **Build B** (`last=first`): with `O_A`, `Consider()` gives committed steps `held - 6000000`, so after
+  `area:98321:4` the walk takes committed `town:1426:138` (cost 822.6) over the **new** areas 384:4/412:4. B never
+  works them, so `Handable(town:1426:136)` stays false (its hands 384/412 are never done), the committed return
+  visit `town:1426:136<<` is never taken, and B's walk runs on; `Verify(B)` then collapses to **8 steps**.
+- **Build C** (`last=again`): `O_B` (from `R_B`) no longer pulls the walk to 138, so C's walk == A's walk again ->
+  10 steps. Hence `C != B` (the failing invariant) - a period-2 cycle.
+
+At `town:1426:136` in build A the rejection is genuine log capacity (`owed=0`), so the reservation theory does not
+apply. I implemented and tested the brief's suggested fix (reserve only the peak excess of committed pickups over
+committed hand-ins still ahead, instead of the raw committed-pickup count) in `Verify()`: **it did not change the
+outcome** - `AGF_LAPS_SEED=4` still `1 failed`, `AGF_LAPS_SEED=12` still `1 failed`.
+
+**Best hypothesis for a correct fix**: the committed order `O_A` must not carry a return visit
+(`town:1426:136<<`) whose prerequisite areas (384:4/412:4) it does not hold; or the rebuild must not let that
+unreachable committed visit re-route the walk (the walk's placement of areas for quests whose pickups the log
+cannot hold, then Verify rejecting the pickup, is the inconsistency that seeds the cycle). Constraints unchanged:
+keep `tests/plan_golden_spec.lua` passing and the `laps_spec` check count unchanged, do not touch `tests/golden/`.
+
+**Rejected fixes (do not repeat)**: (1) drop steps past `Model.MAX_STEPS` from the committed order -> laps_spec
+32 failed; (2) `NameLapAreas lap.ranked[id] = math.max` -> no effect; (3) relax `Handable` to any-hand-in-ready ->
+laps_spec passes but `plan_golden_spec.lua:269` fails.
+
+Fast repro: `AGF_LAPS_SEED=4 luajit tests/laps_spec.lua` (~35 s, 1 failed); `AGF_LAPS_SEED=12` (1 failed).

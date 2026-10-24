@@ -94,3 +94,55 @@ ONE PR to cjber/adventure-guide-forever main carrying the v1.0.7 pin bump, the
 regenerated `Data/`, the `Planning/Laps.lua` fix and a `CHANGELOG.md` **Unreleased**
 line. Commit without `-s`. Report the PR number, the root-cause explanation and the
 exact local gate output. Do not merge.
+
+---
+
+## Deeper findings (run #88, 2026-10-24) - fix NOT yet landed
+
+The oscillation is driven from the walk, not (only) the Verify reservation. For seed 4
+char 56 the three builds differ as:
+
+```
+first  (last=nil):    route 10 steps, ends ... 136:2 138
+again  (last=first):  route 8  steps, ends ... area:98321:4   (136:2 and 138 dropped)
+third  (last=again):  route 10 steps, ends ... 136:2 801
+```
+
+`Planning/Laps.lua` `Handable()` refuses the return visit to `town:1426:136` in the
+`again` build. Instrumented (`HANDABLE town:1426:136 id=384 back=9 before=true log=false
+pending=2 ranked=7 done=1 guard=true inner=true`): the hand-in for quest 384 has
+`pending=2` objectives but the walk only ever works `done=1` of them, so the guard passes
+and the inner check `(done or 0) ~= pending` returns false. With the return visit refused,
+the log never frees a slot (`left` stays at `cap`), so every later pickup is rejected and
+the route collapses. The committed order (which holds `town:1426:136<<` at rank 9) is what
+makes `Handable` treat 384 as a hand-in to wait for.
+
+### Fixes tried and REJECTED (do not repeat)
+
+1. Drop steps past `Model.MAX_STEPS` from the committed order (move the `route[index]=nil`
+   truncation in `MergeLapVisits` before the `held` map): seed 4 passes, but the full
+   `tests/laps_spec.lua` goes to **531755 checks, 32 failed** (was 2). The "a step past the
+   step limit stays in the order" behaviour is load-bearing.
+2. `NameLapAreas`: `lap.ranked[id] = math.max(...)` instead of `math.min(...)` (the
+   Handable guard bound): seed 4 unchanged (**26343 checks, 1 failed**). Not the lever.
+3. Relax `Handable` to take the close when **any** hand-in is ready instead of requiring
+   all: `tests/laps_spec.lua` passes (**490237 checks, 0 failed**) but it changes route
+   content broadly (check count 531776 -> 490237) and **`tests/plan_golden_spec.lua` fails**
+   (assertion in `tests/plan_golden_spec.lua:269`). Too broad; changes the golden routes.
+
+### Suggested direction
+
+Keep the committed-order semantics intact and make `Handable`/`BuildLapAnchors` stop a
+hand-in whose quest the committed order never picks up or works from holding back the
+return visit - i.e. detect the case the comment above `Handable` already describes ("the
+last build's check gave its pickup to the log's limit") precisely, rather than loosening
+the all-ready rule or dropping post-limit steps. A correct fix must leave
+`tests/plan_golden_spec.lua` and the `laps_spec` check count unchanged (route content must
+not move) while turning the 2 stability failures green.
+
+### Working state left behind
+
+`git worktree` `/tmp/agf-fix2` (detached main 20720be) holds the v1.0.7 regenerated
+`Data/`, `tools/gen_corpus.py` pin v1.0.7 and `tests/.corpus`, with the relaxed-`Handable`
+experiment in `Planning/Laps.lua` (revert with `git checkout -- Planning/Laps.lua`). Remove
+with `git -C /home/nebula/wow/adventure-guide-forever worktree remove --force /tmp/agf-fix2`.

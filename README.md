@@ -20,8 +20,6 @@ Agent skills I use daily, one per directory, each a self-contained `SKILL.md` pl
 | [`web-design-guidelines`](web-design-guidelines/SKILL.md) | Audit rendered websites and UI code for accessibility, navigation and responsive behavior |
 | [`copywriting`](copywriting/SKILL.md) | Write or edit copy for any audience and channel, with concrete claims and a consistent voice |
 | [`docs-writing`](docs-writing/SKILL.md) | Use the copywriting workflow for software documentation |
-| [`wow-forever-addon`](#wow-forever-addon) | Hold every WoW: Forever addon to one look, icon family, docs shape and CI baseline |
-| [`wow-addon-publish`](#wow-addon-publish) | Publish a WoW addon to CurseForge and Wago, and cut releases |
 | [`wow-mock-screenshots`](#wow-mock-screenshots) | Render WoW addon screenshots from the game's own art, without the client |
 | [`wow-visual-audit`](wow-visual-audit/SKILL.md) | Gate a rendered addon layout: inside the frame, no overlaps, no bleed |
 
@@ -170,21 +168,18 @@ words, pruning, and when a skill should be model- or user-invoked.
 [mattpocock/skills](https://github.com/mattpocock/skills), (c) 2026 Matt Pocock, MIT. Each carries
 the upstream notice in its own `THIRD_PARTY_NOTICES.md`.
 
-## wow-forever-addon
+## Where the WoW: Forever packs live
 
-A standards pack: numbered requirements (`WFA-1`…) every WoW: Forever addon shares, retail-UI
-look, one icon family, README and store-page budgets, CI and release baseline, repo settings and
-the `main` ruleset. Each addon declares it under `## Standards` in its `AGENTS.md`, and
-`sift audit` reviews against it.
+Only skills that build repo-specific logic belong here. A skill tied to one project lives in the
+repo it describes, under that repo's `.agents/skills/`:
 
-- [`icon-template.svg`](wow-forever-addon/icon-template.svg) is the family frame; swap the emblem.
-- `render_icon.py` renders `media/icon-400.png` and the 64 px `media/Icon.tga` from `media/icon.svg`.
+- `wow-forever-addon` (the `WFA-*` standards pack and its tooling), `wow-addon-publish` and
+  `wow-retail-ui-style` are in [cjber/forever-core](https://github.com/cjber/forever-core/tree/main/.agents/skills),
+  the repo every Forever addon already vendors from.
+- Each addon's own `release` checklist and `sift-project` gate profile stay in that addon's repo.
 
-## wow-addon-publish
-
-Create the CurseForge and Wago projects through each site's own form in a logged-in browser, wire
-their IDs into the TOC, and release with a signed tag that the BigWigs packager uploads everywhere.
-Secrets and gallery deletions stay with the user.
+`wow-mock-screenshots` and `wow-visual-audit` stay here: they hold the general renderer and gate that
+a repo's own `tools/screenshots.py` and `tools/visual_audit.py` are built on.
 
 ## wow-mock-screenshots
 

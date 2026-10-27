@@ -35,8 +35,8 @@ A cloud agent scoped to one organization's repositories cannot write outside tha
 ## Resource budget
 
 - Claude uses Sonnet at medium effort by default.
-- **Codex uses Sol at `xhigh` reasoning effort for every phase**, planning,
-  implementation, and review alike. Sol at xhigh is the point of running a second
+- **Codex uses `gpt-reserve` at `xhigh` reasoning effort for every phase**, planning,
+  implementation, and review alike. xhigh is the point of running a second
   model at all: the value of the Codex arm is that it thinks hard enough to catch
   what the Claude arm assumed, and a cheaper tier spends the coordination
   overhead without buying the scrutiny. Do not drop to a lower effort to save
@@ -44,7 +44,7 @@ A cloud agent scoped to one organization's repositories cannot write outside tha
   corroboration.
 
   ```sh
-  codex exec -m gpt-6-astra -c model_reasoning_effort=xhigh -c service_tier=default --skip-git-repo-check - < prompt.md
+  codex exec -m gpt-reserve -c model_reasoning_effort=xhigh -c service_tier=default --skip-git-repo-check - < prompt.md
   ```
 
   **Always pass `-c service_tier=default` on every codex invocation.** The
@@ -53,9 +53,12 @@ A cloud agent scoped to one organization's repositories cannot write outside tha
   usage meter barely moves. Passing it explicitly makes the skill immune to
   whatever `service_tier` `~/.codex/config.toml` happens to carry.
 
-  Pass the model fully-qualified as `gpt-6-astra`; a bare name like `astra` or
-  `sol` is rejected with "not supported when using Codex with a ChatGPT
-  account".
+  Pass a fully-qualified slug the account serves. A rejected slug fails fast
+  with "not supported when using Codex with a ChatGPT account", and the
+  default in `~/.codex/config.toml` can be one of them. When the pin is
+  rejected, list the served slugs with
+  `jq -r '.models[] | "\(.slug)  \(.description)"' ~/.codex/models_cache.json`,
+  pick the strongest coding model, and update the pin in this skill.
 - Each phase has one Claude arm and one Codex arm. They may exchange one concise
   critique/reply round to challenge assumptions and surface misses. Do not add
   scouts, agent teams, nested subagents, or recursive workflow calls.
@@ -75,11 +78,11 @@ So every invocation redirects stdin. Two correct shapes, both verified:
 
 ```sh
 # Prompt in a file (preferred for anything longer than a line):
-cd "$WORKTREE" && codex exec -m gpt-6-astra -c model_reasoning_effort=xhigh -c service_tier=default \
+cd "$WORKTREE" && codex exec -m gpt-reserve -c model_reasoning_effort=xhigh -c service_tier=default \
   --skip-git-repo-check - < prompt.md
 
 # Prompt as an argument, still requires closing stdin explicitly:
-cd "$WORKTREE" && codex exec -m gpt-6-astra -c model_reasoning_effort=xhigh -c service_tier=default \
+cd "$WORKTREE" && codex exec -m gpt-reserve -c model_reasoning_effort=xhigh -c service_tier=default \
   --skip-git-repo-check "$PROMPT" < /dev/null
 ```
 
@@ -104,7 +107,7 @@ Two further flag landmines on this account:
   which is why every example above `cd`s rather than passing `--cd`. Sandbox mode
   is inherited from the original `exec`.
 - **`codex review` takes `-m`/`-c` as TOP-LEVEL flags**, before the subcommand:
-  `codex -m gpt-6-astra -c model_reasoning_effort=xhigh -c service_tier=default review --base origin/main`. And `--base main`
+  `codex -m gpt-reserve -c model_reasoning_effort=xhigh -c service_tier=default review --base origin/main`. And `--base main`
   reviews against the *local* main, always pass `origin/main`.
 
 ### Invoking Claude from a Codex coordinator

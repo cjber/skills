@@ -49,7 +49,7 @@ Or copy the directories into `~/.claude/skills/`. Invoke by name (`/pr`) or desc
 **Needs:** Claude Code · [Codex CLI](https://github.com/openai/codex) (for `/pr`) · `gh` · `jq`
 (watch scripts only) · signed commits.
 
-**Adapt first:** the Codex model pin (`gpt-6-astra`), the `cb/<slug>` branch prefix and `gh stack`
+**Adapt first:** the Codex model pin (`gpt-reserve`), the `cb/<slug>` branch prefix and `gh stack`
 are personal habits. Without sift, name your own gate in `/pr`.
 
 ---

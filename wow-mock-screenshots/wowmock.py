@@ -20,7 +20,7 @@ per UI unit.
     terrain = minimap_art(ui, 1, 6341.38, 557.68, 233.333)  # world map, north x, west y, radius in yards
     frame, r = world_map_frame(ui, art, ["World", "Kalimdor", "Ashenvale"], arrows=(1, 2))
     tracker, r = objective_tracker(ui, [TrackerModule("Legacy", [TrackerBlock("Novice Mage", ["..."])])])
-    atlas_markup("common-dropdown-icon-checkmark-yellow", 14, 14)  # |A..|a inline textures work in Canvas.text / text_width
+    atlas_markup("common-dropdown-icon-checkmark-yellow", 14, 14)  # inline atlas texture in Canvas text
     tooltip_backdrop(canvas, x, y, w, h)    # legacy BackdropTemplate's tooltip textures, not NineSlice
     dialog_border(canvas, x, y, w, h); panel_tabs(canvas, x, y, ["HUD", "Windows"], selected=1)
     minimal_slider(canvas, x, y, 180, 32, 100, 50, 150); ui_panel_button(canvas, x, y, w, h, "Okay")
@@ -59,7 +59,14 @@ def rgb(hex_colour):
 
 
 # ITEM_QUALITY_COLORS: the client's default C_ColorOverrides colours, used for item names.
-QUALITY_TEXT = {0: rgb("9d9d9d"), 1: rgb("ffffff"), 2: rgb("1eff00"), 3: rgb("0070dd"), 4: rgb("a335ee"), 5: rgb("ff8000")}
+QUALITY_TEXT = {
+    0: rgb("9d9d9d"),
+    1: rgb("ffffff"),
+    2: rgb("1eff00"),
+    3: rgb("0070dd"),
+    4: rgb("a335ee"),
+    5: rgb("ff8000"),
+}
 NORMAL = rgb("ffd200")  # NORMAL_FONT_COLOR, GlobalColor -11776
 WHITE = (1.0, 1.0, 1.0)
 DISABLED = rgb("808080")
@@ -222,12 +229,18 @@ class Ui:
             raise KeyError(f"no atlas element {name!r}")
         atlases = self.table("UiTextureAtlas")
         canvases = self.table("UiCanvas")
-        members = [m for m in self.table("UiTextureAtlasMember").values() if m["UiTextureAtlasElementID"] == element["ID"]]
+        members = [
+            m for m in self.table("UiTextureAtlasMember").values() if m["UiTextureAtlasElementID"] == element["ID"]
+        ]
 
         def logical_size(member):
             # Override size wins; else pixels scaled by the canvas (member's, else the atlas's): canvas 2
             # is 2048 wide, i.e. art authored at 2x.
-            canvas = member["UiCanvasID"] if member["UiCanvasID"] != "0" else atlases[member["UiTextureAtlasID"]]["UiCanvasID"]
+            canvas = (
+                member["UiCanvasID"]
+                if member["UiCanvasID"] != "0"
+                else atlases[member["UiTextureAtlasID"]]["UiCanvasID"]
+            )
             factor = int(canvases[canvas]["Width"]) / 1024 if canvas in canvases else 1
             return (
                 int(member["OverrideWidth"]) or int(member["Width"]) / factor,
@@ -317,9 +330,28 @@ SLOT_BUDGET_INDEX = {
     **dict.fromkeys((15, 25, 26), 4),
 }
 INVENTORY_TYPE_NAMES = {
-    1: "Head", 2: "Neck", 3: "Shoulder", 4: "Shirt", 5: "Chest", 6: "Waist", 7: "Legs", 8: "Feet", 9: "Wrist",
-    10: "Hands", 11: "Finger", 12: "Trinket", 13: "One-Hand", 14: "Off Hand", 15: "Ranged", 16: "Back",
-    17: "Two-Hand", 19: "Tabard", 20: "Chest", 21: "Main Hand", 22: "Off Hand", 23: "Held In Off-hand",
+    1: "Head",
+    2: "Neck",
+    3: "Shoulder",
+    4: "Shirt",
+    5: "Chest",
+    6: "Waist",
+    7: "Legs",
+    8: "Feet",
+    9: "Wrist",
+    10: "Hands",
+    11: "Finger",
+    12: "Trinket",
+    13: "One-Hand",
+    14: "Off Hand",
+    15: "Ranged",
+    16: "Back",
+    17: "Two-Hand",
+    19: "Tabard",
+    20: "Chest",
+    21: "Main Hand",
+    22: "Off Hand",
+    23: "Held In Off-hand",
 }
 STAT_NAMES = {3: "Agility", 4: "Strength", 5: "Intellect", 6: "Spirit", 7: "Stamina"}
 # The tooltip lists primary stats before Stamina whatever order the item stores them in.
@@ -353,7 +385,9 @@ class Canvas:
             piece = self.sliced(src, width, height)
         elif src.tile_h or src.tile_v:
             tile = src.image.resize((max(1, self.px(src.width)), max(1, self.px(src.height))), Image.LANCZOS)
-            tile = tile.resize((tile.width if src.tile_h else width, tile.height if src.tile_v else height), Image.LANCZOS)
+            tile = tile.resize(
+                (tile.width if src.tile_h else width, tile.height if src.tile_v else height), Image.LANCZOS
+            )
             piece = Image.new("RGBA", (width, height))
             for tx in range(0, width, tile.width):
                 for ty in range(0, height, tile.height):
@@ -448,7 +482,9 @@ class Canvas:
             if font.shadow:
                 offset = (self.px(font.shadow[0]), -self.px(font.shadow[1]))
                 draw.text((position[0] + offset[0], position[1] + offset[1]), run, font=face, fill=(0, 0, 0, 255))
-            draw.text(position, run, font=face, fill=rgba255(run_color), stroke_width=stroke, stroke_fill=(0, 0, 0, 255))
+            draw.text(
+                position, run, font=face, fill=rgba255(run_color), stroke_width=stroke, stroke_fill=(0, 0, 0, 255)
+            )
             cursor += face.getlength(run) / self.ui.scale
         self.image = Image.alpha_composite(self.image, layer)
         for run, left, icon_top, w, h in icons:
@@ -489,10 +525,20 @@ class Canvas:
         if "Center" in layout:
             o = offsets(layout["Center"])
             atlas = self.ui.atlas(layout["Center"]["atlas"])
-            self.draw(atlas, tl[2] + o[0], tl[3] + o[1], br[0] + o[2] - tl[2] - o[0], br[1] + o[3] - tl[3] - o[1], center_color)
+            self.draw(
+                atlas,
+                tl[2] + o[0],
+                tl[3] + o[1],
+                br[0] + o[2] - tl[2] - o[0],
+                br[1] + o[3] - tl[3] - o[1],
+                center_color,
+            )
         flips = {
-            "TopRightCorner": (True, False), "BottomLeftCorner": (False, True), "BottomRightCorner": (True, True),
-            "BottomEdge": (False, True), "RightEdge": (True, False),
+            "TopRightCorner": (True, False),
+            "BottomLeftCorner": (False, True),
+            "BottomRightCorner": (True, True),
+            "BottomEdge": (False, True),
+            "RightEdge": (True, False),
         }
         # A piece's own mirrorLayout overrides the layout's (NineSlice.lua SetupTextureCoordinates).
         for name, (atlas, box) in edges.items():
@@ -527,7 +573,10 @@ def tint(image, color):
     if tuple(color) in ((1, 1, 1), (1, 1, 1, 1)):
         return image
     r, g, b, *a = color
-    bands = [band.point(lambda v, f=f: round(v * f)) for band, f in zip(image.split(), (r, g, b, a[0] if a else 1))]
+    bands = [
+        band.point(lambda v, f=f: round(v * f))
+        for band, f in zip(image.split(), (r, g, b, a[0] if a else 1), strict=True)
+    ]
     return Image.merge("RGBA", bands)
 
 
@@ -625,7 +674,9 @@ def backdrop(ui, width, height, inner=(0.13, 0.14, 0.16), outer=(0.04, 0.045, 0.
     for py in range(64):
         for px in range(64):
             d = min(1, math.hypot((px - 32) / 32, (py - 36) / 40))
-            small.putpixel((px, py), tuple(round(255 * (i + (o - i) * d**1.4)) for i, o in zip(inner, outer)))
+            small.putpixel(
+                (px, py), tuple(round(255 * (i + (o - i) * d**1.4)) for i, o in zip(inner, outer, strict=True))
+            )
     canvas = ui.canvas(width, height)
     canvas.image = small.resize(canvas.image.size, Image.BICUBIC).filter(ImageFilter.GaussianBlur(4)).convert("RGBA")
     return canvas
@@ -679,7 +730,11 @@ class TooltipLine:
 
 def coin_parts(copper):
     gold, silver, copper = copper // 10000, copper // 100 % 100, copper % 100
-    return [(value, atlas) for value, atlas in ((gold, "coin-gold"), (silver, "coin-silver"), (copper, "coin-copper")) if value]
+    return [
+        (value, atlas)
+        for value, atlas in ((gold, "coin-gold"), (silver, "coin-silver"), (copper, "coin-copper"))
+        if value
+    ]
 
 
 def money_width(canvas, copper):
@@ -702,7 +757,7 @@ def tooltip(ui, lines):
     measure = ui.canvas(1, 1)
     fonts = [FONTS["GameTooltipHeaderText"]] + [FONTS["GameTooltipText"]] * (len(lines) - 1)
     widths = []
-    for line, font in zip(lines, fonts):
+    for line, font in zip(lines, fonts, strict=True):
         width = measure.text_width(line.left, font)
         if line.money is not None:
             width += 4 + money_width(measure, line.money)
@@ -716,12 +771,20 @@ def tooltip(ui, lines):
     background = ui.global_color("TOOLTIP_DEFAULT_BACKGROUND_COLOR")
     canvas.nine_slice(TOOLTIP_LAYOUT, 0, 0, width, height, center_color=(*background[:3], 1))
     y = TOOLTIP_PADDING
-    for line, font in zip(lines, fonts):
+    for line, font in zip(lines, fonts, strict=True):
         drawn = canvas.text(TOOLTIP_PADDING, y, line.left, font, line.color)
         if line.money is not None:
             draw_money(canvas, TOOLTIP_PADDING + drawn + 4, y - 0.5, line.money)
         if line.right:
-            canvas.text(TOOLTIP_PADDING, y, line.right, font, line.right_color, justify="RIGHT", width=width - 2 * TOOLTIP_PADDING)
+            canvas.text(
+                TOOLTIP_PADDING,
+                y,
+                line.right,
+                font,
+                line.right_color,
+                justify="RIGHT",
+                width=width - 2 * TOOLTIP_PADDING,
+            )
         y += font.height + TOOLTIP_LINE_GAP
     return canvas
 
@@ -770,12 +833,20 @@ def item_button(canvas, x, y, item=None, count=None, hover=False, artwork=None, 
         canvas.draw(ui.atlas("bags-item-slot64"), x, y, ITEM_BUTTON, ITEM_BUTTON)
     else:
         canvas.draw(ui.texture(item.icon), x, y, ITEM_BUTTON, ITEM_BUTTON)
-    canvas.draw(ui.texture("interface/buttons/ui-quickslot2.blp"), x + (ITEM_BUTTON - 64) / 2, y + (ITEM_BUTTON - 64) / 2 + 1, 64, 64)
+    canvas.draw(
+        ui.texture("interface/buttons/ui-quickslot2.blp"),
+        x + (ITEM_BUTTON - 64) / 2,
+        y + (ITEM_BUTTON - 64) / 2 + 1,
+        64,
+        64,
+    )
     if artwork:
         artwork(canvas, x, y)
     if count and count > 1:
         # NumberFontNormal anchored BOTTOMRIGHT -5, 2.
-        canvas.text(x, y + ITEM_BUTTON - 2 - 14, str(count), FONTS["NumberFontNormal"], justify="RIGHT", width=ITEM_BUTTON - 5)
+        canvas.text(
+            x, y + ITEM_BUTTON - 2 - 14, str(count), FONTS["NumberFontNormal"], justify="RIGHT", width=ITEM_BUTTON - 5
+        )
     if item is not None and item.quality in BAG_QUALITY_COLORS:
         border = ui.global_color(BAG_QUALITY_COLORS[item.quality])
         canvas.draw(ui.texture("interface/common/whiteiconframe.blp"), x, y, ITEM_BUTTON, ITEM_BUTTON, border)
@@ -783,7 +854,9 @@ def item_button(canvas, x, y, item=None, count=None, hover=False, artwork=None, 
         # ContainerFrame.xml: bags-junkcoin at its atlas size, TOPLEFT (1, 0).
         canvas.draw(ui.atlas("bags-junkcoin"), x + 1, y)
     if hover:
-        canvas.draw(ui.texture("interface/buttons/buttonhilight-square.blp"), x, y, ITEM_BUTTON, ITEM_BUTTON, blend="ADD")
+        canvas.draw(
+            ui.texture("interface/buttons/buttonhilight-square.blp"), x, y, ITEM_BUTTON, ITEM_BUTTON, blend="ADD"
+        )
 
 
 # ---------------------------------------------------------------------------------------- container frame
@@ -807,7 +880,8 @@ CONTAINER_MARGIN = 24
 def container_frame(ui, title, portrait, slots, money, columns=4, hover=None, artwork=None, junk=()):
     """The Mainline backpack (ContainerFrameBackpackTemplate). `slots` is [(item_id | None, count | None)] in
     slot order; `hover` is the index of a slot under the cursor; `artwork(canvas, x, y, index)` draws into
-    a slot's ARTWORK layer; `junk` holds the indices whose junk coin shows. Returns (canvas, {"frame": rect, "slots": [rect]}) with rects in canvas units."""
+    a slot's ARTWORK layer; `junk` holds the indices whose junk coin shows. Returns the frame and slot rectangles
+    in canvas units."""
     rows = math.ceil(len(slots) / columns)
     items_height = rows * ITEM_BUTTON + (rows - 1) * ITEM_SPACING
     money_height = 13
@@ -818,9 +892,18 @@ def container_frame(ui, title, portrait, slots, money, columns=4, hover=None, ar
 
     background = ui.global_color("PANEL_BACKGROUND_COLOR")
     bg_left, bg_top, bg_right, bg_bottom = m + 2, m + 20, m + width - 2, m + height - 3
-    corner_left, corner_right = ui.atlas("uiframebackground-nineslice-cornerbottomleft"), ui.atlas("uiframebackground-nineslice-cornerbottomright")
+    corner_left, corner_right = (
+        ui.atlas("uiframebackground-nineslice-cornerbottomleft"),
+        ui.atlas("uiframebackground-nineslice-cornerbottomright"),
+    )
     canvas.fill(bg_left, bg_top, bg_right - bg_left, bg_bottom - corner_left.height - bg_top, background)
-    canvas.fill(bg_left + corner_left.width, bg_bottom - corner_left.height, bg_right - bg_left - corner_left.width - corner_right.width, corner_left.height, background)
+    canvas.fill(
+        bg_left + corner_left.width,
+        bg_bottom - corner_left.height,
+        bg_right - bg_left - corner_left.width - corner_right.width,
+        corner_left.height,
+        background,
+    )
     canvas.draw(corner_left, bg_left, bg_bottom - corner_left.height, color=background)
     canvas.draw(corner_right, bg_right - corner_right.width, bg_bottom - corner_right.height, color=background)
 
@@ -920,16 +1003,29 @@ def context_menu(ui, entries):
     margin = 12
     canvas = ui.canvas(width + 2 * margin, height + 2 * margin)
     # MenuStyle1Mixin:Generate: common-dropdown-bg from (-10, 3) to (10, -3) at alpha .925.
+    # The atlas centre has transparent pixels. Blizzard's frame tint plus the
+    # 0.925 vertex alpha still leaves row text legible underneath; the menu
+    # surface itself must be opaque in a flattened screenshot.
+    canvas.fill(margin - 10, margin - 3, width + 20, height + 6, rgb("17191d"))
     canvas.draw(ui.atlas("common-dropdown-bg"), margin - 10, margin - 3, width + 20, height + 6, (1, 1, 1, 0.925))
     y = margin + top
     rows = []
-    for entry, (_, row_height) in zip(entries, extents):
+    for entry, (_, row_height) in zip(entries, extents, strict=True):
         x = margin + left
         if isinstance(entry, MenuDivider):
-            canvas.draw(ui.texture("interface/common/ui-tooltipdivider-transparent.blp"), x, y, child_width, MENU_DIVIDER)
+            canvas.draw(
+                ui.texture("interface/common/ui-tooltipdivider-transparent.blp"), x, y, child_width, MENU_DIVIDER
+            )
         else:
             if getattr(entry, "hover", False):
-                canvas.draw(ui.texture("interface/questframe/ui-questtitlehighlight.blp"), x, y, child_width, row_height, blend="ADD")
+                canvas.draw(
+                    ui.texture("interface/questframe/ui-questtitlehighlight.blp"),
+                    x,
+                    y,
+                    child_width,
+                    row_height,
+                    blend="ADD",
+                )
             if isinstance(entry, MenuTitle):
                 canvas.text(x, y, entry.text, text_font, NORMAL, box_height=MENU_ROW)
             elif isinstance(entry, MenuCheckbox):
@@ -937,12 +1033,16 @@ def context_menu(ui, entries):
                 canvas.draw(tick, x, tick_top)
                 if entry.checked:
                     check = ui.atlas("common-dropdown-icon-checkmark-yellow")
-                    canvas.draw(check, x + (tick.width - check.width) / 2 + 2, tick_top + (tick.height - check.height) / 2 - 1)
+                    canvas.draw(
+                        check, x + (tick.width - check.width) / 2 + 2, tick_top + (tick.height - check.height) / 2 - 1
+                    )
                 canvas.text(x + tick.width + 7, y - 1, entry.text, text_font, box_height=MENU_ROW)
             else:
                 canvas.text(x, y, entry.text, text_font, box_height=MENU_ROW)
                 if entry.submenu:
-                    canvas.draw(ui.texture("interface/chatframe/chatframeexpandarrow.blp"), x + child_width - 16, y + 2, 16, 16)
+                    canvas.draw(
+                        ui.texture("interface/chatframe/chatframeexpandarrow.blp"), x + child_width - 16, y + 2, 16, 16
+                    )
         rows.append((x, y, child_width, row_height))
         y += row_height
     return canvas, {"menu": (margin, margin, width, height), "rows": rows}
@@ -994,7 +1094,7 @@ def minimap_art(ui, map_id, x, y, radius):
     while position + 8 <= len(wdt):
         magic, size = struct.unpack_from("<4sI", wdt, position)
         if magic in (b"DIAM", b"MAID"):
-            maid = wdt[position + 8:position + 8 + size]
+            maid = wdt[position + 8 : position + 8 + size]
         position += size + 8
     assert maid and len(maid) == 64 * 64 * 32, "expected WDT MAID with minimapTexture entries"
     unit = 1600 / 3
@@ -1010,7 +1110,6 @@ def minimap_art(ui, map_id, x, y, radius):
     return image.crop(tuple(round(v * 256) for v in (left - x0, top - y0, right - x0, bottom - y0)))
 
 
-
 def map_art_id(ui, ui_map_id):
     """The UiMapArt a uiMap shows with no phase."""
     rows = [r for r in ui.table("UiMapXMapArt").values() if r["UiMapID"] == str(ui_map_id) and r["PhaseID"] == "0"]
@@ -1024,7 +1123,9 @@ def map_art(ui, ui_map_id):
     UiMapArtTile files laid out on the UiMapArtStyleLayer grid, the last row/column cropped."""
     art = map_art_id(ui, ui_map_id)
     style = ui.table("UiMapArt")[art]["UiMapArtStyleID"]
-    layer = next(r for r in ui.table("UiMapArtStyleLayer").values() if r["UiMapArtStyleID"] == style and r["LayerIndex"] == "0")
+    layer = next(
+        r for r in ui.table("UiMapArtStyleLayer").values() if r["UiMapArtStyleID"] == style and r["LayerIndex"] == "0"
+    )
     width, height = int(layer["LayerWidth"]), int(layer["LayerHeight"])
     tile_w, tile_h = int(layer["TileWidth"]), int(layer["TileHeight"])
     image = Image.new("RGBA", (width, height))
@@ -1065,11 +1166,17 @@ def map_overlays(ui, ui_map_id):
         if row["UiMapArtID"] != art:
             continue
         ordered = sorted(tiles.get(row["ID"], []), key=lambda t: (int(t["RowIndex"]), int(t["ColIndex"])))
-        overlays.append(MapOverlay(
-            int(row["ID"]), int(row["OffsetX"]), int(row["OffsetY"]), int(row["TextureWidth"]), int(row["TextureHeight"]),
-            tuple(int(row[k]) for k in ("HitRectLeft", "HitRectTop", "HitRectRight", "HitRectBottom")),
-            [int(t["FileDataID"]) for t in ordered],
-        ))
+        overlays.append(
+            MapOverlay(
+                int(row["ID"]),
+                int(row["OffsetX"]),
+                int(row["OffsetY"]),
+                int(row["TextureWidth"]),
+                int(row["TextureHeight"]),
+                tuple(int(row[k]) for k in ("HitRectLeft", "HitRectTop", "HitRectRight", "HitRectBottom")),
+                [int(t["FileDataID"]) for t in ordered],
+            )
+        )
     return sorted(overlays, key=lambda o: o.id)
 
 
@@ -1112,7 +1219,14 @@ def tiled(canvas, texture, x, y, w, h, tile_w, tile_h, coords=(0, 1, 0, 1)):
     """A horizTile/vertTile texture region: `coords` (left, right, top, bottom) of the file, repeated every
     tile_w x tile_h UI units and clipped to the rect."""
     left, right, top, bottom = coords
-    piece = texture.crop((round(left * texture.width), round(top * texture.height), round(right * texture.width), round(bottom * texture.height)))
+    piece = texture.crop(
+        (
+            round(left * texture.width),
+            round(top * texture.height),
+            round(right * texture.width),
+            round(bottom * texture.height),
+        )
+    )
     tile = piece.resize((max(1, canvas.px(tile_w)), max(1, canvas.px(tile_h))), Image.LANCZOS)
     width, height = canvas.px(x + w) - canvas.px(x), canvas.px(y + h) - canvas.px(y)
     area = Image.new("RGBA", (width, height))
@@ -1124,7 +1238,12 @@ def tiled(canvas, texture, x, y, w, h, tile_w, tile_h, coords=(0, 1, 0, 1)):
 
 def crop_coords(texture, left, right, top, bottom):
     """SetTexCoord: the file region, flipped when right < left or bottom < top."""
-    box = [round(left * texture.width), round(top * texture.height), round(right * texture.width), round(bottom * texture.height)]
+    box = [
+        round(left * texture.width),
+        round(top * texture.height),
+        round(right * texture.width),
+        round(bottom * texture.height),
+    ]
     piece = texture.crop((min(box[0], box[2]), min(box[1], box[3]), max(box[0], box[2]), max(box[1], box[3])))
     if right < left:
         piece = piece.transpose(Image.FLIP_LEFT_RIGHT)
@@ -1165,7 +1284,9 @@ def nav_bar(canvas, x, y, w, h, names, arrows=()):
         canvas.draw(crop_coords(sheet, 0.88867188, 0.9296875, 0.296875, 0.53125), left + width, top, 21, 30)
         canvas.text(left + 20, top, name, font, box_height=button_h)
         if name in arrows:
-            arrow = crop_coords(ui.texture("interface/buttons/squarebuttontextures.blp"), 0.453125, 0.640625, 0.203125, 0.015625)
+            arrow = crop_coords(
+                ui.texture("interface/buttons/squarebuttontextures.blp"), 0.453125, 0.640625, 0.203125, 0.015625
+            )
             # MenuArrowButton 27x31, RIGHT at the button's TOPRIGHT (-2, -15); the art 12x12 at CENTER (0, -1).
             canvas.draw(arrow, left + width - 2 - 27 / 2 - 6, top + 15 - 6 + 1, 12, 12)
     tex_left = 0.703125 - home_w / 128 * 0.25
@@ -1175,7 +1296,9 @@ def nav_bar(canvas, x, y, w, h, names, arrows=()):
     tiled(canvas, tile, x, y, w, h, 128, h, (0, 1, 0.2578125, 0.32421875))
 
 
-def world_map_frame(ui, map_image, nav, arrows=(), title="Map & Quest Log", portrait="interface/questframe/ui-questlog-bookicon.blp"):
+def world_map_frame(
+    ui, map_image, nav, arrows=(), title="Map & Quest Log", portrait="interface/questframe/ui-questlog-bookicon.blp"
+):
     """WorldMapFrame minimized with the quest log hidden, as the Camelot (Forever) UI lays it out: metal
     portrait frame, rock background, NavBar (`nav` = home label then map names), the tracking options
     dropdown beside it, and `map_image` (canvas pixels, e.g. map_art) fitted to the scroll container.
@@ -1342,16 +1465,18 @@ def camelot_layout(layout):
     return result
 
 
-PORTRAIT_FRAME_TEMPLATE_LAYOUT = camelot_layout({  # NineSliceLayouts.PortraitFrameTemplate
-    "TopLeftCorner": {"atlas": "UI-Frame-PortraitMetal-CornerTopLeft", "x": -13, "y": 16},
-    "TopRightCorner": {"atlas": "UI-Frame-Metal-CornerTopRight", "x": 4, "y": 16},
-    "BottomLeftCorner": {"atlas": "UI-Frame-Metal-CornerBottomLeft", "x": -13, "y": -3},
-    "BottomRightCorner": {"atlas": "UI-Frame-Metal-CornerBottomRight", "x": 4, "y": -3},
-    "TopEdge": {"atlas": "_UI-Frame-Metal-EdgeTop"},
-    "BottomEdge": {"atlas": "_UI-Frame-Metal-EdgeBottom"},
-    "LeftEdge": {"atlas": "!UI-Frame-Metal-EdgeLeft"},
-    "RightEdge": {"atlas": "!UI-Frame-Metal-EdgeRight"},
-})
+PORTRAIT_FRAME_TEMPLATE_LAYOUT = camelot_layout(
+    {  # NineSliceLayouts.PortraitFrameTemplate
+        "TopLeftCorner": {"atlas": "UI-Frame-PortraitMetal-CornerTopLeft", "x": -13, "y": 16},
+        "TopRightCorner": {"atlas": "UI-Frame-Metal-CornerTopRight", "x": 4, "y": 16},
+        "BottomLeftCorner": {"atlas": "UI-Frame-Metal-CornerBottomLeft", "x": -13, "y": -3},
+        "BottomRightCorner": {"atlas": "UI-Frame-Metal-CornerBottomRight", "x": 4, "y": -3},
+        "TopEdge": {"atlas": "_UI-Frame-Metal-EdgeTop"},
+        "BottomEdge": {"atlas": "_UI-Frame-Metal-EdgeBottom"},
+        "LeftEdge": {"atlas": "!UI-Frame-Metal-EdgeLeft"},
+        "RightEdge": {"atlas": "!UI-Frame-Metal-EdgeRight"},
+    }
+)
 INSET_FRAME_LAYOUT = {  # NineSliceLayouts.InsetFrameTemplate
     "TopLeftCorner": {"atlas": "UI-Frame-InnerTopLeft"},
     "TopRightCorner": {"atlas": "UI-Frame-InnerTopRight"},
@@ -1411,7 +1536,9 @@ def three_slice_button(canvas, x, y, w, h, text, font=None, atlas="128-RedButton
             extra -= abs(lw - rw)
             nl = nr = min(lw, rw) - extra / 2
         left_img = left.image.crop((0, 0, round(left.image.width * nl / lw), left.image.height))
-        right_img = right.image.crop((round(right.image.width * (1 - nr / rw)), 0, right.image.width, right.image.height))
+        right_img = right.image.crop(
+            (round(right.image.width * (1 - nr / rw)), 0, right.image.width, right.image.height)
+        )
         lw, rw = nl, nr
     else:
         left_img, right_img = left.image, right.image
@@ -1455,7 +1582,13 @@ def minimal_scrollbar(canvas, x, y, h, visible=1.0, offset=0.0):
     track_top, track_bottom = y + 19, y + h - 19
     canvas.draw(top, x, track_top)
     canvas.draw(bottom, x, track_bottom - bottom.height)
-    canvas.draw(ui.atlas("!minimal-scrollbar-track-middle"), x, track_top + top.height, 8, track_bottom - bottom.height - track_top - top.height)
+    canvas.draw(
+        ui.atlas("!minimal-scrollbar-track-middle"),
+        x,
+        track_top + top.height,
+        8,
+        track_bottom - bottom.height - track_top - top.height,
+    )
     if visible < 1:
         track = track_bottom - track_top
         extent = max(23, track * visible)
@@ -1490,7 +1623,14 @@ def side_tab(canvas, x, y, icon, selected=False):
     canvas.draw(back, cx - back.width / 2, cy - back.height / 2)
     layer = ui.canvas(canvas.width, canvas.height)
     image = icon if isinstance(icon, Image.Image) else ui.texture(icon)
-    image = image.crop((round(image.width * 0.03125), round(image.height * 0.03125), round(image.width * 0.96875), round(image.height * 0.96875)))
+    image = image.crop(
+        (
+            round(image.width * 0.03125),
+            round(image.height * 0.03125),
+            round(image.width * 0.96875),
+            round(image.height * 0.96875),
+        )
+    )
     layer.draw(image, cx - 4 - 25, cy - 25, 50, 50)
     mask = ui.atlas("common-sidetab-mask")
     layer.mask(mask.image, cx - mask.width / 2, cy - mask.height / 2, mask.width, mask.height)
@@ -1515,15 +1655,19 @@ def tooltip_backdrop(canvas, x, y, w, h, background=(0, 0, 0, 1), border=(1, 1, 
     bg.image = tint(bg.image, background)
     canvas.paste(bg, x + 3, y + 3)
     texture = ui.texture(137057)
-    for index, (left, top) in enumerate(((x, y), (x + w - edge, y), (x, y + h - edge), (x + w - edge, y + h - edge)), 4):
+    for index, (left, top) in enumerate(
+        ((x, y), (x + w - edge, y), (x, y + h - edge), (x + w - edge, y + h - edge)), 4
+    ):
         piece = crop_coords(texture, index / 8 + 1 / 128, (index + 1) / 8 - 1 / 128, 1 / 16, 15 / 16)
         canvas.draw(piece, left, top, edge, edge, border)
-    for index, (left, top, length, horizontal) in enumerate((
-        (x, y + edge, h - 2 * edge, False),
-        (x + w - edge, y + edge, h - 2 * edge, False),
-        (x + edge, y, w - 2 * edge, True),
-        (x + edge, y + h - edge, w - 2 * edge, True),
-    )):
+    for index, (left, top, length, horizontal) in enumerate(
+        (
+            (x, y + edge, h - 2 * edge, False),
+            (x + w - edge, y + edge, h - 2 * edge, False),
+            (x + edge, y, w - 2 * edge, True),
+            (x + edge, y + h - edge, w - 2 * edge, True),
+        )
+    ):
         piece = crop_coords(texture, index / 8 + 1 / 128, (index + 1) / 8 - 1 / 128, 0, 1)
         if horizontal:
             # Backdrop.lua maps the strip's left edge to the top, with V decreasing rightward.
@@ -1633,7 +1777,11 @@ def minimal_slider(canvas, x, y, w, h, value, lo, hi):
     steppers 4 outside it and the thumb at `value` in [lo, hi], all centred vertically."""
     ui = canvas.ui
     bar_x, bar_w, cy = x + 19, w - 38, y + h / 2
-    left, right, middle = ui.atlas("Minimal_SliderBar_Left"), ui.atlas("Minimal_SliderBar_Right"), ui.atlas("_Minimal_SliderBar_Middle")
+    left, right, middle = (
+        ui.atlas("Minimal_SliderBar_Left"),
+        ui.atlas("Minimal_SliderBar_Right"),
+        ui.atlas("_Minimal_SliderBar_Middle"),
+    )
     canvas.draw(left, bar_x, cy - left.height / 2)
     canvas.draw(right, bar_x + bar_w - right.width, cy - right.height / 2)
     canvas.draw(middle, bar_x + left.width, cy - middle.height / 2, bar_w - left.width - right.width, middle.height)

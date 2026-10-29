@@ -121,6 +121,9 @@ wt="$HOME/.worktrees/$repo_name"
 wait
 ```
 
+- Codex's `workspace-write` sandbox has no network, loopback included, so tests that bind a
+  local port or start a browser fail there and read as a passing diagnosis. Add
+  `-c sandbox_workspace_write.network_access=true` for any arm that runs such tests.
 - A reviewer gets read-only access instead: `codex exec -s read-only`, `claude -p
   --permission-mode plan`, and an `opencode run` without `--auto`.
 - An arm is done when its artifact exists (`plan-*.md`, `result-*.md`, a branch SHA), not when

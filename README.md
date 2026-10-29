@@ -21,6 +21,9 @@ Agent skills I use daily, one per directory, each a self-contained `SKILL.md` pl
 | [`web-design-guidelines`](web-design-guidelines/SKILL.md) | Audit rendered websites and UI code for accessibility, navigation and responsive behavior |
 | [`copywriting`](copywriting/SKILL.md) | Write or edit copy for any audience and channel, with concrete claims and a consistent voice |
 | [`docs-writing`](docs-writing/SKILL.md) | Use the copywriting workflow for software documentation |
+| [`barry-coding-team`](barry-coding-team/SKILL.md) | Run one coding task across Barry Claude, Codex and OpenCode with separate worktrees and one review round |
+| [`barry-code`](barry-code/SKILL.md) | Invoke the Barry team on the coding task at hand with `/barry-code` |
+| [`barry-ship`](barry-ship/SKILL.md) | Ship a change across all three Barry agents, with simplify, gate, review and CI chained |
 | [`wow-mock-screenshots`](#wow-mock-screenshots) | Render WoW addon screenshots from the game's own art, without the client |
 | [`wow-visual-audit`](wow-visual-audit/SKILL.md) | Gate a rendered addon layout: inside the frame, no overlaps, no bleed |
 
@@ -156,6 +159,16 @@ it: a deterministic check first, a sentence in a steering file last.
 ## handoff
 
 Goal, state, open items and pointers to existing artifacts, written outside the workspace.
+
+## barry-coding-team
+
+One lead, one writer per worktree, one review round. Default split: OpenCode leads and integrates,
+Codex builds, Claude plans and reviews. `/barry-code` is the one-line entry point; `/barry-ship`
+is `/pr` fanned out across Barry: two-model plan and build, then `/simplify`, `sift check`,
+`/review` on three models, `/commit` and a CI watch up to the merge gate.
+
+- The run directory `~/.barry/team/<repo>/<date>/` is the mailbox; git branches are the handoff.
+- Publishing is the lead's job, and merging waits for the human.
 
 ## skill-writing
 

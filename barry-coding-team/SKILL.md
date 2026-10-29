@@ -111,8 +111,12 @@ Prefer Nebula Tasks; they are the agents' native interface.
 - **The lead dispatches:** send a focused brief and keep the `thread_id`.
 
 ```sh
-nebula-ai --json chat --no-stream --agent barry-codex -- "$(cat "$run_dir/brief-codex.md")"
+id=$(nebula-ai --json agents get barry-codex | jq -r .id)
+nebula-ai --json chat --no-stream --agent "$id" -- "$(cat "$run_dir/brief-codex.md")" < /dev/null
 ```
+
+The Barry agents are private, so `chat --agent <slug>` answers "Agent not found" and
+`agents list` omits them; `agents get <slug>` resolves the ID that `chat` accepts.
 
 - One level deep only. An agent that was dispatched as part of a team run does not dispatch
   another Barry agent; the lead does the dispatching, at most one sub-task per agent per round.

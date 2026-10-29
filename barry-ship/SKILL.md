@@ -12,9 +12,10 @@ from [`barry-coding-team`](../barry-coding-team/SKILL.md): read it first. This s
 pattern and the chain around it.
 
 **Roles for this pattern.** The calling session is the **coordinator**: it scopes, synthesizes,
-owns git (stage, sign, push, PR, replies) and runs every chained skill. `barry-claude` and
-`barry-codex` plan and build; `barry-opencode` is the third reviewer and the fallback for an arm
-that cannot run. No Barry agent commits to the integration branch, pushes or opens a PR.
+owns git (stage, sign, push, PR, replies) and runs every chained skill. Barry Claude and Barry
+Codex plan and build; Barry OpenCode is the third reviewer and the fallback for an arm that cannot
+run. Every arm runs as a local CLI in its own worktree. No arm commits to the integration branch,
+pushes or opens a PR.
 
 Run the stages in order. Each ends on its artifact; a stage without one is not done.
 
@@ -32,7 +33,7 @@ Run the stages in order. Each ends on its artifact; a stage without one is not d
 
 ## 2. Plan on two models
 
-- Dispatch the brief to `barry-claude` and `barry-codex` in parallel. Each returns
+- Start the Claude and Codex arms on the brief in parallel. Each returns
   `plan-<agent>.md`: decisions, files and contracts touched, risks, checks.
 - Send each plan to the other agent once. Replies hold only wrong assumptions, missing risks and
   corrections.
@@ -43,7 +44,7 @@ share no file.
 
 ## 3. Build on two models
 
-- Dispatch each slice to its agent in its own worktree. Each runs only its slice's focused checks
+- Start each slice's arm in its own worktree. Each runs only its slice's focused checks
   and returns `result-<agent>.md` with a branch and SHA.
 - If the change cannot be split, one agent builds and the other reviews its seam in stage 5.
 - Exchange the two diffs once for seam mismatches only. Merge both into the integration worktree
@@ -62,8 +63,8 @@ share no file.
 ## 5. Review on three models
 
 - Run `/review` on the branch in this session.
-- Dispatch the same base..head to `barry-codex` and `barry-opencode` as read-only reviews, in
-  the finding shape from `barry-coding-team`.
+- Start the Codex and OpenCode arms on the same base..head as read-only reviews, in the finding
+  shape from `barry-coding-team`.
 - Verify every finding against the source. Fix the ones that reproduce, rerun the gate once, and
   record the dropped ones with the reason.
 

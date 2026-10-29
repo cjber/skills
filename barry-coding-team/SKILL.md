@@ -1,14 +1,14 @@
 ---
 name: barry-coding-team
-description: "Coordinate Barry Claude, Barry Codex and Barry OpenCode on one coding task: split roles, hand off through git artifacts and Nebula Tasks, then integrate one reviewed result. Use for 'use the Barry team', /barry-code, a multi-agent coding pass, or an independent implementation plus review across Barry agents."
+description: "Coordinate Barry Claude, Barry Codex and Barry OpenCode on one coding task: run them as local CLIs, split roles, hand off through git artifacts, then integrate one reviewed result. Use for 'use the Barry team', /barry-code, a multi-agent coding pass, or an independent implementation plus review across Barry agents."
 ---
 
 # Barry coding team
 
-Three external CLI agents run on the same Linux machine and share one filesystem: Barry Claude
-(`barry-claude`), Barry Codex (`barry-codex`) and Barry OpenCode (`barry-opencode`). Each is a
-separate session, so they share no context. Git carries the code, a run directory carries the
-coordination, and Nebula carries the dispatch.
+Three coding agents run as local CLIs on this machine and share one filesystem: Barry Claude
+(`claude`), Barry Codex (`codex`) and Barry OpenCode (`opencode`). Each is a separate session, so
+they share no context. Git carries the code, a run directory carries the coordination, and the
+lead starts each arm as a background process.
 
 Use the team when independent implementation or review is worth the overhead. A small, isolated
 fix stays with one agent.
@@ -19,7 +19,7 @@ fix stays with one agent.
 |---|---|---|---|
 | Barry OpenCode | Lead / integrator | Scope, brief, worktrees, integration, gate, publish, report | Smaller model: verify with commands, not memory |
 | Barry Codex | Builder | One bounded implementation slice, disciplined commits | Has reported no signed GitHub identity: it does not publish |
-| Barry Claude | Planner / reviewer / operator | Design and diff review, repo and environment repair | Its plan token can expire mid-turn |
+| Barry Claude | Planner / reviewer / operator | Design and diff review, repo and environment repair | Plans before it reads: ask for evidence |
 
 If the human names a lead, that agent leads. Otherwise the first Barry tagged in the request leads;
 if that is unclear, Barry OpenCode leads. One agent per role, one lead per run. A non-lead never
@@ -35,7 +35,7 @@ edits the lead's checkout.
 
 ## Run directory
 
-The run directory is the shared mailbox, because the agents cannot read each other's Tasks.
+The run directory is the shared mailbox, because the agents cannot read each other's sessions.
 
 ```sh
 repo="$(git rev-parse --show-toplevel)"
@@ -53,8 +53,7 @@ install -d -m 700 "$run_dir"
 - If the directory already contains a brief for different work, use `$date_tag-2`, `-3`, and say
   which path you used in your reply.
 
-Keep every file and every dispatched brief under 8 KB. Send paths and short excerpts, not whole
-files: Nebula rejects an oversized dispatch rather than truncating it.
+Send paths and short excerpts in a brief, not whole files: every arm can read the disk.
 
 ## Start a run
 
@@ -104,36 +103,30 @@ run them as a pipeline instead of a fan-out.
 
 ## Dispatch
 
-Prefer Nebula Tasks; they are the agents' native interface.
-
-- **The human tagged the team:** their Tasks already exist. Put each agent's assignment in
-  `brief-<slug>.md`; they read it from the run directory. Do not dispatch a duplicate Task.
-- **The lead dispatches:** send a focused brief and keep the `thread_id`.
-
-```sh
-nebula-ai --json --workspace cillian chat --no-stream --agent barry-codex \
-  -- "$(cat "$run_dir/brief-codex.md")" < /dev/null
-```
-
-The Barry agents live in the personal `cillian` workspace. Without `--workspace cillian`, `chat`
-answers "Agent not found" whenever another workspace is active.
-
-- One level deep only. An agent that was dispatched as part of a team run does not dispatch
-  another Barry agent; the lead does the dispatching, at most one sub-task per agent per round.
-- `status: incomplete` or exit `5` means the task was sent. Check
-  `nebula-ai --json tasks status <thread-id>` and read the thread; never resend a mutating brief.
-- If Nebula is unavailable and the human asked for a local run, the CLIs are on `PATH`. Give each
-  arm its own worktree and a read-only mode for review; run only the arms you are not already
-  running as:
+The lead starts every arm in its own worktree, in the background, through
+`~/scripts/agent-session` so it inherits the session memory limits. Close stdin on every call: an
+arm that waits on stdin hangs silently or exits 0 having done nothing. Run the arms concurrently
+and wait for all of them; each writes its log to the run directory.
 
 ```sh
-(cd "$HOME/.worktrees/$repo_name/barry-codex-$date_tag" && codex exec -s workspace-write \
-  "Read $run_dir/brief-codex.md and do it.")
-(cd "$HOME/.worktrees/$repo_name/barry-claude-$date_tag" && claude -p \
-  "$(cat "$run_dir/brief-claude.md")" --permission-mode plan)
-(cd "$HOME/.worktrees/$repo_name/barry-opencode-$date_tag" && opencode run --auto \
-  "Read $run_dir/brief-opencode.md and do it.")
+wt="$HOME/.worktrees/$repo_name"
+# Writing arms: their own worktree, write access to it.
+(cd "$wt/barry-codex-$date_tag" && ~/scripts/agent-session codex exec -m gpt-reserve \
+  -c model_reasoning_effort=xhigh -c service_tier=default -s workspace-write \
+  -o "$run_dir/reply-codex.md" - < "$run_dir/brief-codex.md" > "$run_dir/log-codex.txt" 2>&1) &
+(cd "$wt/barry-claude-$date_tag" && ~/scripts/agent-session claude -p --model opus \
+  --permission-mode bypassPermissions < "$run_dir/brief-claude.md" > "$run_dir/log-claude.txt" 2>&1) &
+(cd "$wt/barry-opencode-$date_tag" && ~/scripts/agent-session opencode run --auto \
+  "Read $run_dir/brief-opencode.md and do it." < /dev/null > "$run_dir/log-opencode.txt" 2>&1) &
+wait
 ```
+
+- A reviewer gets read-only access instead: `codex exec -s read-only`, `claude -p
+  --permission-mode plan`, and an `opencode run` without `--auto`.
+- An arm is done when its artifact exists (`plan-*.md`, `result-*.md`, a branch SHA), not when
+  its process exits. `Reading additional input from stdin...` in a Codex log means the brief
+  never arrived; a fast exit with no artifact is a failure.
+- One level deep only: an arm never starts another arm.
 
 ## Execution patterns
 
@@ -160,8 +153,7 @@ the source before acting on it; a finding that does not reproduce is recorded an
 
 ## Integrate and publish
 
-1. Read every `result-*.md`. If one is missing, check that agent's Task status; do not block the
-   run on it. Treat an agent's claim as a lead, not proof: inspect its branch with
+1. Read every `result-*.md`. If one is missing, read that arm's log; do not block the run on it. Treat an agent's claim as a lead, not proof: inspect its branch with
    `git log --oneline "$base"..<branch>` and `git diff --stat "$base"..<branch>`.
 2. Merge into the integration worktree one arm at a time, running the gate after each merge.
    Resolve conflicts there; never force-push a branch another agent may still hold.
@@ -181,12 +173,8 @@ the source before acting on it; a finding that does not reproduce is recorded an
 
 - **An agent cannot run:** record it as unavailable, reassign the role to another agent, and say so
   in the final report. Do not retry in a loop.
-- **Claude's plan token expires mid-run:** its branch or partial review is still usable. Verify the
-  artifact, hand the remaining review to another agent, and record the failure.
 - **Disk is full:** stop writing, run `df -h`, delete only temporary files this run created, and
   report. Do not delete caches or user data you do not own.
-- **A brief is rejected as too large:** write it to the run directory and dispatch the path plus a
-  ten-line summary.
 - **Two agents changed the same file:** stop merging, compare both diffs against the base, and
   resolve on the integration branch with one owner.
 

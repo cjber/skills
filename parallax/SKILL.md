@@ -20,11 +20,17 @@ command is `parallax setup`, while `/parallax setup` invokes this skill.
    a dashboard is requested, and open the returned URL to verify the result where
    browser access permits.
 
-For an eval campaign, read the consuming repository's testing workflow and
-Parallax's authoring and adapter docs before selecting fixtures. Use natural user
-prompts and negative examples. Verify controls, preserve raw evidence locally,
-and obtain authorization before paid calls or external writes that the user has
-not already authorized.
+For an eval campaign, read the standing rules in the Parallax checkout's
+`AGENTS.md`, the consuming repository's testing workflow, and Parallax's
+authoring and adapter docs before selecting fixtures. Use natural user prompts
+and negative examples. Verify controls, preserve raw evidence locally, and obtain
+authorization before paid calls or external writes that the user has not already
+authorized.
+
+Before the first paid call, check that each provider key has credit for the whole
+campaign and that every secret and variable the workflow names is set: a key that
+runs out mid-campaign fails every later call and invalidates those trials. Smoke
+a few tasks live, then run the full suite.
 
 Record failures, invalid trials, usage, provenance and tracking receipts alongside
 successful trials. Unknown costs or timings stay unknown. Keep raw prompts, answers
